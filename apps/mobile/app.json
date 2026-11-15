@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Uday",
+    "slug": "uday",
+    "scheme": "uday",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#1A1040",
+    "splash": { "backgroundColor": "#1A1040", "resizeMode": "contain" },
+    "ios": { "bundleIdentifier": "in.uday.app", "supportsTablet": false,
+      "infoPlist": { "NSLocationWhenInUseUsageDescription": "Uday checks that caregivers have arrived at the booked home." } },
+    "android": { "package": "in.uday.app", "permissions": ["ACCESS_FINE_LOCATION"], "adaptiveIcon": { "backgroundColor": "#1A1040" } },
+    "web": { "bundler": "metro", "output": "single" },
+    "plugins": ["expo-secure-store", "expo-font", ["expo-location", { "locationWhenInUsePermission": "Uday checks that caregivers have arrived at the booked home." }]],
+    "extra": { "eas": { "projectId": "SET_BY_AGENCY" } }
+  }
+}

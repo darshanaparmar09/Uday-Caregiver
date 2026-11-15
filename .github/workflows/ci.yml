@@ -1,0 +1,33 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: uday, POSTGRES_PASSWORD: uday, POSTGRES_DB: uday }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://uday:uday@localhost:5432/uday
+      SESSION_SECRET: ci-session-secret-that-is-long-enough-123456
+      LOOKUP_KEY: ci-lookup-key
+      FIELD_KEY_PII: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+      FIELD_KEY_HEALTH: YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=
+      UDAY_ENV: staging
+      GATEWAY: mock
+      SMS_PROVIDER: log
+      OTP_DEV_CODE: "123456"
+      CRON_SECRET: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm test -w @uday/core
+      - run: npx tsc --noEmit -p apps/web
+      - run: node db/migrate.mjs && npm run db:seed
+      - run: npm run build -w @uday/web
+      - run: (npm run start -w @uday/web &) && sleep 8 && BASE_URL=http://localhost:3000 npm run test -w @uday/web
+      - run: cd apps/mobile && npm ci && npx tsc --noEmit

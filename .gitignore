@@ -1,0 +1,7 @@
+node_modules
+.next
+.env
+.env.local
+*.log
+apps/mobile/.expo
+apps/mobile/dist

@@ -1,0 +1,23 @@
+{
+  "name": "uday",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "packages/*",
+    "apps/web"
+  ],
+  "scripts": {
+    "test": "npm run test -w @uday/core && npm run test -w @uday/web",
+    "db:migrate": "node db/migrate.mjs",
+    "db:seed": "tsx db/seed.mts",
+    "dev": "npm run dev -w @uday/web",
+    "build": "npm run build -w @uday/web"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "tsx": "4.19.2",
+    "pg": "8.13.1"
+  }
+}
