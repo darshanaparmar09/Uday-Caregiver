@@ -7,7 +7,9 @@ async function call(t: string | null, path: string, body?: unknown, method?: str
   return { status: r.status, j: (await r.json().catch(() => ({}))) as any };
 }
 async function login(phone: string) { await call(null, "/api/auth/request", { phone }); return (await call(null, "/api/auth/verify", { phone, code: OTP, client: "app" })).j.token as string; }
-const day = (n: number) => new Date(Date.now() + n * 86400e3).toISOString().slice(0, 10);
+// Jitter keeps reruns against the same database from clashing with earlier bookings.
+const J = 100 + Math.floor(Math.random() * 3000);
+const day = (n: number) => new Date(Date.now() + (n + J) * 86400e3).toISOString().slice(0, 10);
 
 async function activeShift(cgName: string, cgPhone: string, tier: number, offset: number) {
   const fam = await login("+9187" + String(Date.now()).slice(-8));
@@ -15,7 +17,7 @@ async function activeShift(cgName: string, cgPhone: string, tier: number, offset
     emergencyContacts: [{ name: "Rohan", relation: "Son", phone: "+16505550100", city: "San Jose" }, { name: "Mira", relation: "Friend", phone: "9822044444", city: "Pune", isLocal: true }],
     consent: { onBehalf: true, shareWithCaregiver: { allergies: true, medicines: true, conditions: true } } });
   const cg = (await call(null, `/api/caregivers?type=day&tier=${tier}`)).j.find((c: any) => c.display_name === cgName);
-  const b = await call(fam, "/api/bookings", { recipientId: r.j.id, caregiverId: cg.id, careType: "day", days: 1, startDate: day(offset), startTime: "09:00", method: "UPI" });
+  const b = await call(fam, "/api/bookings", { recipientId: r.j.id, caregiverId: cg.id, careType: "day", days: 1, startDate: day(offset), startTime: "09:00", method: "UPI", careNeed: "companionship", homeCommitments: ["toilet", "water", "belongings", "household", "infection", "cameras", "scope"] });
   assert.equal(b.status, 200, JSON.stringify(b.j));
   const t = await login(cgPhone);
   for (const a of [{ action: "accept" }, { action: "enroute" }, { action: "arrive" }]) assert.equal((await call(t, `/api/bookings/${b.j.id}/action`, a)).status, 200);

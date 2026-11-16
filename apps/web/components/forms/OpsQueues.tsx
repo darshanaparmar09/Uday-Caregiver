@@ -23,6 +23,11 @@ export function OpsQueues() {
             <button key={n} onClick={() => go(`/api/ops/caregivers/${c.id}/stage`, { stage: n, status: s === "clear" ? "pending" : "clear" }, `${t} updated`)}
               className={`min-h-[40px] rounded-lg border px-3 ${s === "clear" ? "border-teal-500 bg-teal-50 text-teal-600" : s === "submitted" ? "border-orange-400 bg-orange-50" : "border-line"}`}>{s === "clear" ? "✓ " : ""}{t}{s === "submitted" ? " · to check" : ""}</button>); })}</div>
           <p className="note mt-1">Police verification: record the provider's result only. Never upload the report.</p></div>)}</div>
+      <div className="card"><h3 className="mb-3 font-bold">Care facilities to review ({d.facilities?.length ?? 0})</h3>
+        {d.facilities?.map((f: any) => <div key={f.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm"><span><b className="text-ink">{f.name}</b> · {f.locality} · licence {f.licence_no ?? "missing"} · {f.plan}</span>
+          <span className="flex gap-2"><button className="btn min-h-[40px] px-3 text-sm" onClick={() => go(`/api/ops/facilities/${f.id}`, { status: "live", licenceVerified: true }, `${f.name} is live`)}>Licence checked, go live</button>
+            <button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go(`/api/ops/facilities/${f.id}`, { status: "suspended" }, `${f.name} paused`)}>Pause</button></span></div>)}
+        <p className="note mt-1">Check the licence with the issuing authority before going live.</p></div>
       <div className="card"><h3 className="mb-3 font-bold">Leave requests ({d.leave.length})</h3>
         {d.leave.map((l: any) => <div key={l.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm"><span><b className="text-ink">{l.display_name}</b> · {l.from_day} to {l.to_day} · {l.reason}</span>
           <span className="flex gap-2"><button className="btn min-h-[40px] px-3 text-sm" onClick={() => go(`/api/ops/leave/${l.id}`, { approve: true }, "Leave approved")}>Approve</button><button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go(`/api/ops/leave/${l.id}`, { approve: false }, "Leave declined")}>Decline</button></span></div>)}</div>

@@ -6,7 +6,7 @@ import { enc, lookupHash, normalisePhone } from "./crypto";
 import { sendOtp } from "./notify";
 import { TEST_MODE } from "./env";
 
-export type Role = "family" | "caregiver" | "senior" | "ops";
+export type Role = "family" | "caregiver" | "senior" | "ops" | "facility";
 export interface SessionUser { id: string; role: Role; name: string | null; phoneLast4: string; sessionId: string }
 
 const COOKIE = "uday_session";

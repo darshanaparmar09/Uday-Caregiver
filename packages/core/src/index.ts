@@ -160,3 +160,93 @@ export function vitalsFlags(v: Vitals, L = VITALS_LIMITS): string[] {
   if (v.pain != null && v.pain >= L.painAlertAt) f.push(`Pain ${v.pain} of 10`);
   return f;
 }
+
+// ───────── what care is needed (family picks one when hiring) ─────────
+export interface CareNeed { id: string; group: string; label: string; tier: Tier; skills: string[] }
+export const CARE_NEED_GROUPS = ["Recovery", "Long term conditions", "Disability support", "Short illness", "Daily living", "Hospital and outings", "Other"] as const;
+export const CARE_NEEDS: CareNeed[] = [
+  { id: "post_op", group: "Recovery", label: "After surgery", tier: 3, skills: ["Post surgery", "Wound care", "Vitals"] },
+  { id: "discharge", group: "Recovery", label: "Back home from hospital", tier: 2, skills: ["Post surgery", "Mobility support", "Transfers"] },
+  { id: "fracture", group: "Recovery", label: "Fracture or joint replacement", tier: 2, skills: ["Transfers", "Physio assist", "Mobility support"] },
+  { id: "stroke", group: "Recovery", label: "Stroke recovery", tier: 2, skills: ["Bedridden support", "Transfers", "Physio assist"] },
+  { id: "dementia", group: "Long term conditions", label: "Dementia or Alzheimer's", tier: 2, skills: ["Dementia care"] },
+  { id: "parkinsons", group: "Long term conditions", label: "Parkinson's", tier: 2, skills: ["Mobility support", "Transfers"] },
+  { id: "diabetes", group: "Long term conditions", label: "Diabetes", tier: 3, skills: ["Diabetes care", "Vitals"] },
+  { id: "heart", group: "Long term conditions", label: "Heart or lung condition", tier: 3, skills: ["Vitals"] },
+  { id: "palliative", group: "Long term conditions", label: "Cancer or end of life comfort care", tier: 3, skills: ["Vitals", "Hygiene"] },
+  { id: "bedridden", group: "Long term conditions", label: "Bedridden care", tier: 2, skills: ["Bedridden support", "Hygiene", "Transfers"] },
+  { id: "mobility", group: "Disability support", label: "Physical disability or wheelchair", tier: 2, skills: ["Mobility support", "Transfers"] },
+  { id: "sensory", group: "Disability support", label: "Poor sight or hearing", tier: 1, skills: ["Companionship", "Walks"] },
+  { id: "short_illness", group: "Short illness", label: "Fever, infection or short illness", tier: 2, skills: ["Meals", "Hygiene"] },
+  { id: "companionship", group: "Daily living", label: "Company and daily help", tier: 1, skills: ["Companionship", "Meals", "Walks"] },
+  { id: "falls", group: "Daily living", label: "Fall risk, needs supervision", tier: 1, skills: ["Mobility support", "Walks"] },
+  { id: "hospital_visit", group: "Hospital and outings", label: "Doctor or hospital visit escort", tier: 1, skills: ["Companionship", "Mobility support"] },
+  { id: "hospital_stay", group: "Hospital and outings", label: "Attendant during a hospital stay", tier: 2, skills: ["Hygiene", "Mobility support"] },
+  { id: "other", group: "Other", label: "Something else", tier: 1, skills: [] },
+];
+export const careNeed = (id: string) => CARE_NEEDS.find((n) => n.id === id);
+
+// ───────── what the family provides at home (agreed at checkout) ─────────
+export const HOME_COMMITMENTS_VERSION = "2026-11-v1";
+export function homeCommitments(careType: CareType): { id: string; label: string }[] {
+  const all = [
+    { id: "toilet", label: "A clean toilet with handwashing the caregiver can use" },
+    { id: "water", label: "Drinking water" },
+    { id: "belongings", label: "A safe place to keep belongings and charge a phone" },
+    { id: "household", label: "I will tell Uday about pets, smokers and others living at home" },
+    { id: "infection", label: "I will tell Uday if anyone at home has an infectious illness" },
+    { id: "cameras", label: "I will tell the caregiver where any cameras are; none in toilets or rest areas" },
+    { id: "scope", label: "Care tasks only: no cooking for the whole household or general house cleaning" },
+  ];
+  const night = [{ id: "rest_seat", label: "A place to sit or rest during quiet hours" }];
+  const live = [
+    { id: "meals", label: "Three meals a day, or a meal allowance agreed in advance" },
+    { id: "bath", label: "A bathroom with bathing facility" },
+    { id: "sleep", label: "A separate sleeping space with bed and bedding" },
+    { id: "breaks", label: "At least 2 hours of break in the day and 8 hours of rest at night" },
+    { id: "day_off", label: "A weekly day off, covered by an Uday relief caregiver" },
+  ];
+  return careType === "live" ? [...all, ...live] : careType === "night" ? [...all, ...night] : all;
+}
+
+// ───────── multi area rating (averages out one emotional score) ─────────
+export const RATING_AREAS = [["punctuality", "On time"], ["quality", "Quality of care"], ["kindness", "Kindness and respect"], ["hygiene", "Hygiene and tidiness"], ["communication", "Communication"]] as const;
+export type RatingArea = (typeof RATING_AREAS)[number][0];
+export function overallRating(r: Partial<Record<RatingArea, number>>): number {
+  const v = RATING_AREAS.map(([k]) => r[k]).filter((x): x is number => typeof x === "number" && x >= 1 && x <= 5);
+  if (v.length !== RATING_AREAS.length) throw new Error("Rate all five areas from 1 to 5");
+  return Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10;
+}
+
+// ───────── health readings and wearables ─────────
+export const READING_KINDS = { bp_sys: ["BP upper", "mmHg"], bp_dia: ["BP lower", "mmHg"], pulse: ["Pulse", "bpm"], spo2: ["Oxygen", "%"], temp_c: ["Temperature", "°C"],
+  glucose: ["Blood sugar", "mg/dL"], weight_kg: ["Weight", "kg"], steps: ["Steps", "steps"], sleep_hours: ["Sleep", "hours"], pain: ["Pain", "of 10"] } as const;
+export type ReadingKind = keyof typeof READING_KINDS;
+export const READING_RANGE: Record<ReadingKind, [number, number]> = { bp_sys: [50, 260], bp_dia: [30, 160], pulse: [25, 220], spo2: [50, 100], temp_c: [32, 43], glucose: [20, 600], weight_kg: [20, 250], steps: [0, 100000], sleep_hours: [0, 24], pain: [0, 10] };
+
+/**
+ * Ten common wearables and home devices. "phone" devices sync through Apple Health (iPhone) or
+ * Health Connect (Android) on the senior's phone running the Uday app. "cloud" devices connect through
+ * the maker's online API. Support marked verify must be confirmed by the agency before launch.
+ */
+export const WEARABLES = [
+  { id: "apple_watch", name: "Apple Watch", via: "phone", path: "Apple Health on iPhone", reads: ["pulse", "spo2", "steps", "sleep_hours"], verify: false },
+  { id: "galaxy_watch", name: "Samsung Galaxy Watch", via: "phone", path: "Samsung Health to Health Connect", reads: ["pulse", "spo2", "steps", "sleep_hours"], verify: false },
+  { id: "fitbit", name: "Fitbit", via: "phone", path: "Fitbit app to Health Connect or Apple Health", reads: ["pulse", "spo2", "steps", "sleep_hours"], verify: false },
+  { id: "pixel_watch", name: "Google Pixel Watch", via: "phone", path: "Fitbit app to Health Connect", reads: ["pulse", "spo2", "steps", "sleep_hours"], verify: false },
+  { id: "garmin", name: "Garmin", via: "phone", path: "Garmin Connect to Health Connect or Apple Health", reads: ["pulse", "steps", "sleep_hours"], verify: true },
+  { id: "amazfit", name: "Amazfit", via: "phone", path: "Zepp app to Health Connect or Apple Health", reads: ["pulse", "steps", "sleep_hours"], verify: true },
+  { id: "noise", name: "Noise smartwatch", via: "phone", path: "NoiseFit app to Health Connect or Apple Health", reads: ["pulse", "steps", "sleep_hours"], verify: true },
+  { id: "boat", name: "boAt smartwatch", via: "phone", path: "boAt Crest app to Health Connect or Apple Health", reads: ["pulse", "steps"], verify: true },
+  { id: "omron", name: "Omron BP monitor", via: "phone", path: "OMRON connect app to Health Connect or Apple Health", reads: ["bp_sys", "bp_dia", "pulse"], verify: true },
+  { id: "withings", name: "Withings (BP monitor, scale, watch)", via: "cloud", path: "Withings account, connected online", reads: ["bp_sys", "bp_dia", "pulse", "weight_kg", "spo2"], verify: true },
+] as const;
+
+// ───────── care facilities ─────────
+export const FACILITY_TYPES = { assisted_living: "Assisted living", nursing_home: "Nursing home (skilled nursing)", memory_care: "Memory care", retirement_community: "Retirement community", respite: "Short stay and respite", rehab: "Rehabilitation centre" } as const;
+export type FacilityType = keyof typeof FACILITY_TYPES;
+/** Listing plans for facilities, billed monthly. Prices are assumptions until Uday sets them. */
+export const FACILITY_PLANS = { listed: { name: "Listed", pricePaise: 499900, features: ["Profile and photos", "Visit requests from families", "Family reviews"] },
+  featured: { name: "Featured", pricePaise: 999900, features: ["Everything in Listed", "Shown first in search", "Monthly enquiry report"] } } as const;
+export type FacilityPlan = keyof typeof FACILITY_PLANS;
+export const FACILITY_REVIEW_AREAS = [["care", "Care"], ["staff", "Staff"], ["cleanliness", "Cleanliness"], ["activities", "Activities"], ["value", "Value for money"]] as const;

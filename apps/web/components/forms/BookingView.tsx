@@ -2,17 +2,17 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, inr, TYPE, DUR, TIER, STATUS } from "../api";
+import { RateCare } from "./RateCare";
 
 const STEPS = ["Requested", "Accepted", "On the way", "Arrived", "Care", "Done"];
 const IDX: Record<string, number> = { offered: 0, proposal: 0, accepted: 1, enroute: 2, arrived: 3, active: 4, completed: 5, closed: 5 };
-const TAGS = ["On time", "Kind and patient", "Followed the care profile", "Clean and tidy", "Good communication"];
 
 function countdown(iso?: string) { if (!iso) return ""; const s = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 1000)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = String(s % 60).padStart(2, "0"); return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`; }
 
 export function BookingView({ id }: { id: string }) {
   const [b, setB] = useState<any>(null); const [err, setErr] = useState(""); const [panel, setPanel] = useState<string | null>(null);
   const [quote, setQuote] = useState<any>(null); const [busy, setBusy] = useState(false); const [, tick] = useState(0);
-  const [stars, setStars] = useState(0); const [tags, setTags] = useState<string[]>([]); const [date, setDate] = useState(""); const [cat, setCat] = useState("Caregiver is late or did not arrive"); const [txt, setTxt] = useState("");
+  const [date, setDate] = useState(""); const [cat, setCat] = useState("Caregiver is late or did not arrive"); const [txt, setTxt] = useState("");
   const load = useCallback(() => api(`/api/bookings/${id}`).then(setB).catch((e) => setErr(e.message)), [id]);
   useEffect(() => { load(); const a = setInterval(load, 5000); const t = setInterval(() => tick((n) => n + 1), 1000); return () => { clearInterval(a); clearInterval(t); }; }, [load]);
   async function act(body: any) { setBusy(true); setErr(""); try { await api(`/api/bookings/${id}/action`, { body }); setPanel(null); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
@@ -34,7 +34,9 @@ export function BookingView({ id }: { id: string }) {
           <dt className="text-muted">Care</dt><dd className="text-ink">{TYPE[b.careType]}</dd>
           <dt className="text-muted">Plan</dt><dd className="text-ink">{DUR[b.days]}{b.days > 1 ? ` · day ${Math.min(b.daysDone + 1, b.days)} of ${b.days}` : ""}</dd>
           <dt className="text-muted">Starts</dt><dd className="text-ink">{b.startDate} · {String(b.startTime).slice(0, 5)}</dd>
-          <dt className="text-muted">For</dt><dd className="text-ink">{b.recipient.name}, {b.recipient.locality}</dd></dl>
+          <dt className="text-muted">For</dt><dd className="text-ink">{b.recipient.name}, {b.recipient.locality}</dd>
+          {b.careNeed && <><dt className="text-muted">Care needed</dt><dd className="text-ink">{b.careNeed.label}{b.careNeed.note ? `: ${b.careNeed.note}` : ""}</dd></>}</dl>
+        {!!b.homeCommitments?.length && <details className="mt-3 text-sm"><summary className="cursor-pointer font-semibold text-indigo-600">What you agreed to provide at home ({b.homeCommitments.length})</summary><ul className="mt-2 list-disc pl-5">{b.homeCommitments.map((h: any) => <li key={h.id}>{h.label}</li>)}</ul></details>}
       </div>
 
       {b.status === "offered" && <div className="card border-orange-400 bg-orange-50"><div className="eyebrow">Waiting for {first} to accept</div><div className="mt-1 font-display text-4xl font-extrabold tabular-nums text-ink">{countdown(b.offerExpiresAt)}</div>
@@ -70,11 +72,7 @@ export function BookingView({ id }: { id: string }) {
         <div className="flex gap-2"><button className="inline-flex min-h-[48px] items-center rounded-xl border border-coral-500 px-5 font-semibold text-coral-600" disabled={busy} onClick={() => act({ action: "cancel" })}>Yes, cancel</button><button className="btn-ghost" onClick={() => setPanel(null)}>Keep booking</button></div></div>}
       {panel === "resch" && <div className="card grid gap-3"><h2 className="text-lg font-bold">Move the start date</h2><input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
         <p className="note">{quote?.feePaise ? `Inside 4 hours of the shift, so a ${inr(quote.feePaise)} fee applies.` : "Free to reschedule."}</p><button className="btn" disabled={busy} onClick={() => act({ action: "reschedule", startDate: date })}>Confirm new date</button></div>}
-      {panel === "rate" && <div className="card grid gap-3"><h2 className="text-lg font-bold">Rate {first}</h2>
-        <div className="flex gap-1">{[1, 2, 3, 4, 5].map((n) => <button key={n} aria-label={`${n} stars`} onClick={() => setStars(n)} className={`h-12 w-12 text-3xl ${n <= stars ? "text-orange-400" : "text-line"}`}>★</button>)}</div>
-        <div className="flex flex-wrap gap-2">{TAGS.map((t) => <button key={t} type="button" aria-pressed={tags.includes(t)} onClick={() => setTags(tags.includes(t) ? tags.filter((x) => x !== t) : [...tags, t])} className={`min-h-[40px] rounded-full border px-3 text-sm ${tags.includes(t) ? "border-orange-400 bg-orange-50" : "border-line"}`}>{t}</button>)}</div>
-        {stars > 0 && stars <= 3 && <p className="note">A rating of 3 or below opens a help request so the care manager calls you.</p>}
-        <button className="btn" disabled={!stars || busy} onClick={() => act({ action: "rate", stars, tags })}>Submit rating</button></div>}
+      {panel === "rate" && <div className="card"><RateCare bookingId={id} name={first} onDone={() => { setPanel(null); load(); }} /></div>}
       {panel === "invoice" && <div className="card grid gap-1 text-sm"><h2 className="mb-2 text-lg font-bold">Invoice {b.code.replace("UDY", "INV")}</h2>
         {[[`Care fee · ${inr(b.fees.ratePaise)} × ${b.days}`, b.fees.carePaise], ["Uday platform fee", b.fees.platformPaise], ["GST on platform fee", b.fees.gstPaise]].map(([t, v]) => <div key={t} className="flex justify-between"><span>{t}</span><b className="text-ink">{inr(v)}</b></div>)}
         <div className="mt-1 flex justify-between border-t border-line pt-2"><span className="font-semibold text-ink">Total</span><b className="font-display text-lg text-ink">{inr(b.fees.totalPaise)}</b></div>

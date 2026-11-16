@@ -58,7 +58,7 @@ test("availability: a day off blocks booking; leave approved by ops blocks days"
   const r = await call(fam, "/api/recipients", { name: "Shalini", address: "C2 Lake View, Kothrud", locality: "Kothrud", hospital: "Sahyadri", hasPhone: false, emergencyContacts: [{ name: "Ravi", relation: "Son", phone: "+447700900123", city: "London" }, { name: "Asha", relation: "Niece", phone: "9822011111", city: "Pune", isLocal: true }], consent: { onBehalf: true, shareWithCaregiver: { allergies: true, medicines: true, conditions: true } } });
   rid = r.j.id;
   assert.equal((await call(cg, "/api/caregiver/availability", { day: day(5), available: false }, "PUT")).status, 200);
-  const blocked = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: cgId, careType: "day", days: 1, startDate: day(5), startTime: "09:00", method: "UPI" });
+  const blocked = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: cgId, careType: "day", days: 1, startDate: day(5), startTime: "09:00", method: "UPI", careNeed: "companionship", homeCommitments: ["toilet", "water", "belongings", "household", "infection", "cameras", "scope"] });
   assert.equal(blocked.status, 400); assert.match(blocked.j.error, /not available/);
   const lv = await call(cg, "/api/caregiver/leave", { from: day(10), to: day(11), reason: "Family function" }); assert.equal(lv.status, 200);
   assert.equal((await call(ops, `/api/ops/leave/${lv.j.id}`, { approve: true })).status, 200);
@@ -67,7 +67,7 @@ test("availability: a day off blocks booking; leave approved by ops blocks days"
 });
 
 test("shift, weekly payout and earnings", async () => {
-  const b = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: cgId, careType: "day", days: 1, startDate: day(2), startTime: "09:00", method: "Card" });
+  const b = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: cgId, careType: "day", days: 1, startDate: day(2), startTime: "09:00", method: "Card", careNeed: "companionship", homeCommitments: ["toilet", "water", "belongings", "household", "infection", "cameras", "scope"] });
   assert.equal(b.status, 200, JSON.stringify(b.j)); const id = b.j.id;
   for (const a of [{ action: "accept" }, { action: "enroute" }, { action: "arrive" }]) assert.equal((await call(cg, `/api/bookings/${id}/action`, a)).status, 200);
   assert.equal((await call(cg, "/api/caregiver/availability", { day: day(2), available: false }, "PUT")).status, 400, "cannot mark a booked day off");
@@ -77,7 +77,7 @@ test("shift, weekly payout and earnings", async () => {
   const e1 = await call(cg, "/api/caregiver/earnings"); assert.equal(e1.j.balancePaise, 85000); assert.equal(e1.j.thisWeek.shifts, 1);
   const run = await call(ops, "/api/ops/payouts", {}); assert.ok(run.j.paid >= 1);
   const e2 = await call(cg, "/api/caregiver/earnings"); assert.equal(e2.j.balancePaise, 0); assert.equal(e2.j.payouts[0].status, "paid"); assert.equal(e2.j.payouts[0].amount_paise, 85000);
-  assert.equal((await call(fam, `/api/bookings/${id}/action`, { action: "rate", stars: 3, tags: ["Kind and patient"] })).status, 200);
+  assert.equal((await call(fam, `/api/bookings/${id}/action`, { action: "rate", areas: { punctuality: 3, quality: 3, kindness: 3, hygiene: 3, communication: 3 }, tags: ["Kind and patient"] })).status, 200);
   const rt = await call(cg, "/api/caregiver/ratings"); assert.equal(rt.j.count, 1); assert.equal(rt.j.belowStandard, true); assert.ok(rt.j.tips.length >= 1);
 });
 

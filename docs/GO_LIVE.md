@@ -14,6 +14,11 @@ What is built, and what must be finished or connected before real families and r
 - Website: ten public pages, hire flow, family dashboard, booking view, onboarding, health form, careers applications, operations board.
 - Security: field encryption with separate keys, hashed lookups, append only events, ledger and audit tables, security headers, no card data, no Aadhaar numbers, no police reports stored.
 
+- Care facilities: directory, profile, visit requests, visit checklist, reviews after a completed visit, facility self onboarding with a monthly plan, ops approval, renewals (`/api/cron?job=renewals`, run daily).
+- Care need picker (18 needs, 7 groups) and home commitments per care type, stored with a version.
+- Five area caregiver ratings, averaged; a rating is required before rehiring the same caregiver.
+- Readings from caregivers, families and devices in one encrypted stream; wearable connections.
+
 ## Must be connected before launch
 
 | Item | Owner | Where |
@@ -34,6 +39,13 @@ What is built, and what must be finished or connected before real families and r
 | App store listings, icons, splash artwork | U, A | `apps/mobile/app.json` |
 | Domain, TLS, monitoring and alerting | A | hosting |
 
+- Facility plans: create Listed and Featured monthly plans in Razorpay and set `RAZORPAY_PLAN_LISTED`, `RAZORPAY_PLAN_FEATURED`.
+- Health devices: add `react-native-health` (iPhone) and `react-native-health-connect` (Android) in a development build, then implement `readStore()` in `packages/mobile-shared/src/health.ts`. Confirm sync support for Garmin, Amazfit, Noise, boAt, Omron and Withings.
+- Withings: register an API app and implement the account link in `lib/readings.ts` `connect()`.
+
 ## Working assumptions to confirm
 
 8% platform fee, 18% GST on platform fee, offer window 30 minutes same day and 4 hours for later starts, 150 metre geofence, check in expected by 10 AM with alert after 11 AM, sample caregiver rates. All are in `packages/core` POLICY or environment variables.
+- Facility plan prices: ₹4,999 and ₹9,999 a month plus GST.
+- Home commitment wording, including live in breaks (2 hours day, 8 hours night) and a weekly day off with relief cover: check with your lawyer.
+- Facility licence check: ops confirms the licence with the issuing authority before a listing goes live.

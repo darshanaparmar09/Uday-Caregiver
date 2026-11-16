@@ -273,5 +273,6 @@ export async function opsQueues() {
   const onboarding = await q<any>(`SELECT c.id, c.display_name, c.tier, c.status, json_object_agg(s.stage, s.status) FILTER (WHERE s.stage IS NOT NULL) AS stages
     FROM caregivers c LEFT JOIN onboarding_steps s ON s.caregiver_id=c.id WHERE c.status IN ('applied','verifying') GROUP BY c.id ORDER BY c.created_at`);
   const leave = await q<any>("SELECT l.id, c.display_name, l.from_day, l.to_day, l.reason FROM leave_requests l JOIN caregivers c ON c.id=l.caregiver_id WHERE l.status='requested' ORDER BY l.from_day");
-  return { applications, onboarding, leave };
+  const facilities = await q<any>("SELECT f.id, f.name, f.locality, f.licence_no, f.plan, f.status FROM facilities f WHERE f.status='review' ORDER BY f.created_at");
+  return { applications, onboarding, leave, facilities };
 }

@@ -24,6 +24,9 @@ export interface Gateway {
   verifyBank(accountNumber: string, ifsc: string, holder: string): Promise<{ ref: string; nameMatch: boolean }>;
   /** Send a payout to a verified bank account reference. */
   payout(bankRef: string, amountPaise: number, reference: string): Promise<{ ref: string; status: "paid" | "processing" }>;
+  /** Monthly charge for a facility listing plan. Returns the subscription reference. */
+  subscribe(planId: string, amountPaise: number, reference: string): Promise<{ ref: string; status: "active" | "pending_customer"; checkoutUrl?: string }>;
+  chargeRenewal(subscriptionRef: string, amountPaise: number): Promise<{ ok: boolean }>;
 }
 
 class MockGateway implements Gateway {
@@ -34,6 +37,8 @@ class MockGateway implements Gateway {
   async refund() {}
   verifyWebhook() { return true; }
   async verifyBank(_a: string, _i: string, _h: string) { return { ref: "mock_fa_" + randomUUID().slice(0, 8), nameMatch: true }; }
+  async subscribe(_p: string, amountPaise: number) { if (amountPaise <= 0) throw new Error("bad amount"); return { ref: "mock_sub_" + randomUUID().slice(0, 8), status: "active" as const }; }
+  async chargeRenewal() { return { ok: true }; }
   async payout(_ref: string, amountPaise: number) { if (amountPaise <= 0) throw new Error("bad amount"); return { ref: "mock_po_" + randomUUID().slice(0, 8), status: "paid" as const }; }
 }
 
@@ -60,6 +65,12 @@ class RazorpayGateway implements Gateway {
     const fa = await this.call("/fund_accounts", { contact_id: contact.id, account_type: "bank_account", bank_account: { name: holder, ifsc, account_number: accountNumber } });
     return { ref: fa.id as string, nameMatch: true };
   }
+  async subscribe(planId: string, _amountPaise: number, reference: string) {
+    // Razorpay Subscriptions: create a plan once in the dashboard per listing plan, store its id in env, then create a subscription.
+    const sub = await this.call("/subscriptions", { plan_id: process.env[`RAZORPAY_PLAN_${planId.toUpperCase()}`], total_count: 120, notes: { reference } });
+    return { ref: sub.id as string, status: "pending_customer" as const, checkoutUrl: sub.short_url as string };
+  }
+  async chargeRenewal() { return { ok: true }; /* Razorpay charges renewals itself and reports by webhook */ }
   async payout(bankRef: string, amountPaise: number, reference: string) {
     const p = await this.call("/payouts", { account_number: process.env.RAZORPAYX_ACCOUNT, fund_account_id: bankRef, amount: amountPaise, currency: "INR", mode: "IMPS", purpose: "payout", reference_id: reference });
     return { ref: p.id as string, status: "processing" as const };

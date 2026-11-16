@@ -27,3 +27,7 @@ export const STATUS: Record<string, string> = {
   active: "Care in progress", completed: "Please rate", closed: "Completed", cancelled: "Cancelled", released: "Cancelled",
 };
 export function countdown(iso?: string) { if (!iso) return ""; const s = Math.max(0, Math.round((new Date(iso).getTime() - Date.now()) / 1000)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = String(s % 60).padStart(2, "0"); return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`; }
+
+export const READING: Record<string, [string, string]> = { bp_sys: ["BP upper", "mmHg"], bp_dia: ["BP lower", "mmHg"], pulse: ["Pulse", "bpm"], spo2: ["Oxygen", "%"], temp_c: ["Temperature", "°C"],
+  glucose: ["Blood sugar", "mg/dL"], weight_kg: ["Weight", "kg"], steps: ["Steps", "steps"], sleep_hours: ["Sleep", "hours"], pain: ["Pain", "of 10"] };
+export const SOURCE: Record<string, string> = { caregiver: "Caregiver", family: "Family", device: "Device" };

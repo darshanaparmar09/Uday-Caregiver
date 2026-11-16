@@ -12,7 +12,7 @@ export function SignIn() {
     try { const r = await api<{ devCode?: string }>("/api/auth/request", { body: { phone } }); setDev(r.devCode); setStep("code"); } catch (x: any) { setErr(x.message); } finally { setBusy(false); } }
   async function verify(e: React.FormEvent) { e.preventDefault(); setErr(""); setBusy(true);
     try { const r = await api<{ user: { role: string } }>("/api/auth/verify", { body: { phone, code, name: name || undefined, client: "web" } });
-      router.push(r.user.role === "ops" ? "/ops" : next); router.refresh(); } catch (x: any) { setErr(x.message); setBusy(false); } }
+      router.push(r.user.role === "ops" ? "/ops" : r.user.role === "facility" ? "/partner" : next); router.refresh(); } catch (x: any) { setErr(x.message); setBusy(false); } }
   return (
     <div>
       <div className="eyebrow">Customer account</div>

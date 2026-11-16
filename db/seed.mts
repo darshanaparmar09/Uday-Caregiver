@@ -42,5 +42,22 @@ for (const [name, ini, tier, types, langs, skills, area, lat, lng, exp, gender, 
   i++;
 }
 await user("+919000000099", "Uday Ops", "ops");
+
+// SAMPLE facilities so the directory has content in testing. Invented names, clearly marked sample; remove before launch.
+const FAC = [
+  ["Sample: Sunrise Assisted Living", ["assisted_living", "respite"], "Baner", 45000, 75000, 200000, false, true, "1 caregiver for 10 residents", null, ["Morning yoga", "Bhajan evenings", "Garden walks"]],
+  ["Sample: Banyan Court Nursing Home", ["nursing_home", "rehab"], "Kothrud", 60000, 110000, 0, false, false, "1 nurse for 6 residents, 24 hours", null, ["Physiotherapy", "Reading room"]],
+  ["Sample: Smriti Memory Care", ["memory_care"], "Aundh", 80000, 130000, 300000, true, false, "1 caregiver for 8 residents", "1 for 5 in the memory unit", ["Music therapy", "Reminiscence sessions", "Sensory garden"]],
+  ["Sample: Green Acres Retirement Community", ["retirement_community", "assisted_living"], "Hinjawadi", 55000, 90000, 2500000, false, true, "1 caregiver for 12 residents", null, ["Clubhouse", "Weekly outings", "Temple visits"]],
+] as const;
+for (const [name, types, loc, from, to, entry, dem, pets, ratio, mratio, acts] of FAC) {
+  const ex = await c.query("SELECT id FROM facilities WHERE name=$1", [name]);
+  if (ex.rowCount) continue;
+  await c.query(`INSERT INTO facilities (name, types, locality, description, licence_no, licence_verified, beds, staff_ratio, memory_staff_ratio, doctor_visits,
+      monthly_from_paise, monthly_to_paise, entry_fee_paise, refund_policy, extra_costs, dementia_unit, pets_allowed, diets, activities, status, plan, sample)
+    VALUES ($1,$2,$3,$4,'SAMPLE-LIC',false,60,$5,$6,'General physician visits twice a week',$7,$8,$9,'Entry fee refundable within 30 days of moving in (sample)','Medication help and physiotherapy charged extra (sample)',$10,$11,'{Vegetarian,Jain}',$12,'live','listed',true)`,
+    [name, types, loc, "Sample listing for testing the directory. Not a real facility.", ratio, mratio, from * 100, to * 100, entry * 100, dem, pets, acts]);
+}
+console.log("sample facilities: 4");
 console.log("ops: sign in with +919000000099");
 await c.end();

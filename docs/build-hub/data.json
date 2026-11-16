@@ -1,1 +1,2106 @@
-{"shots": [{"title": "Website \u00b7 desktop", "items": [{"src": "shots/w_d_d.webp", "cap": "Home", "w": 960, "h": 645}, {"src": "shots/w_d_hire_d.webp", "cap": "Hire a caregiver", "w": 960, "h": 645}, {"src": "shots/w_d_trust_d.webp", "cap": "Trust and safety", "w": 960, "h": 645}], "wide": true}, {"title": "Website \u00b7 phone", "items": [{"src": "shots/w_m.webp", "cap": "Home", "w": 390, "h": 664}, {"src": "shots/w_m_hire.webp", "cap": "Hire", "w": 390, "h": 664}, {"src": "shots/w_m_trust.webp", "cap": "Trust", "w": 390, "h": 664}], "wide": false}, {"title": "Family web app", "items": [{"src": "shots/w_m_app.webp", "cap": "Dashboard", "w": 390, "h": 664}, {"src": "shots/w_m_onb.webp", "cap": "Onboarding", "w": 390, "h": 664}, {"src": "shots/w_m_health.webp", "cap": "Health details (optional)", "w": 390, "h": 664}, {"src": "shots/w_m_checkout.webp", "cap": "Checkout", "w": 390, "h": 664}, {"src": "shots/w_m_booking.webp", "cap": "Booking, waiting", "w": 390, "h": 664}], "wide": false}, {"title": "Uday app \u00b7 senior mode", "items": [{"src": "shots/g7_family_welcome.webp", "w": 390, "h": 664, "cap": "Who is using this phone"}, {"src": "shots/a_2sun.webp", "cap": "Sunrise check in", "w": 390, "h": 664}, {"src": "shots/a_3ask.webp", "cap": "How are you today", "w": 390, "h": 664}, {"src": "shots/a_4thanks.webp", "cap": "Checked in", "w": 390, "h": 664}], "wide": false}, {"title": "Uday app \u00b7 family mode", "items": [{"src": "shots/a_7family.webp", "cap": "Home", "w": 390, "h": 664}, {"src": "shots/a_8code.webp", "cap": "Start code", "w": 390, "h": 664}], "wide": false}, {"title": "Uday Caregiver app (separate app)", "items": [{"src": "shots/g1_welcome.webp", "w": 390, "h": 664, "cap": "Welcome"}, {"src": "shots/g2_job.webp", "w": 390, "h": 664, "cap": "Shift in progress"}, {"src": "shots/g4_ticked.webp", "w": 390, "h": 664, "cap": "Care checklist"}, {"src": "shots/g5_health.webp", "w": 390, "h": 664, "cap": "Vitals and pain"}, {"src": "shots/g6_academy.webp", "w": 390, "h": 664, "cap": "Academy"}, {"src": "shots/c4_days.webp", "cap": "Days", "w": 390, "h": 664}, {"src": "shots/c5_pay.webp", "cap": "Pay", "w": 390, "h": 664}, {"src": "shots/c8_me.webp", "cap": "Me, ratings", "w": 390, "h": 664}, {"src": "shots/c1_onboarding.webp", "cap": "Onboarding steps", "w": 390, "h": 664}], "wide": false}], "status": [{"sheet": "Website", "title": "Public website (marketing pages)", "rows": [{"id": "01", "module": "Pages", "feature": "Home", "what": "Hero, problem, how it works, tiers, NRI section, daily check in", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Your photos placed. Image rights to confirm before launch"}, {"id": "02", "module": "Pages", "feature": "How it works", "what": "Six steps, change of plans, payment, help", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "03", "module": "Pages", "feature": "Families", "what": "For families abroad: time zones, international cards, local contact, siblings", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "04", "module": "Pages", "feature": "Partners", "what": "Senior living, hospitals, banks and insurers, corporate HR", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Partner enquiry form not built; links to Contact"}, {"id": "05", "module": "Pages", "feature": "Trust and safety", "what": "Six checks, shift safety, incident promise", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Police verification shown as tick only, per your decision"}, {"id": "06", "module": "Pages", "feature": "Careers with application form", "what": "Benefits and academy application", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Applications saved to the database. Recruiter review screen pending (see Ops)"}, {"id": "07", "module": "Pages", "feature": "About", "what": "Uday means sunrise, founding story", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Founder bios not added"}, {"id": "08", "module": "Pages", "feature": "FAQ", "what": "Eight questions on cost, charging, decline, cancel, health data, NRI payment", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Prices quoted are samples until survey"}, {"id": "09", "module": "Pages", "feature": "Contact", "what": "Routes for families, caregivers, partners", "status": "Partial", "phase": "Year 1, before launch", "owner": "Darshana", "notes": "Phone and email to publish at launch"}, {"id": "10", "module": "Pages", "feature": "Privacy and terms", "what": "Legal page", "status": "Pending", "phase": "Year 1, before launch", "owner": "Counsel", "notes": "Placeholder with commitments only. Final text from counsel"}, {"id": "11", "module": "Structure", "feature": "Navigation and footer", "what": "Sticky header, phone menu, footer links, skip to content", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "12", "module": "Structure", "feature": "Mobile first layout", "what": "Every page designed at phone width first", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Tested at iPhone width, no sideways scrolling"}, {"id": "13", "module": "Structure", "feature": "Design system", "what": "Indigo and orange accents, Plus Jakarta Sans and Inter", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Fonts load from Google Fonts"}, {"id": "14", "module": "Structure", "feature": "Accessibility basics", "what": "Focus outlines, reduced motion, labelled controls", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Formal accessibility audit pending"}, {"id": "15", "module": "Structure", "feature": "Security headers", "what": "HTTPS only, no framing, no content sniffing", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "16", "module": "Structure", "feature": "Search engine setup", "what": "Page titles and descriptions", "status": "Partial", "phase": "Year 1, before launch", "owner": "Agency", "notes": "Sitemap and robots file pending"}, {"id": "17", "module": "Structure", "feature": "Analytics and cookie consent", "what": "Visitor analytics with consent banner", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": "Choose a tool that keeps data in India or anonymised"}, {"id": "18", "module": "Structure", "feature": "Hindi and Marathi versions", "what": "Translated pages", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Translations needed from Uday"}, {"id": "19", "module": "Launch", "feature": "Domain, hosting, TLS", "what": "Site live on Uday's domain", "status": "Pending", "phase": "Year 1, before launch", "owner": "Darshana, Agency", "notes": "Domain not yet bought"}]}, {"sheet": "Family Web App", "title": "Family web app (signed in area of the website)", "rows": [{"id": "01", "module": "Account", "feature": "Sign in or register by mobile code", "what": "Indian and international numbers, 6 digit code, attempt and resend limits", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Works in test mode. Needs an SMS provider to send real codes"}, {"id": "02", "module": "Account", "feature": "Sessions and sign out", "what": "Secure cookie, 30 day session, revocable", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "03", "module": "Onboarding", "feature": "About you", "what": "Name, email, country, city, time zone, language", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "04", "module": "Onboarding", "feature": "Senior profile", "what": "Name, date of birth, languages, own phone, care needs, diet, caregiver preference", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Date of birth stored encrypted"}, {"id": "05", "module": "Onboarding", "feature": "Home address and access notes", "what": "Full address, locality, hospital, getting in notes", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Encrypted. Map pin and geocoding pending, needed for the arrival check"}, {"id": "06", "module": "Onboarding", "feature": "Emergency contacts", "what": "Minimum two, local contact flag", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Rule of one Pune contact within 60 minutes is an assumption"}, {"id": "07", "module": "Onboarding", "feature": "Consent", "what": "What caregivers may see, own or on behalf consent, terms acceptance", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Consent wording to be approved by counsel"}, {"id": "08", "module": "Health (optional)", "feature": "Health details", "what": "Allergies with severity, No known allergies and Prefer not to say, medicines, conditions, doctor", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Optional per your decision. Encrypted with a separate key, every view logged"}, {"id": "09", "module": "Health (optional)", "feature": "Prescription and report upload", "what": "Photo or PDF upload", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Needs encrypted file storage"}, {"id": "10", "module": "Identity (optional)", "feature": "Customer Aadhaar check", "what": "Voluntary check through KYC partner", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Optional per your decision. Needs KYC partner"}, {"id": "11", "module": "Family", "feature": "Several seniors per account", "what": "Both parents under one login", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "12", "module": "Family", "feature": "Invite family members with roles", "what": "Owner, care manager, payer, viewer, local contact", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Roles exist and are enforced. Invite screens not built"}, {"id": "13", "module": "Dashboard", "feature": "Parents and check in status", "what": "Today's check in, help alerts, I spoke to them today", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "14", "module": "Dashboard", "feature": "Bookings list", "what": "Active and past, status labels", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "15", "module": "Hire", "feature": "Caregiver list and filters", "what": "Day, night, live in; one day, week, month, quarter; tier", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Shows sample caregivers until real ones are onboarded"}, {"id": "16", "module": "Hire", "feature": "Verified ticks", "what": "Police verified and ID verified", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Tick shows result only, no report stored"}, {"id": "17", "module": "Hire", "feature": "Caregiver profile page", "what": "Full profile with reviews and calendar", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "18", "module": "Checkout", "feature": "Itemised price", "what": "Care fee, platform fee, GST, total", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "8% fee and 18% GST are assumptions for the CA to confirm"}, {"id": "19", "module": "Checkout", "feature": "Payment hold", "what": "Hold on request, charge on acceptance", "status": "Partial", "phase": "Year 1, before launch", "owner": "Agency", "notes": "Works with test payments. Real gateway to connect after quotes"}, {"id": "20", "module": "Booking", "feature": "Offer countdown", "what": "Time left for caregiver to answer", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "30 minutes same day, 4 hours later starts (assumption)"}, {"id": "21", "module": "Booking", "feature": "Substitute approval", "what": "Approve or refuse the next same tier caregiver", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "22", "module": "Booking", "feature": "Progress tracker and codes", "what": "Requested to Done, start and end codes", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "23", "module": "Booking", "feature": "Shift log view", "what": "Care tasks done, vitals, mood, notes; out of range readings highlighted", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "24", "module": "Booking", "feature": "Cancel with fee preview", "what": "Free over 4 hours before, then 20% of one day", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "25", "module": "Booking", "feature": "Reschedule", "what": "Move start date before care begins", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "26", "module": "Booking", "feature": "Rating", "what": "Stars and tags; 3 or below opens a help request", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "27", "module": "Booking", "feature": "Invoice", "what": "Fee breakdown on screen", "status": "Partial", "phase": "Year 1, before launch", "owner": "Agency", "notes": "GST invoice PDF pending CA and GSTIN"}, {"id": "28", "module": "Booking", "feature": "Help requests", "what": "Categories, urgent routing, response time shown", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Ops screen to resolve requests pending"}, {"id": "29", "module": "Booking", "feature": "Live location map", "what": "Caregiver travel on a map", "status": "Pending", "phase": "Year 2", "owner": "Agency", "notes": "Optional for pilot"}, {"id": "30", "module": "Booking", "feature": "Masked calling and chat", "what": "Talk without sharing numbers", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Needs a calling provider"}, {"id": "31", "module": "Billing", "feature": "Membership and coupons", "what": "Backup guarantee plan, codes", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "32", "module": "Billing", "feature": "Recurring billing", "what": "Weekly or monthly auto debit for long plans", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "UPI AutoPay or card mandate through gateway"}]}, {"sheet": "App Senior", "title": "Uday app (family and senior), senior mode", "rows": [{"id": "01", "module": "Start", "feature": "Who is using this phone", "what": "Two large choices: senior or family; caregivers pointed to their own app", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "02", "module": "Start", "feature": "Sign in and link to family profile", "what": "Senior enters the number the family added", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Works in test mode. Needs SMS provider"}, {"id": "03", "module": "Check in", "feature": "Pulsing sunrise", "what": "Whole screen sunrise, tap to begin", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Signature interaction, per your specification"}, {"id": "04", "module": "Check in", "feature": "I am well or I need help", "what": "Two large buttons, teal and coral", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "05", "module": "Check in", "feature": "Help screen", "what": "Help is coming, Call 112 button", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "06", "module": "Check in", "feature": "Already checked in today", "what": "Calm sunrise with tick, help still available", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "07", "module": "Alerts", "feature": "Missed check in alert to family", "what": "Alert if no check in by the expected time", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Logic built (alert after 11 AM, assumption). Needs WhatsApp or push delivery"}, {"id": "08", "module": "Alerts", "feature": "Morning reminder to senior", "what": "Notification to check in", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Needs push notifications"}, {"id": "09", "module": "Access", "feature": "Large type and targets", "what": "Hind font, 22px minimum, 72px buttons, no grey that reads as disabled", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "10", "module": "Access", "feature": "Hindi and Marathi", "what": "Translated app", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Translations needed"}, {"id": "11", "module": "Access", "feature": "Check in by phone call", "what": "For seniors without a smartphone", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Needs a calling or voice provider"}]}, {"sheet": "App Family", "title": "Uday app (family and senior), family mode", "rows": [{"id": "01", "module": "Account", "feature": "Sign in", "what": "Mobile code", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Needs SMS provider"}, {"id": "02", "module": "Home", "feature": "Parents check in status", "what": "Teal, amber or coral card per parent", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "03", "module": "Home", "feature": "I spoke to them today", "what": "Check in on the parent's behalf", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "04", "module": "Bookings", "feature": "Bookings list with countdown", "what": "Live status", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "05", "module": "Bookings", "feature": "Booking detail with large codes", "what": "Start and end codes in large type", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "06", "module": "Bookings", "feature": "Approve substitute", "what": "One tap approve or refuse", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "07", "module": "Bookings", "feature": "Cancel with fee preview", "what": "Same rule as website", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "08", "module": "Bookings", "feature": "Rate the care", "what": "Five large stars", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Tags only on website for now"}, {"id": "09", "module": "Bookings", "feature": "Shift logs", "what": "Care tasks done, vitals, mood, notes; out of range readings highlighted", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "10", "module": "Bookings", "feature": "Book care in the app", "what": "Native hire and checkout", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Currently opens the website hire page"}, {"id": "11", "module": "Profile", "feature": "Onboarding and health details in the app", "what": "Native forms", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Currently done on the website"}, {"id": "12", "module": "Help", "feature": "Help requests from the app", "what": "Same as website", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "13", "module": "Alerts", "feature": "Push notifications", "what": "Accepted, arrived, log, help, missed check in", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Needs push service setup"}]}, {"sheet": "App Caregiver", "title": "Uday Caregiver app (separate app, Android first)", "rows": [{"id": "01", "module": "App", "feature": "Separate caregiver app", "what": "Own store listing (Uday Caregiver, in.uday.caregiver); families never see caregiver screens", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Split from the family app on 16 Nov at your request. Shared design code kept in one place"}, {"id": "02", "module": "App", "feature": "Welcome screen", "what": "Photo, what Uday offers caregivers, sign in, how to apply", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Uses your caregiver photo"}, {"id": "03", "module": "Shift", "feature": "Daily care checklist", "what": "Morning routine, health monitoring, mobility and support, environment and charting; each task time stamped", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "From the Uday Daily Resident Care Checklist"}, {"id": "04", "module": "Shift", "feature": "Vital signs", "what": "BP, pulse and temperature for Tier 3 nurses; pain, skin and appetite for all", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Lower tiers cannot enter vitals"}, {"id": "05", "module": "Shift", "feature": "Out of range alerts", "what": "Readings outside the usual range alert the family and Uday at once", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Limits are assumptions for the clinical advisor: BP 90 to 160 over 50 to 100, pulse 50 to 110, temperature 35.5 to 37.9, pain 7 or more"}, {"id": "06", "module": "Account", "feature": "Sign in, registered caregivers only", "what": "Refuses numbers not registered by Uday", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Needs SMS provider for real codes"}, {"id": "07", "module": "Jobs", "feature": "Online and offline switch", "what": "Receive requests only when online", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "08", "module": "Jobs", "feature": "New requests with countdown", "what": "Care type, plan, start, locality, earnings", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "09", "module": "Jobs", "feature": "Accept or decline with reason", "what": "Four reasons, triggers same tier substitute", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "10", "module": "Jobs", "feature": "Address and care profile unlock", "what": "Full address after accepting, access notes only when travelling", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "11", "module": "Jobs", "feature": "Allergy and medicine flags", "what": "Shown at top of the job, only what the family shared", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Shows Health details not shared when family skipped them"}, {"id": "12", "module": "Shift", "feature": "Start travel and arrival check", "what": "Phone location, arrival allowed within 150 metres", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "150 metres is an assumption. Address map pin pending on the family side"}, {"id": "13", "module": "Shift", "feature": "Start and end codes", "what": "Codes from the family", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "14", "module": "Shift", "feature": "Shift log", "what": "Meal, medicines, mood, note; required before ending", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "15", "module": "Shift", "feature": "Multi day plans", "what": "Shift steps repeat each day, paid per shift", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "16", "module": "Shift", "feature": "I cannot make it", "what": "Cancels and starts a substitute offer", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Penalty rules pending labour counsel"}, {"id": "17", "module": "Safety", "feature": "SOS", "what": "Sends location to the safety team, Call 112", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Safety desk process and staffing needed from Uday"}, {"id": "18", "module": "Money", "feature": "Earnings summary", "what": "Completed shifts and amount", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "19", "module": "Money", "feature": "Weekly payouts to bank", "what": "Automatic Monday payout of completed shifts, payout history", "status": "Completed", "phase": "Year 1, before launch", "owner": "Claude", "notes": "Built and tested with the test gateway. Connect RazorpayX (or the chosen gateway) payouts to move real money. Payouts held 48 hours after a bank change"}, {"id": "20", "module": "Money", "feature": "Bank account verification", "what": "Account checked by a small test deposit; only last four digits kept", "status": "Completed", "phase": "Year 1, before launch", "owner": "Claude", "notes": "Real check needs the gateway account"}, {"id": "21", "module": "Onboarding", "feature": "15 stage onboarding in the app", "what": "Step list with status; caregiver completes profile, identity, certificates, fitness, contract, bank", "status": "Completed", "phase": "Year 1, before launch", "owner": "Claude", "notes": "Uday clears screening, references, police (result only), certificate check, academy assessment, kit and shadow shift from the ops screen. Activates automatically when all 14 steps are clear"}, {"id": "22", "module": "Onboarding", "feature": "Identity check", "what": "Aadhaar and PAN through KYC partner; only result and last four digits kept", "status": "Completed", "phase": "Year 1, before launch", "owner": "Claude", "notes": "Works in test mode. Connect the KYC partner for live checks"}, {"id": "23", "module": "Onboarding", "feature": "Document upload", "what": "Certificates, nursing registration, fitness, vaccination; encrypted per file", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Production needs the S3 storage driver (see Backend)"}, {"id": "24", "module": "Onboarding", "feature": "Caregiver agreement", "what": "Read and sign in the app", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Draft terms; final text from labour counsel"}, {"id": "25", "module": "Schedule", "feature": "Availability calendar and leave", "what": "Next 21 days, mark days off, request leave, see booked days", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Days off and approved leave block new bookings and substitute offers"}, {"id": "26", "module": "Academy", "feature": "Training modules and tier progress", "what": "Lessons, quizzes, progress toward next tier", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Six starter modules. Clinical advisor to review content. Passing Tier 1 sends you to the practical assessment"}, {"id": "27", "module": "Alerts", "feature": "Push alert for new requests", "what": "Wakes the phone with an urgent alert when a request arrives; tap opens Jobs", "status": "Completed", "phase": "Year 1, before launch", "owner": "Claude", "notes": "Built on Expo push. Sends to real phones once the app is built with an EAS project id and PUSH_PROVIDER is set"}, {"id": "28", "module": "Access", "feature": "Low data and offline mode", "what": "Saved jobs shown without signal; shift logs queue and send automatically", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Codes and accepting a job need signal by design"}, {"id": "29", "module": "Feedback", "feature": "Ratings view and coaching", "what": "Rating, what families praise, coaching tips; alert when recent average is below 4.3", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "30", "module": "Shell", "feature": "Five tab layout", "what": "Jobs, Days, Pay, Learn, Me; 72px tabs with 22px labels", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}]}, {"sheet": "Backend", "title": "Backend, database and security", "rows": [{"id": "01", "module": "Data", "feature": "Database and migrations", "what": "PostgreSQL schema, 27 tables, migration runner", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "02", "module": "Data", "feature": "Seed data", "what": "Seven sample caregivers, ops user", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Replace with real caregivers before launch"}, {"id": "03", "module": "Engine", "feature": "Booking rules engine", "what": "Fees in paise, state machine, cancellation, substitute matching", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "10 automated tests pass"}, {"id": "04", "module": "Security", "feature": "Mobile code sign in", "what": "Rate limits, attempt limits, codes stored hashed", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "05", "module": "Security", "feature": "Role permissions", "what": "Family, senior, caregiver, ops; family roles enforced", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Tested: another family cannot see a booking"}, {"id": "06", "module": "Security", "feature": "Field encryption", "what": "Separate keys for personal and health data", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Keys must live in a key vault in production"}, {"id": "07", "module": "Security", "feature": "Never stored", "what": "Card numbers, UPI PIN, full Aadhaar, police reports", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "By design: no columns exist for them"}, {"id": "08", "module": "Security", "feature": "Audit log", "what": "Every health view and edit recorded; cannot be altered", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "09", "module": "Security", "feature": "Test mode lock", "what": "Test codes and test payments refused in production", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "10", "module": "Money", "feature": "Double entry ledger", "what": "Every rupee recorded twice; books balance", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Verified balanced in test run"}, {"id": "11", "module": "Money", "feature": "Payment gateway adapter", "what": "Hold, capture, release, refund", "status": "Partial", "phase": "Year 1, before launch", "owner": "Agency", "notes": "Test gateway works. Razorpay skeleton written; finish after gateway choice"}, {"id": "12", "module": "Money", "feature": "Payment webhooks", "what": "Gateway confirms payments to Uday", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": ""}, {"id": "13", "module": "Jobs", "feature": "Scheduler tasks", "what": "Expire unanswered offers, missed check in alerts", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Hosting must call it every minute"}, {"id": "14", "module": "Alerts", "feature": "Notifications log", "what": "Every message recorded", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Delivery providers pending"}, {"id": "15", "module": "Quality", "feature": "End to end tests", "what": "Booking lifecycle, caregiver onboarding to payout, care checklist and vitals, access control", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "18 tests pass, plus 12 engine tests"}, {"id": "16", "module": "Quality", "feature": "Automatic test pipeline", "what": "Runs tests on every change", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Written; runs once code is on GitHub"}, {"id": "17", "module": "Deploy", "feature": "Docker and deployment guide", "what": "Container, India hosting guide, go live checklist", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "18", "module": "Data", "feature": "Document storage", "what": "Each file encrypted with its own key", "status": "Partial", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Built with a development driver. Add the S3 driver for an Indian region bucket"}, {"id": "19", "module": "Data", "feature": "Key rotation and data deletion", "what": "Rotate keys, delete health data on closure", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": "Retention periods from counsel"}, {"id": "20", "module": "Ops", "feature": "Backups and monitoring", "what": "Tested backups, alerts, uptime", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": ""}, {"id": "21", "module": "Quality", "feature": "Penetration test", "what": "Independent security test", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": ""}]}, {"sheet": "Ops and Finance", "title": "Operations console and finance back office (staff only)", "rows": [{"id": "01", "module": "Ops", "feature": "Live board", "what": "Bookings by status, open help requests, SOS, caregiver checks", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Basic version"}, {"id": "02", "module": "Ops", "feature": "Dispatch overrides", "what": "Manual offers, reassign, override", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "03", "module": "Ops", "feature": "Caregiver verification queue", "what": "Clear onboarding steps per caregiver", "status": "Completed", "phase": "Year 1, before launch", "owner": "Claude", "notes": "Basic version. Police: result and reference only"}, {"id": "04", "module": "Ops", "feature": "Applications review", "what": "Move a Careers application into onboarding at a tier", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": "Screening call notes screen pending"}, {"id": "05", "module": "Ops", "feature": "Leave approvals", "what": "Approve or decline caregiver leave", "status": "Completed", "phase": "Year 1 pilot", "owner": "Claude", "notes": ""}, {"id": "06", "module": "Ops", "feature": "Help request resolution", "what": "Assign, resolve, refunds within limits", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": ""}, {"id": "07", "module": "Ops", "feature": "Incident management", "what": "Safety cases, suspension, written outcome", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": ""}, {"id": "08", "module": "Ops", "feature": "Pricing and policy settings", "what": "Change rates, fees, windows without code", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": "Today set in code"}, {"id": "09", "module": "Ops", "feature": "Reports", "what": "Pilot gates, fill rate, on time arrival", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "10", "module": "Finance", "feature": "Weekly payout run", "what": "Pay caregivers from the ledger, by button or Monday scheduler", "status": "Completed", "phase": "Year 1, before launch", "owner": "Claude", "notes": "Test gateway today"}, {"id": "11", "module": "Finance", "feature": "GST invoices", "what": "Numbered PDF invoices", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": "CA to confirm tax treatment"}, {"id": "12", "module": "Finance", "feature": "Reconciliation", "what": "Match gateway reports to ledger daily", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "13", "module": "Partners", "feature": "Partner portals", "what": "Senior living, hospitals, banks, HR", "status": "Pending", "phase": "Year 1 Q3", "owner": "Agency", "notes": "Previewed in Phase 1 console only"}, {"id": "14", "module": "Later", "feature": "Health vault", "what": "Records with consent trail, NRI concierge", "status": "Pending", "phase": "Year 2", "owner": "Agency", "notes": "Previewed in Phase 2 console only"}, {"id": "15", "module": "Later", "feature": "US payments", "what": "Stripe US, Venmo", "status": "Pending", "phase": "Year 2", "owner": "Agency", "notes": "After US entity"}, {"id": "16", "module": "Later", "feature": "ABDM and multi city", "what": "Health record exchange, five cities", "status": "Pending", "phase": "Year 3", "owner": "Agency", "notes": "Previewed in Phase 3 console only"}]}, {"sheet": "Integrations", "title": "Third party services to connect", "rows": [{"id": "01", "module": "Payments", "feature": "Payment gateway (India)", "what": "UPI, cards incl. international, hold and capture, split payouts", "status": "Pending", "phase": "Year 1, before launch", "owner": "Darshana, Agency", "notes": "Choose after quotes"}, {"id": "02", "module": "Messaging", "feature": "SMS for sign in codes", "what": "Code delivery", "status": "Pending", "phase": "Year 1, before launch", "owner": "Agency", "notes": "Provider to choose"}, {"id": "03", "module": "Messaging", "feature": "WhatsApp Business API", "what": "Alerts and check in backup", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "04", "module": "Messaging", "feature": "Push notifications", "what": "App alerts", "status": "Partial", "phase": "Year 1, before launch", "owner": "Agency", "notes": "Sender and phone registration built. Needs EAS project and access token"}, {"id": "05", "module": "Messaging", "feature": "Masked calling", "what": "Calls without real numbers", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "06", "module": "Messaging", "feature": "Email", "what": "Invoices and receipts", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "07", "module": "Verification", "feature": "KYC partner", "what": "Aadhaar and PAN checks", "status": "Partial", "phase": "Year 1, before launch", "owner": "Darshana, Agency", "notes": "Adapter built with test mode. Choose partner and connect"}, {"id": "08", "module": "Verification", "feature": "Police verification provider", "what": "Results and reference only", "status": "Pending", "phase": "Year 1, before launch", "owner": "Darshana", "notes": ""}, {"id": "09", "module": "Location", "feature": "Maps and geocoding", "what": "Address pin for arrival check", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "10", "module": "Documents", "feature": "Electronic signature", "what": "Caregiver contracts", "status": "Pending", "phase": "Year 1 pilot", "owner": "Agency", "notes": ""}, {"id": "11", "module": "Infrastructure", "feature": "Cloud hosting in India", "what": "Server, database, key vault, file storage", "status": "Pending", "phase": "Year 1, before launch", "owner": "Darshana, Agency", "notes": ""}, {"id": "12", "module": "Distribution", "feature": "Apple and Google developer accounts", "what": "Publish the app", "status": "Pending", "phase": "Year 1, before launch", "owner": "Darshana", "notes": "Must be in Uday's name"}]}]}
+{
+ "shots": [
+  {
+   "title": "Care facilities · website",
+   "wide": true,
+   "items": [
+    {
+     "src": "shots/f1_dir_d.webp",
+     "w": 960,
+     "h": 645,
+     "cap": "Directory with filters, desktop"
+    }
+   ]
+  },
+  {
+   "title": "Care facilities · phone",
+   "wide": false,
+   "items": [
+    {
+     "src": "shots/f2_dir.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Directory"
+    },
+    {
+     "src": "shots/f3_profile.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Facility profile"
+    },
+    {
+     "src": "shots/f4_checklist.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Visit checklist"
+    },
+    {
+     "src": "shots/f5_partner.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "List your facility"
+    },
+    {
+     "src": "shots/f6_portal.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Facility portal"
+    },
+    {
+     "src": "shots/f7_plan.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Monthly plan"
+    }
+   ]
+  },
+  {
+   "title": "Hiring: care need, home commitments, readings",
+   "wide": false,
+   "items": [
+    {
+     "src": "shots/h1_needs.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Step 1: care need"
+    },
+    {
+     "src": "shots/h2_list.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Good match first"
+    },
+    {
+     "src": "shots/h3_commit.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Home commitments, live in"
+    },
+    {
+     "src": "shots/r1_readings.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Readings by source"
+    },
+    {
+     "src": "shots/r2_devices.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Wearables"
+    }
+   ]
+  },
+  {
+   "title": "Apps: readings and job card",
+   "wide": false,
+   "items": [
+    {
+     "src": "shots/a10_readings.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Family app: readings"
+    },
+    {
+     "src": "shots/a11_devices.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Family app: devices"
+    },
+    {
+     "src": "shots/g8_offer.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Caregiver: care need on offer"
+    },
+    {
+     "src": "shots/g9_commit.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Caregiver: home commitments"
+    }
+   ]
+  },
+  {
+   "title": "Website · desktop",
+   "items": [
+    {
+     "src": "shots/w_d_d.webp",
+     "cap": "Home",
+     "w": 960,
+     "h": 645
+    },
+    {
+     "src": "shots/w_d_hire_d.webp",
+     "cap": "Hire a caregiver",
+     "w": 960,
+     "h": 645
+    },
+    {
+     "src": "shots/w_d_trust_d.webp",
+     "cap": "Trust and safety",
+     "w": 960,
+     "h": 645
+    }
+   ],
+   "wide": true
+  },
+  {
+   "title": "Website · phone",
+   "items": [
+    {
+     "src": "shots/w_m.webp",
+     "cap": "Home",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/w_m_hire.webp",
+     "cap": "Hire",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/w_m_trust.webp",
+     "cap": "Trust",
+     "w": 390,
+     "h": 664
+    }
+   ],
+   "wide": false
+  },
+  {
+   "title": "Family web app",
+   "items": [
+    {
+     "src": "shots/w_m_app.webp",
+     "cap": "Dashboard",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/w_m_onb.webp",
+     "cap": "Onboarding",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/w_m_health.webp",
+     "cap": "Health details (optional)",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/w_m_checkout.webp",
+     "cap": "Checkout",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/w_m_booking.webp",
+     "cap": "Booking, waiting",
+     "w": 390,
+     "h": 664
+    }
+   ],
+   "wide": false
+  },
+  {
+   "title": "Uday app · senior mode",
+   "items": [
+    {
+     "src": "shots/g7_family_welcome.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Who is using this phone"
+    },
+    {
+     "src": "shots/a_2sun.webp",
+     "cap": "Sunrise check in",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/a_3ask.webp",
+     "cap": "How are you today",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/a_4thanks.webp",
+     "cap": "Checked in",
+     "w": 390,
+     "h": 664
+    }
+   ],
+   "wide": false
+  },
+  {
+   "title": "Uday app · family mode",
+   "items": [
+    {
+     "src": "shots/a_7family.webp",
+     "cap": "Home",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/a_8code.webp",
+     "cap": "Start code",
+     "w": 390,
+     "h": 664
+    }
+   ],
+   "wide": false
+  },
+  {
+   "title": "Uday Caregiver app (separate app)",
+   "items": [
+    {
+     "src": "shots/g1_welcome.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Welcome"
+    },
+    {
+     "src": "shots/g2_job.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Shift in progress"
+    },
+    {
+     "src": "shots/g4_ticked.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Care checklist"
+    },
+    {
+     "src": "shots/g5_health.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Vitals and pain"
+    },
+    {
+     "src": "shots/g6_academy.webp",
+     "w": 390,
+     "h": 664,
+     "cap": "Academy"
+    },
+    {
+     "src": "shots/c4_days.webp",
+     "cap": "Days",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/c5_pay.webp",
+     "cap": "Pay",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/c8_me.webp",
+     "cap": "Me, ratings",
+     "w": 390,
+     "h": 664
+    },
+    {
+     "src": "shots/c1_onboarding.webp",
+     "cap": "Onboarding steps",
+     "w": 390,
+     "h": 664
+    }
+   ],
+   "wide": false
+  }
+ ],
+ "status": [
+  {
+   "sheet": "Website",
+   "title": "Public website (marketing pages)",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Pages",
+     "feature": "Home",
+     "what": "Hero, problem, how it works, tiers, NRI section, daily check in",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Your photos placed. Image rights to confirm before launch"
+    },
+    {
+     "id": "02",
+     "module": "Pages",
+     "feature": "How it works",
+     "what": "Six steps, change of plans, payment, help",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "03",
+     "module": "Pages",
+     "feature": "Families",
+     "what": "For families abroad: time zones, international cards, local contact, siblings",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "04",
+     "module": "Pages",
+     "feature": "Partners",
+     "what": "Senior living, hospitals, banks and insurers, corporate HR",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Partner enquiry form not built; links to Contact"
+    },
+    {
+     "id": "05",
+     "module": "Pages",
+     "feature": "Trust and safety",
+     "what": "Six checks, shift safety, incident promise",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Police verification shown as tick only, per your decision"
+    },
+    {
+     "id": "06",
+     "module": "Pages",
+     "feature": "Careers with application form",
+     "what": "Benefits and academy application",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Applications saved to the database. Recruiter review screen pending (see Ops)"
+    },
+    {
+     "id": "07",
+     "module": "Pages",
+     "feature": "About",
+     "what": "Uday means sunrise, founding story",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Founder bios not added"
+    },
+    {
+     "id": "08",
+     "module": "Pages",
+     "feature": "FAQ",
+     "what": "Eight questions on cost, charging, decline, cancel, health data, NRI payment",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Prices quoted are samples until survey"
+    },
+    {
+     "id": "09",
+     "module": "Pages",
+     "feature": "Contact",
+     "what": "Routes for families, caregivers, partners",
+     "status": "Partial",
+     "phase": "Year 1, before launch",
+     "owner": "Darshana",
+     "notes": "Phone and email to publish at launch"
+    },
+    {
+     "id": "10",
+     "module": "Pages",
+     "feature": "Privacy and terms",
+     "what": "Legal page",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Counsel",
+     "notes": "Placeholder with commitments only. Final text from counsel"
+    },
+    {
+     "id": "11",
+     "module": "Structure",
+     "feature": "Navigation and footer",
+     "what": "Sticky header, phone menu, footer links, skip to content",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "12",
+     "module": "Structure",
+     "feature": "Mobile first layout",
+     "what": "Every page designed at phone width first",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Tested at iPhone width, no sideways scrolling"
+    },
+    {
+     "id": "13",
+     "module": "Structure",
+     "feature": "Design system",
+     "what": "Indigo and orange accents, Plus Jakarta Sans and Inter",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Fonts load from Google Fonts"
+    },
+    {
+     "id": "14",
+     "module": "Structure",
+     "feature": "Accessibility basics",
+     "what": "Focus outlines, reduced motion, labelled controls",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Formal accessibility audit pending"
+    },
+    {
+     "id": "15",
+     "module": "Structure",
+     "feature": "Security headers",
+     "what": "HTTPS only, no framing, no content sniffing",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "16",
+     "module": "Structure",
+     "feature": "Search engine setup",
+     "what": "Page titles and descriptions",
+     "status": "Partial",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "Sitemap and robots file pending"
+    },
+    {
+     "id": "17",
+     "module": "Structure",
+     "feature": "Analytics and cookie consent",
+     "what": "Visitor analytics with consent banner",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "Choose a tool that keeps data in India or anonymised"
+    },
+    {
+     "id": "18",
+     "module": "Structure",
+     "feature": "Hindi and Marathi versions",
+     "what": "Translated pages",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Translations needed from Uday"
+    },
+    {
+     "id": "19",
+     "module": "Launch",
+     "feature": "Domain, hosting, TLS",
+     "what": "Site live on Uday's domain",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Darshana, Agency",
+     "notes": "Domain not yet bought"
+    },
+    {
+     "id": "20",
+     "module": "Care facilities",
+     "feature": "Facilities directory",
+     "what": "Search by type, area, budget, dementia unit, pets; featured first; ratings",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "4 sample listings for testing; real facilities onboard themselves"
+    },
+    {
+     "id": "21",
+     "module": "Care facilities",
+     "feature": "Facility profile and visit",
+     "what": "Costs, ratios, refunds; request a visit; visit checklist from your guide, answers saved privately",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "22",
+     "module": "Care facilities",
+     "feature": "Choosing guide",
+     "what": "Levels of care, setting, budget, visit checklist",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Paraphrased from your guide, adapted to India"
+    },
+    {
+     "id": "23",
+     "module": "Care facilities",
+     "feature": "Facility reviews",
+     "what": "Five areas averaged; only after the facility marks the visit completed; one per family",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "24",
+     "module": "Care facilities",
+     "feature": "Facility self onboarding portal",
+     "what": "Profile, licence, monthly plan, visit requests, reviews, cancel",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Plan prices ₹4,999 and ₹9,999 a month are assumptions"
+    }
+   ]
+  },
+  {
+   "sheet": "Family Web App",
+   "title": "Family web app (signed in area of the website)",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Account",
+     "feature": "Sign in or register by mobile code",
+     "what": "Indian and international numbers, 6 digit code, attempt and resend limits",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Works in test mode. Needs an SMS provider to send real codes"
+    },
+    {
+     "id": "02",
+     "module": "Account",
+     "feature": "Sessions and sign out",
+     "what": "Secure cookie, 30 day session, revocable",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "03",
+     "module": "Onboarding",
+     "feature": "About you",
+     "what": "Name, email, country, city, time zone, language",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "04",
+     "module": "Onboarding",
+     "feature": "Senior profile",
+     "what": "Name, date of birth, languages, own phone, care needs, diet, caregiver preference",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Date of birth stored encrypted"
+    },
+    {
+     "id": "05",
+     "module": "Onboarding",
+     "feature": "Home address and access notes",
+     "what": "Full address, locality, hospital, getting in notes",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Encrypted. Map pin and geocoding pending, needed for the arrival check"
+    },
+    {
+     "id": "06",
+     "module": "Onboarding",
+     "feature": "Emergency contacts",
+     "what": "Minimum two, local contact flag",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Rule of one Pune contact within 60 minutes is an assumption"
+    },
+    {
+     "id": "07",
+     "module": "Onboarding",
+     "feature": "Consent",
+     "what": "What caregivers may see, own or on behalf consent, terms acceptance",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Consent wording to be approved by counsel"
+    },
+    {
+     "id": "08",
+     "module": "Health (optional)",
+     "feature": "Health details",
+     "what": "Allergies with severity, No known allergies and Prefer not to say, medicines, conditions, doctor",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Optional per your decision. Encrypted with a separate key, every view logged"
+    },
+    {
+     "id": "09",
+     "module": "Health (optional)",
+     "feature": "Prescription and report upload",
+     "what": "Photo or PDF upload",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Needs encrypted file storage"
+    },
+    {
+     "id": "10",
+     "module": "Identity (optional)",
+     "feature": "Customer Aadhaar check",
+     "what": "Voluntary check through KYC partner",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Optional per your decision. Needs KYC partner"
+    },
+    {
+     "id": "11",
+     "module": "Family",
+     "feature": "Several seniors per account",
+     "what": "Both parents under one login",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "12",
+     "module": "Family",
+     "feature": "Invite family members with roles",
+     "what": "Owner, care manager, payer, viewer, local contact",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Roles exist and are enforced. Invite screens not built"
+    },
+    {
+     "id": "13",
+     "module": "Dashboard",
+     "feature": "Parents and check in status",
+     "what": "Today's check in, help alerts, I spoke to them today",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "14",
+     "module": "Dashboard",
+     "feature": "Bookings list",
+     "what": "Active and past, status labels",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "15",
+     "module": "Hire",
+     "feature": "Caregiver list and filters",
+     "what": "Day, night, live in; one day, week, month, quarter; tier",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Shows sample caregivers until real ones are onboarded"
+    },
+    {
+     "id": "16",
+     "module": "Hire",
+     "feature": "Verified ticks",
+     "what": "Police verified and ID verified",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Tick shows result only, no report stored"
+    },
+    {
+     "id": "17",
+     "module": "Hire",
+     "feature": "Caregiver profile page",
+     "what": "Full profile with reviews and calendar",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "18",
+     "module": "Checkout",
+     "feature": "Itemised price",
+     "what": "Care fee, platform fee, GST, total",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "8% fee and 18% GST are assumptions for the CA to confirm"
+    },
+    {
+     "id": "19",
+     "module": "Checkout",
+     "feature": "Payment hold",
+     "what": "Hold on request, charge on acceptance",
+     "status": "Partial",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "Works with test payments. Real gateway to connect after quotes"
+    },
+    {
+     "id": "20",
+     "module": "Booking",
+     "feature": "Offer countdown",
+     "what": "Time left for caregiver to answer",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "30 minutes same day, 4 hours later starts (assumption)"
+    },
+    {
+     "id": "21",
+     "module": "Booking",
+     "feature": "Substitute approval",
+     "what": "Approve or refuse the next same tier caregiver",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "22",
+     "module": "Booking",
+     "feature": "Progress tracker and codes",
+     "what": "Requested to Done, start and end codes",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "23",
+     "module": "Booking",
+     "feature": "Shift log view",
+     "what": "Care tasks done, vitals, mood, notes; out of range readings highlighted",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "24",
+     "module": "Booking",
+     "feature": "Cancel with fee preview",
+     "what": "Free over 4 hours before, then 20% of one day",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "25",
+     "module": "Booking",
+     "feature": "Reschedule",
+     "what": "Move start date before care begins",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "26",
+     "module": "Booking",
+     "feature": "Rating",
+     "what": "Stars and tags; 3 or below opens a help request",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "27",
+     "module": "Booking",
+     "feature": "Invoice",
+     "what": "Fee breakdown on screen",
+     "status": "Partial",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "GST invoice PDF pending CA and GSTIN"
+    },
+    {
+     "id": "28",
+     "module": "Booking",
+     "feature": "Help requests",
+     "what": "Categories, urgent routing, response time shown",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Ops screen to resolve requests pending"
+    },
+    {
+     "id": "29",
+     "module": "Booking",
+     "feature": "Live location map",
+     "what": "Caregiver travel on a map",
+     "status": "Pending",
+     "phase": "Year 2",
+     "owner": "Agency",
+     "notes": "Optional for pilot"
+    },
+    {
+     "id": "30",
+     "module": "Booking",
+     "feature": "Masked calling and chat",
+     "what": "Talk without sharing numbers",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Needs a calling provider"
+    },
+    {
+     "id": "31",
+     "module": "Billing",
+     "feature": "Membership and coupons",
+     "what": "Backup guarantee plan, codes",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "32",
+     "module": "Billing",
+     "feature": "Recurring billing",
+     "what": "Weekly or monthly auto debit for long plans",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "UPI AutoPay or card mandate through gateway"
+    },
+    {
+     "id": "33",
+     "module": "Hire",
+     "feature": "Care need picker",
+     "what": "18 needs in 7 groups; suggests a tier; sorts caregivers by matching skills",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "34",
+     "module": "Hire",
+     "feature": "Home commitments",
+     "what": "Toilet, water, belongings, disclosures, care scope; live in adds meals, bath, sleep, breaks, weekly day off",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Wording to be checked by your lawyer"
+    },
+    {
+     "id": "35",
+     "module": "Ratings",
+     "feature": "Five area caregiver rating",
+     "what": "Punctuality, quality, kindness, hygiene, communication; overall is the average",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "36",
+     "module": "Ratings",
+     "feature": "Rate before rehire",
+     "what": "Rehiring the same caregiver asks for the pending rating before payment",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "37",
+     "module": "Health",
+     "feature": "Readings page",
+     "what": "Caregiver, family and device readings with source labels and trends; manual entry",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Alert limits to be confirmed by the clinical advisor"
+    },
+    {
+     "id": "38",
+     "module": "Health",
+     "feature": "Wearables",
+     "what": "Top 10 devices; connect and disconnect",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Phone devices need the native health module; Withings needs its API; 6 devices marked to verify"
+    }
+   ]
+  },
+  {
+   "sheet": "App Senior",
+   "title": "Uday app (family and senior), senior mode",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Start",
+     "feature": "Who is using this phone",
+     "what": "Two large choices: senior or family; caregivers pointed to their own app",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "02",
+     "module": "Start",
+     "feature": "Sign in and link to family profile",
+     "what": "Senior enters the number the family added",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Works in test mode. Needs SMS provider"
+    },
+    {
+     "id": "03",
+     "module": "Check in",
+     "feature": "Pulsing sunrise",
+     "what": "Whole screen sunrise, tap to begin",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Signature interaction, per your specification"
+    },
+    {
+     "id": "04",
+     "module": "Check in",
+     "feature": "I am well or I need help",
+     "what": "Two large buttons, teal and coral",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "05",
+     "module": "Check in",
+     "feature": "Help screen",
+     "what": "Help is coming, Call 112 button",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "06",
+     "module": "Check in",
+     "feature": "Already checked in today",
+     "what": "Calm sunrise with tick, help still available",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "07",
+     "module": "Alerts",
+     "feature": "Missed check in alert to family",
+     "what": "Alert if no check in by the expected time",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Logic built (alert after 11 AM, assumption). Needs WhatsApp or push delivery"
+    },
+    {
+     "id": "08",
+     "module": "Alerts",
+     "feature": "Morning reminder to senior",
+     "what": "Notification to check in",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Needs push notifications"
+    },
+    {
+     "id": "09",
+     "module": "Access",
+     "feature": "Large type and targets",
+     "what": "Hind font, 22px minimum, 72px buttons, no grey that reads as disabled",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "10",
+     "module": "Access",
+     "feature": "Hindi and Marathi",
+     "what": "Translated app",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Translations needed"
+    },
+    {
+     "id": "11",
+     "module": "Access",
+     "feature": "Check in by phone call",
+     "what": "For seniors without a smartphone",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Needs a calling or voice provider"
+    },
+    {
+     "id": "12",
+     "module": "Health",
+     "feature": "Health devices sync",
+     "what": "Reads Apple Health or Health Connect on the senior phone and uploads readings",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Upload and dedupe done; native module needs a development build"
+    }
+   ]
+  },
+  {
+   "sheet": "App Family",
+   "title": "Uday app (family and senior), family mode",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Account",
+     "feature": "Sign in",
+     "what": "Mobile code",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Needs SMS provider"
+    },
+    {
+     "id": "02",
+     "module": "Home",
+     "feature": "Parents check in status",
+     "what": "Teal, amber or coral card per parent",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "03",
+     "module": "Home",
+     "feature": "I spoke to them today",
+     "what": "Check in on the parent's behalf",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "04",
+     "module": "Bookings",
+     "feature": "Bookings list with countdown",
+     "what": "Live status",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "05",
+     "module": "Bookings",
+     "feature": "Booking detail with large codes",
+     "what": "Start and end codes in large type",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "06",
+     "module": "Bookings",
+     "feature": "Approve substitute",
+     "what": "One tap approve or refuse",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "07",
+     "module": "Bookings",
+     "feature": "Cancel with fee preview",
+     "what": "Same rule as website",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "08",
+     "module": "Bookings",
+     "feature": "Rate the care",
+     "what": "Five large stars",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Tags only on website for now"
+    },
+    {
+     "id": "09",
+     "module": "Bookings",
+     "feature": "Shift logs",
+     "what": "Care tasks done, vitals, mood, notes; out of range readings highlighted",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "10",
+     "module": "Bookings",
+     "feature": "Book care in the app",
+     "what": "Native hire and checkout",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Currently opens the website hire page"
+    },
+    {
+     "id": "11",
+     "module": "Profile",
+     "feature": "Onboarding and health details in the app",
+     "what": "Native forms",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Currently done on the website"
+    },
+    {
+     "id": "12",
+     "module": "Help",
+     "feature": "Help requests from the app",
+     "what": "Same as website",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "13",
+     "module": "Alerts",
+     "feature": "Push notifications",
+     "what": "Accepted, arrived, log, help, missed check in",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Needs push service setup"
+    },
+    {
+     "id": "14",
+     "module": "Health",
+     "feature": "Readings and devices",
+     "what": "Latest readings by source; connect wearables",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    }
+   ]
+  },
+  {
+   "sheet": "App Caregiver",
+   "title": "Uday Caregiver app (separate app, Android first)",
+   "rows": [
+    {
+     "id": "01",
+     "module": "App",
+     "feature": "Separate caregiver app",
+     "what": "Own store listing (Uday Caregiver, in.uday.caregiver); families never see caregiver screens",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Split from the family app on 16 Nov at your request. Shared design code kept in one place"
+    },
+    {
+     "id": "02",
+     "module": "App",
+     "feature": "Welcome screen",
+     "what": "Photo, what Uday offers caregivers, sign in, how to apply",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Uses your caregiver photo"
+    },
+    {
+     "id": "03",
+     "module": "Shift",
+     "feature": "Daily care checklist",
+     "what": "Morning routine, health monitoring, mobility and support, environment and charting; each task time stamped",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "From the Uday Daily Resident Care Checklist"
+    },
+    {
+     "id": "04",
+     "module": "Shift",
+     "feature": "Vital signs",
+     "what": "BP, pulse and temperature for Tier 3 nurses; pain, skin and appetite for all",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Lower tiers cannot enter vitals"
+    },
+    {
+     "id": "05",
+     "module": "Shift",
+     "feature": "Out of range alerts",
+     "what": "Readings outside the usual range alert the family and Uday at once",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Limits are assumptions for the clinical advisor: BP 90 to 160 over 50 to 100, pulse 50 to 110, temperature 35.5 to 37.9, pain 7 or more"
+    },
+    {
+     "id": "06",
+     "module": "Account",
+     "feature": "Sign in, registered caregivers only",
+     "what": "Refuses numbers not registered by Uday",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Needs SMS provider for real codes"
+    },
+    {
+     "id": "07",
+     "module": "Jobs",
+     "feature": "Online and offline switch",
+     "what": "Receive requests only when online",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "08",
+     "module": "Jobs",
+     "feature": "New requests with countdown",
+     "what": "Care type, plan, start, locality, earnings",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "09",
+     "module": "Jobs",
+     "feature": "Accept or decline with reason",
+     "what": "Four reasons, triggers same tier substitute",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "10",
+     "module": "Jobs",
+     "feature": "Address and care profile unlock",
+     "what": "Full address after accepting, access notes only when travelling",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "11",
+     "module": "Jobs",
+     "feature": "Allergy and medicine flags",
+     "what": "Shown at top of the job, only what the family shared",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Shows Health details not shared when family skipped them"
+    },
+    {
+     "id": "12",
+     "module": "Shift",
+     "feature": "Start travel and arrival check",
+     "what": "Phone location, arrival allowed within 150 metres",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "150 metres is an assumption. Address map pin pending on the family side"
+    },
+    {
+     "id": "13",
+     "module": "Shift",
+     "feature": "Start and end codes",
+     "what": "Codes from the family",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "14",
+     "module": "Shift",
+     "feature": "Shift log",
+     "what": "Meal, medicines, mood, note; required before ending",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "15",
+     "module": "Shift",
+     "feature": "Multi day plans",
+     "what": "Shift steps repeat each day, paid per shift",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "16",
+     "module": "Shift",
+     "feature": "I cannot make it",
+     "what": "Cancels and starts a substitute offer",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Penalty rules pending labour counsel"
+    },
+    {
+     "id": "17",
+     "module": "Safety",
+     "feature": "SOS",
+     "what": "Sends location to the safety team, Call 112",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Safety desk process and staffing needed from Uday"
+    },
+    {
+     "id": "18",
+     "module": "Money",
+     "feature": "Earnings summary",
+     "what": "Completed shifts and amount",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "19",
+     "module": "Money",
+     "feature": "Weekly payouts to bank",
+     "what": "Automatic Monday payout of completed shifts, payout history",
+     "status": "Completed",
+     "phase": "Year 1, before launch",
+     "owner": "Claude",
+     "notes": "Built and tested with the test gateway. Connect RazorpayX (or the chosen gateway) payouts to move real money. Payouts held 48 hours after a bank change"
+    },
+    {
+     "id": "20",
+     "module": "Money",
+     "feature": "Bank account verification",
+     "what": "Account checked by a small test deposit; only last four digits kept",
+     "status": "Completed",
+     "phase": "Year 1, before launch",
+     "owner": "Claude",
+     "notes": "Real check needs the gateway account"
+    },
+    {
+     "id": "21",
+     "module": "Onboarding",
+     "feature": "15 stage onboarding in the app",
+     "what": "Step list with status; caregiver completes profile, identity, certificates, fitness, contract, bank",
+     "status": "Completed",
+     "phase": "Year 1, before launch",
+     "owner": "Claude",
+     "notes": "Uday clears screening, references, police (result only), certificate check, academy assessment, kit and shadow shift from the ops screen. Activates automatically when all 14 steps are clear"
+    },
+    {
+     "id": "22",
+     "module": "Onboarding",
+     "feature": "Identity check",
+     "what": "Aadhaar and PAN through KYC partner; only result and last four digits kept",
+     "status": "Completed",
+     "phase": "Year 1, before launch",
+     "owner": "Claude",
+     "notes": "Works in test mode. Connect the KYC partner for live checks"
+    },
+    {
+     "id": "23",
+     "module": "Onboarding",
+     "feature": "Document upload",
+     "what": "Certificates, nursing registration, fitness, vaccination; encrypted per file",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Production needs the S3 storage driver (see Backend)"
+    },
+    {
+     "id": "24",
+     "module": "Onboarding",
+     "feature": "Caregiver agreement",
+     "what": "Read and sign in the app",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Draft terms; final text from labour counsel"
+    },
+    {
+     "id": "25",
+     "module": "Schedule",
+     "feature": "Availability calendar and leave",
+     "what": "Next 21 days, mark days off, request leave, see booked days",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Days off and approved leave block new bookings and substitute offers"
+    },
+    {
+     "id": "26",
+     "module": "Academy",
+     "feature": "Training modules and tier progress",
+     "what": "Lessons, quizzes, progress toward next tier",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Six starter modules. Clinical advisor to review content. Passing Tier 1 sends you to the practical assessment"
+    },
+    {
+     "id": "27",
+     "module": "Alerts",
+     "feature": "Push alert for new requests",
+     "what": "Wakes the phone with an urgent alert when a request arrives; tap opens Jobs",
+     "status": "Completed",
+     "phase": "Year 1, before launch",
+     "owner": "Claude",
+     "notes": "Built on Expo push. Sends to real phones once the app is built with an EAS project id and PUSH_PROVIDER is set"
+    },
+    {
+     "id": "28",
+     "module": "Access",
+     "feature": "Low data and offline mode",
+     "what": "Saved jobs shown without signal; shift logs queue and send automatically",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Codes and accepting a job need signal by design"
+    },
+    {
+     "id": "29",
+     "module": "Feedback",
+     "feature": "Ratings view and coaching",
+     "what": "Rating, what families praise, coaching tips; alert when recent average is below 4.3",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "30",
+     "module": "Shell",
+     "feature": "Five tab layout",
+     "what": "Jobs, Days, Pay, Learn, Me; 72px tabs with 22px labels",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "31",
+     "module": "Jobs",
+     "feature": "Care need and home commitments on job card",
+     "what": "Shows what care is needed and what the family agreed to provide",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    }
+   ]
+  },
+  {
+   "sheet": "Backend",
+   "title": "Backend, database and security",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Data",
+     "feature": "Database and migrations",
+     "what": "PostgreSQL schema, 27 tables, migration runner",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "02",
+     "module": "Data",
+     "feature": "Seed data",
+     "what": "Seven sample caregivers, ops user",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Replace with real caregivers before launch"
+    },
+    {
+     "id": "03",
+     "module": "Engine",
+     "feature": "Booking rules engine",
+     "what": "Fees in paise, state machine, cancellation, substitute matching",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "10 automated tests pass"
+    },
+    {
+     "id": "04",
+     "module": "Security",
+     "feature": "Mobile code sign in",
+     "what": "Rate limits, attempt limits, codes stored hashed",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "05",
+     "module": "Security",
+     "feature": "Role permissions",
+     "what": "Family, senior, caregiver, ops; family roles enforced",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Tested: another family cannot see a booking"
+    },
+    {
+     "id": "06",
+     "module": "Security",
+     "feature": "Field encryption",
+     "what": "Separate keys for personal and health data",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Keys must live in a key vault in production"
+    },
+    {
+     "id": "07",
+     "module": "Security",
+     "feature": "Never stored",
+     "what": "Card numbers, UPI PIN, full Aadhaar, police reports",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "By design: no columns exist for them"
+    },
+    {
+     "id": "08",
+     "module": "Security",
+     "feature": "Audit log",
+     "what": "Every health view and edit recorded; cannot be altered",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "09",
+     "module": "Security",
+     "feature": "Test mode lock",
+     "what": "Test codes and test payments refused in production",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "10",
+     "module": "Money",
+     "feature": "Double entry ledger",
+     "what": "Every rupee recorded twice; books balance",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Verified balanced in test run"
+    },
+    {
+     "id": "11",
+     "module": "Money",
+     "feature": "Payment gateway adapter",
+     "what": "Hold, capture, release, refund",
+     "status": "Partial",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "Test gateway works. Razorpay skeleton written; finish after gateway choice"
+    },
+    {
+     "id": "12",
+     "module": "Money",
+     "feature": "Payment webhooks",
+     "what": "Gateway confirms payments to Uday",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "13",
+     "module": "Jobs",
+     "feature": "Scheduler tasks",
+     "what": "Expire unanswered offers, missed check in alerts",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Hosting must call it every minute"
+    },
+    {
+     "id": "14",
+     "module": "Alerts",
+     "feature": "Notifications log",
+     "what": "Every message recorded",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Delivery providers pending"
+    },
+    {
+     "id": "15",
+     "module": "Quality",
+     "feature": "End to end tests",
+     "what": "Booking lifecycle, caregiver onboarding to payout, care checklist and vitals, access control",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "18 tests pass, plus 12 engine tests"
+    },
+    {
+     "id": "16",
+     "module": "Quality",
+     "feature": "Automatic test pipeline",
+     "what": "Runs tests on every change",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Written; runs once code is on GitHub"
+    },
+    {
+     "id": "17",
+     "module": "Deploy",
+     "feature": "Docker and deployment guide",
+     "what": "Container, India hosting guide, go live checklist",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "18",
+     "module": "Data",
+     "feature": "Document storage",
+     "what": "Each file encrypted with its own key",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Built with a development driver. Add the S3 driver for an Indian region bucket"
+    },
+    {
+     "id": "19",
+     "module": "Data",
+     "feature": "Key rotation and data deletion",
+     "what": "Rotate keys, delete health data on closure",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "Retention periods from counsel"
+    },
+    {
+     "id": "20",
+     "module": "Ops",
+     "feature": "Backups and monitoring",
+     "what": "Tested backups, alerts, uptime",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "21",
+     "module": "Quality",
+     "feature": "Penetration test",
+     "what": "Independent security test",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "22",
+     "module": "Data",
+     "feature": "Readings store",
+     "what": "One encrypted stream per senior from caregivers, family and devices; range checks; duplicate skipping",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "23",
+     "module": "Billing",
+     "feature": "Facility subscriptions",
+     "what": "Recurring monthly plan through the gateway; renewals by cron; listing hides when unpaid",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Razorpay subscription plans to be created by the agency"
+    }
+   ]
+  },
+  {
+   "sheet": "Ops and Finance",
+   "title": "Operations console and finance back office (staff only)",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Ops",
+     "feature": "Live board",
+     "what": "Bookings by status, open help requests, SOS, caregiver checks",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Basic version"
+    },
+    {
+     "id": "02",
+     "module": "Ops",
+     "feature": "Dispatch overrides",
+     "what": "Manual offers, reassign, override",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "03",
+     "module": "Ops",
+     "feature": "Caregiver verification queue",
+     "what": "Clear onboarding steps per caregiver",
+     "status": "Completed",
+     "phase": "Year 1, before launch",
+     "owner": "Claude",
+     "notes": "Basic version. Police: result and reference only"
+    },
+    {
+     "id": "04",
+     "module": "Ops",
+     "feature": "Applications review",
+     "what": "Move a Careers application into onboarding at a tier",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Screening call notes screen pending"
+    },
+    {
+     "id": "05",
+     "module": "Ops",
+     "feature": "Leave approvals",
+     "what": "Approve or decline caregiver leave",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "06",
+     "module": "Ops",
+     "feature": "Help request resolution",
+     "what": "Assign, resolve, refunds within limits",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "07",
+     "module": "Ops",
+     "feature": "Incident management",
+     "what": "Safety cases, suspension, written outcome",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "08",
+     "module": "Ops",
+     "feature": "Pricing and policy settings",
+     "what": "Change rates, fees, windows without code",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": "Today set in code"
+    },
+    {
+     "id": "09",
+     "module": "Ops",
+     "feature": "Reports",
+     "what": "Pilot gates, fill rate, on time arrival",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "10",
+     "module": "Finance",
+     "feature": "Weekly payout run",
+     "what": "Pay caregivers from the ledger, by button or Monday scheduler",
+     "status": "Completed",
+     "phase": "Year 1, before launch",
+     "owner": "Claude",
+     "notes": "Test gateway today"
+    },
+    {
+     "id": "11",
+     "module": "Finance",
+     "feature": "GST invoices",
+     "what": "Numbered PDF invoices",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "CA to confirm tax treatment"
+    },
+    {
+     "id": "12",
+     "module": "Finance",
+     "feature": "Reconciliation",
+     "what": "Match gateway reports to ledger daily",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "13",
+     "module": "Partners",
+     "feature": "Partner portals",
+     "what": "Senior living, hospitals, banks, HR",
+     "status": "Pending",
+     "phase": "Year 1 Q3",
+     "owner": "Agency",
+     "notes": "Previewed in Phase 1 console only"
+    },
+    {
+     "id": "14",
+     "module": "Later",
+     "feature": "Health vault",
+     "what": "Records with consent trail, NRI concierge",
+     "status": "Pending",
+     "phase": "Year 2",
+     "owner": "Agency",
+     "notes": "Previewed in Phase 2 console only"
+    },
+    {
+     "id": "15",
+     "module": "Later",
+     "feature": "US payments",
+     "what": "Stripe US, Venmo",
+     "status": "Pending",
+     "phase": "Year 2",
+     "owner": "Agency",
+     "notes": "After US entity"
+    },
+    {
+     "id": "16",
+     "module": "Later",
+     "feature": "ABDM and multi city",
+     "what": "Health record exchange, five cities",
+     "status": "Pending",
+     "phase": "Year 3",
+     "owner": "Agency",
+     "notes": "Previewed in Phase 3 console only"
+    },
+    {
+     "id": "17",
+     "module": "Facilities",
+     "feature": "Facility approval queue",
+     "what": "Check licence, go live or pause",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    }
+   ]
+  },
+  {
+   "sheet": "Integrations",
+   "title": "Third party services to connect",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Payments",
+     "feature": "Payment gateway (India)",
+     "what": "UPI, cards incl. international, hold and capture, split payouts",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Darshana, Agency",
+     "notes": "Choose after quotes"
+    },
+    {
+     "id": "02",
+     "module": "Messaging",
+     "feature": "SMS for sign in codes",
+     "what": "Code delivery",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "Provider to choose"
+    },
+    {
+     "id": "03",
+     "module": "Messaging",
+     "feature": "WhatsApp Business API",
+     "what": "Alerts and check in backup",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "04",
+     "module": "Messaging",
+     "feature": "Push notifications",
+     "what": "App alerts",
+     "status": "Partial",
+     "phase": "Year 1, before launch",
+     "owner": "Agency",
+     "notes": "Sender and phone registration built. Needs EAS project and access token"
+    },
+    {
+     "id": "05",
+     "module": "Messaging",
+     "feature": "Masked calling",
+     "what": "Calls without real numbers",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "06",
+     "module": "Messaging",
+     "feature": "Email",
+     "what": "Invoices and receipts",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "07",
+     "module": "Verification",
+     "feature": "KYC partner",
+     "what": "Aadhaar and PAN checks",
+     "status": "Partial",
+     "phase": "Year 1, before launch",
+     "owner": "Darshana, Agency",
+     "notes": "Adapter built with test mode. Choose partner and connect"
+    },
+    {
+     "id": "08",
+     "module": "Verification",
+     "feature": "Police verification provider",
+     "what": "Results and reference only",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Darshana",
+     "notes": ""
+    },
+    {
+     "id": "09",
+     "module": "Location",
+     "feature": "Maps and geocoding",
+     "what": "Address pin for arrival check",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "10",
+     "module": "Documents",
+     "feature": "Electronic signature",
+     "what": "Caregiver contracts",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Agency",
+     "notes": ""
+    },
+    {
+     "id": "11",
+     "module": "Infrastructure",
+     "feature": "Cloud hosting in India",
+     "what": "Server, database, key vault, file storage",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Darshana, Agency",
+     "notes": ""
+    },
+    {
+     "id": "12",
+     "module": "Distribution",
+     "feature": "Apple and Google developer accounts",
+     "what": "Publish the app",
+     "status": "Pending",
+     "phase": "Year 1, before launch",
+     "owner": "Darshana",
+     "notes": "Must be in Uday's name"
+    },
+    {
+     "id": "13",
+     "module": "Health",
+     "feature": "Apple Health and Health Connect",
+     "what": "Native modules in a development build",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "14",
+     "module": "Health",
+     "feature": "Withings cloud API",
+     "what": "Account link for BP monitor, scale and watch",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "15",
+     "module": "Payments",
+     "feature": "Razorpay subscriptions",
+     "what": "Listed and Featured plans",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    }
+   ]
+  }
+ ]
+}

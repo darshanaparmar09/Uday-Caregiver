@@ -42,7 +42,7 @@ test("full lifecycle: book, accept, travel, codes, log, end, rate", async () => 
   const list = await call(null, "/api/caregivers?type=day&tier=2");
   const sunita = list.j.find((c: any) => c.display_name === "Sunita Pawar");
   assert.ok(sunita.police_verified);
-  const b = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: sunita.id, careType: "day", days: 1, startDate: tomorrow(), startTime: "09:00", method: "UPI" });
+  const b = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: sunita.id, careType: "day", days: 1, startDate: tomorrow(), startTime: "09:00", method: "UPI", careNeed: "companionship", homeCommitments: ["toilet", "water", "belongings", "household", "infection", "cameras", "scope"] });
   assert.equal(b.status, 200, JSON.stringify(b.j)); const id = b.j.id;
   assert.equal(b.j.total_paise, 153216);
 
@@ -64,14 +64,14 @@ test("full lifecycle: book, accept, travel, codes, log, end, rate", async () => 
   assert.equal((await call(cg, `/api/bookings/${id}/action`, { action: "log", meal: true, meds: true, mood: "Cheerful", note: "Walked 10 minutes" })).status, 200);
   assert.equal((await call(cg, `/api/bookings/${id}/action`, { action: "end", code: fe.j.endCode })).status, 200);
   const done = await call(fam, `/api/bookings/${id}`); assert.equal(done.j.status, "completed"); assert.equal(done.j.logs[0].note, "Walked 10 minutes");
-  assert.equal((await call(fam, `/api/bookings/${id}/action`, { action: "rate", stars: 5, tags: ["On time"] })).status, 200);
+  assert.equal((await call(fam, `/api/bookings/${id}/action`, { action: "rate", areas: { punctuality: 5, quality: 5, kindness: 5, hygiene: 5, communication: 5 }, tags: ["On time"] })).status, 200);
   assert.equal((await call(fam, `/api/bookings/${id}`)).j.status, "closed");
 });
 
 test("decline cascades to a same tier caregiver, family approves", async () => {
   const list = (await call(null, "/api/caregivers?type=day&tier=2")).j;
   const sunita = list.find((c: any) => c.display_name === "Sunita Pawar");
-  const b = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: sunita.id, careType: "day", days: 7, startDate: tomorrow(), startTime: "09:00", method: "Card" });
+  const b = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: sunita.id, careType: "day", days: 7, startDate: tomorrow(), startTime: "09:00", method: "Card", careNeed: "companionship", homeCommitments: ["toilet", "water", "belongings", "household", "infection", "cameras", "scope"] });
   const id = b.j.id; const cg = await login("+919000000001");
   assert.equal((await call(cg, `/api/bookings/${id}/action`, { action: "decline", reason: "Not available" })).status, 200);
   const p = await call(fam, `/api/bookings/${id}`); assert.equal(p.j.status, "proposal"); assert.equal(p.j.proposal.tier, 2);

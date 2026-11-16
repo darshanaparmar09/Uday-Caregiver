@@ -48,6 +48,7 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
           <Card key={o.id} tone="amber">
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}><T weight="bold">New request</T><T size={30} weight="bold">{countdown(o.offer_expires_at)}</T></View>
             <T size={26} weight="semi">{TYPE[o.care_type]} · {PLAN[o.days]}</T>
+            {o.care_need_label ? <T weight="bold" color={C.teal}>Care needed: {o.care_need_label}{o.care_need_note ? `. ${o.care_need_note}` : ""}</T> : null}
             <T>Starts {o.start_date} at {String(o.start_time).slice(0, 5)} · {o.locality}</T>
             <T weight="bold">You earn {inr(o.rate_paise)} a shift · {inr(o.care_paise)} total</T>
             {decline === o.id ? <>{REASONS.map((r) => <Button key={r} title={r} tone="outline" busy={busy} onPress={() => act(o.id, { action: "decline", reason: r })} />)}<Button title="Back" tone="night" onPress={() => setDecline(null)} /></>
@@ -59,6 +60,9 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
             <T weight="bold" color={C.teal}>{{ accepted: "Next shift", enroute: "Travelling", arrived: "At the door", active: "Shift in progress" }[active.status as string]}</T>
             <T size={26} weight="semi">{active.recipient.name} · {TYPE[active.careType]}</T>
             <T>{active.address}</T>
+            {active.careNeed ? <T weight="bold" color={C.teal}>Care needed: {active.careNeed.label}{active.careNeed.note ? `. ${active.careNeed.note}` : ""}</T> : null}
+            {active.homeCommitments?.length ? <Card style={{ padding: 14 }}><T weight="bold">The family agreed to provide</T>{active.homeCommitments.map((h: any) => <T key={h.id ?? h}>✓ {h.label ?? h}</T>)}
+              <T color={C.inkSoft}>If something is missing, tell the care manager from the Me tab.</T></Card> : null}
             {active.accessNotes ? <T color={C.inkSoft}>Getting in: {active.accessNotes}</T> : null}
             {active.health?.shared === false && <T color={C.inkSoft}>Health details not shared by the family. Ask at the first visit.</T>}
             {active.health?.allergies?.length ? <Card tone="coral" style={{ padding: 14 }}><T weight="bold">Allergies: {active.health.allergies.map((a: any) => a.name).join(", ")}</T></Card> : null}

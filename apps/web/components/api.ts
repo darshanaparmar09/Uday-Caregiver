@@ -2,7 +2,7 @@
 export async function api<T = any>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
   const r = await fetch(path, { method: opts.method ?? (opts.body ? "POST" : "GET"), headers: opts.body ? { "Content-Type": "application/json" } : undefined, body: opts.body ? JSON.stringify(opts.body) : undefined, cache: "no-store" });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(new Error(j.error ?? "Something went wrong"), { status: r.status, fields: j.fields });
+  if (!r.ok) throw Object.assign(new Error(j.error ?? "Something went wrong"), { status: r.status, fields: j.fields, data: j });
   return j as T;
 }
 export const inr = (paise: number) => "₹" + Math.round(paise / 100).toLocaleString("en-IN");

@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
 import {
-  assertTransition, cancelQuote, fees, nextMatch, offerWindowMinutes, POLICY, shiftCode, shiftStart, rupees, checklistFor, vitalsFlags, CHECKLIST_IDS,
+  assertTransition, cancelQuote, fees, nextMatch, offerWindowMinutes, POLICY, shiftCode, shiftStart, rupees, checklistFor, vitalsFlags, CHECKLIST_IDS, careNeed, homeCommitments, HOME_COMMITMENTS_VERSION, overallRating, type RatingArea,
   type BookingStatus, type CareType, type Actor,
 } from "@uday/core";
 import { one, q, tx } from "./db";
@@ -9,7 +9,7 @@ import { gateway } from "./payments";
 import { notify } from "./notify";
 import type { SessionUser } from "./auth";
 
-export class AppError extends Error { constructor(msg: string, public status = 400) { super(msg); } }
+export class AppError extends Error { constructor(msg: string, public status = 400, public data?: Record<string, unknown>) { super(msg); } }
 
 const RATE_COL: Record<CareType, string> = { day: "rate_day_paise", night: "rate_night_paise", live: "rate_live_paise" };
 const START_TIMES: Record<CareType, string[]> = { day: ["07:00", "09:00", "10:00"], night: ["20:00"], live: ["09:00"] };
@@ -65,13 +65,23 @@ export async function listCaregivers(careType: CareType, tier?: number) {
 }
 
 // ───────── create ─────────
-export interface CreateInput { recipientId: string; caregiverId: string; careType: CareType; days: number; startDate: string; startTime: string; method: string; note?: string }
+export interface CreateInput { recipientId: string; caregiverId: string; careType: CareType; days: number; startDate: string; startTime: string; method: string; note?: string; careNeed: string; careNeedNote?: string; homeCommitments: string[] }
 
 export async function createBooking(u: SessionUser, i: CreateInput) {
   const role = await familyRole(u.id, i.recipientId);
   if (!role || !["owner", "care_manager", "payer"].includes(role)) throw new AppError("You cannot book for this person", 403);
   if (![1, 7, 30, 90].includes(i.days)) throw new AppError("Choose one day, a week, a month or a quarter");
   if (!START_TIMES[i.careType].includes(i.startTime)) throw new AppError("Choose a valid start time");
+  const need = careNeed(i.careNeed);
+  if (!need) throw new AppError("Choose what care is needed");
+  if (need.id === "other" && !i.careNeedNote?.trim()) throw new AppError("Tell us briefly what care is needed");
+  const required = homeCommitments(i.careType);
+  const missing = required.filter((h) => !i.homeCommitments?.includes(h.id));
+  if (missing.length) throw new AppError("Please confirm everything the caregiver needs at home", 400, { missing: missing.map((m) => m.id) });
+  // Rehire rule: a family must rate this caregiver's last completed care before paying for new care.
+  const unrated = await one<{ id: string; code: string }>(`SELECT b.id, b.code FROM bookings b JOIN family_members f ON f.care_recipient_id=b.care_recipient_id AND f.user_id=$1
+    WHERE b.caregiver_id=$2 AND b.status='completed' ORDER BY b.updated_at DESC LIMIT 1`, [u.id, i.caregiverId]);
+  if (unrated) throw new AppError("Please rate this caregiver's last care before booking again.", 409, { needsRating: unrated.id, code: unrated.code });
   const cg = await one<any>("SELECT * FROM caregivers WHERE id=$1 AND status='active'", [i.caregiverId]);
   if (!cg || !cg.care_types.includes(i.careType)) throw new AppError("This caregiver does not offer that care");
   const start = shiftStart(i.startDate, i.startTime, 0);
@@ -85,10 +95,11 @@ export async function createBooking(u: SessionUser, i: CreateInput) {
   return tx(async (c) => {
     const b = (await c.query(
       `INSERT INTO bookings (code, payer_id, care_recipient_id, caregiver_id, tier, care_type, days, start_date, start_time, status,
-        rate_paise, care_paise, platform_paise, gst_paise, total_paise, policy, offer_expires_at, note)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'offered',$10,$11,$12,$13,$14,$15, now() + ($16 || ' minutes')::interval, $17) RETURNING *`,
+        rate_paise, care_paise, platform_paise, gst_paise, total_paise, policy, offer_expires_at, note, care_need, care_need_note, home_commitments, home_commitments_version)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'offered',$10,$11,$12,$13,$14,$15, now() + ($16 || ' minutes')::interval, $17, $18, $19, $20, $21) RETURNING *`,
       [code, u.id, i.recipientId, cg.id, cg.tier, i.careType, i.days, i.startDate, i.startTime,
-       f.ratePaise, f.carePaise, f.platformPaise, f.gstPaise, f.totalPaise, POLICY, String(windowMin), i.note ?? null])).rows[0];
+       f.ratePaise, f.carePaise, f.platformPaise, f.gstPaise, f.totalPaise, POLICY, String(windowMin), i.note ?? null,
+       need.id, i.careNeedNote?.slice(0, 200) ?? null, JSON.stringify(required), HOME_COMMITMENTS_VERSION])).rows[0];
     await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, status) VALUES ($1,$2,$3,$4,$5,'held')",
       [b.id, gateway().name, hold.gatewayRef, i.method, f.totalPaise]);
     await c.query("INSERT INTO booking_events (booking_id, actor_id, actor_role, to_status, message) VALUES ($1,$2,'family','offered',$3)",
@@ -119,6 +130,8 @@ export async function getBooking(u: SessionUser, id: string) {
     fees: { ratePaise: b.rate_paise, carePaise: b.care_paise, platformPaise: b.platform_paise, gstPaise: b.gst_paise, totalPaise: b.total_paise },
     cancelFeePaise: b.cancel_fee_paise, refundPaise: b.refund_paise, proposal, events, logs,
     viewer: fam ? "family" : isCg ? "caregiver" : "ops",
+    careNeed: b.care_need ? { id: b.care_need, label: careNeed(b.care_need)?.label ?? b.care_need, note: b.care_need_note } : null,
+    homeCommitments: b.home_commitments ?? [],
   };
   if (fam) {
     if (b.status === "arrived") out.startCode = dec(b.start_code_enc);
@@ -153,8 +166,9 @@ export async function listBookings(u: SessionUser) {
   if (u.role === "caregiver") {
     const cg = await caregiverFor(u.id);
     if (!cg) return [];
-    return q(`SELECT b.id, b.code, b.status, b.care_type, b.days, b.days_done, b.start_date, b.start_time, b.offer_expires_at, b.rate_paise, b.care_paise, r.locality, r.name AS recipient_name
+    const rows = await q<any>(`SELECT b.id, b.code, b.status, b.care_type, b.days, b.days_done, b.start_date, b.start_time, b.offer_expires_at, b.rate_paise, b.care_paise, b.care_need, b.care_need_note, r.locality, r.name AS recipient_name
       FROM bookings b JOIN care_recipients r ON r.id=b.care_recipient_id WHERE b.caregiver_id=$1 ORDER BY b.created_at DESC LIMIT 100`, [cg.id]);
+    return rows.map((r) => ({ ...r, care_need_label: r.care_need ? careNeed(r.care_need)?.label ?? r.care_need : null }));
   }
   return q(`SELECT b.id, b.code, b.status, b.care_type, b.days, b.days_done, b.start_date, b.start_time, b.offer_expires_at, b.total_paise, c.display_name AS caregiver_name, c.initials, r.name AS recipient_name
     FROM bookings b JOIN caregivers c ON c.id=b.caregiver_id JOIN care_recipients r ON r.id=b.care_recipient_id
@@ -212,7 +226,7 @@ export type Action =
   | { action: "cancel" } | { action: "reschedule"; startDate: string }
   | { action: "enroute"; lat?: number; lng?: number } | { action: "arrive"; lat?: number; lng?: number }
   | { action: "start"; code: string } | { action: "log"; meal?: boolean; meds?: boolean; mood: string; note?: string; checklist?: Record<string, string>; vitals?: { bpSys?: number; bpDia?: number; pulse?: number; tempC?: number; pain?: number; skinConcern?: boolean; appetite?: string } }
-  | { action: "end"; code: string } | { action: "rate"; stars: number; tags: string[]; note?: string }
+  | { action: "end"; code: string } | { action: "rate"; areas: Partial<Record<RatingArea, number>>; tags?: string[]; note?: string }
   | { action: "ticket"; category: string; text?: string } | { action: "cg_cancel" };
 
 export async function act(u: SessionUser, id: string, a: Action) {
@@ -342,6 +356,9 @@ export async function act(u: SessionUser, id: string, a: Action) {
         await c.query("INSERT INTO shift_logs (booking_id, day, caregiver_id, meal, meds, mood, note_enc, checklist_enc, vitals_enc, flags) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
           [b.id, b.days_done + 1, cgId, meal, meds, String(a.mood).slice(0, 40), enc(a.note?.slice(0, 1000), "health"),
            Object.keys(checklist).length ? encJson(checklist) : null, Object.keys(v).length ? encJson(v) : null, flags]);
+        const KIND: Record<string, string> = { bpSys: "bp_sys", bpDia: "bp_dia", pulse: "pulse", tempC: "temp_c", pain: "pain" };
+        for (const [k, kind] of Object.entries(KIND)) { const val = (v as any)[k]; if (typeof val === "number")
+          await c.query("INSERT INTO readings (care_recipient_id, kind, value_enc, source, booking_id, recorded_at, created_by) VALUES ($1,$2,$3,'caregiver',$4, now(), $5)", [b.care_recipient_id, kind, enc(String(val), "health"), b.id, u.id]); }
         if (flags.length) {
           await event(c, b, u, "caregiver", null, `Readings outside the usual range: ${flags.join(", ")}. Family and Uday alerted.`);
           await tellFamily(b.care_recipient_id, "vitals_alert", { bookingId: b.id });
@@ -371,12 +388,13 @@ export async function act(u: SessionUser, id: string, a: Action) {
       }
       case "rate": {
         assertTransition(b.status, "closed", "family");
-        const s = Math.round(a.stars);
-        if (s < 1 || s > 5) throw new AppError("Stars must be 1 to 5");
-        await c.query("INSERT INTO reviews (booking_id, stars, tags, note_enc) VALUES ($1,$2,$3,$4)", [b.id, s, (a.tags ?? []).slice(0, 8), enc(a.note, "pii")]);
-        await c.query("UPDATE caregivers SET rating = ROUND(((rating*rating_count)+$2)/(rating_count+1), 1), rating_count=rating_count+1 WHERE id=$1", [b.caregiver_id, s]);
+        let overall: number;
+        try { overall = overallRating(a.areas); } catch (e: any) { throw new AppError(e.message); }
+        const s = Math.round(overall);
+        await c.query("INSERT INTO reviews (booking_id, stars, tags, note_enc, areas, overall) VALUES ($1,$2,$3,$4,$5,$6)", [b.id, s, (a.tags ?? []).slice(0, 8), enc(a.note, "pii"), a.areas, overall]);
+        await c.query("UPDATE caregivers SET rating = ROUND(((rating*rating_count)+$2)/(rating_count+1), 1), rating_count=rating_count+1 WHERE id=$1", [b.caregiver_id, overall]);
         await c.query("UPDATE bookings SET status='closed', updated_at=now() WHERE id=$1", [b.id]);
-        await event(c, b, u, "family", "closed", `You rated ${s} stars.`);
+        await event(c, b, u, "family", "closed", `You rated ${overall} out of 5 across five areas.`);
         if (s <= 3) await openTicket(c, u, b.id, "Low rating follow up", undefined);
         break;
       }

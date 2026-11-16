@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
-import { api, API, countdown, inr, PLAN, STATUS, TYPE } from "../shared/api";
+import { api, API, countdown, inr, PLAN, READING, SOURCE, STATUS, TYPE } from "../shared/api";
 import { Button, Card, ErrorText, Screen, T } from "../shared/ui";
 import { C } from "../shared/theme";
 
 export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }) {
-  const [recips, setRecips] = useState<any[]>([]); const [bookings, setBookings] = useState<any[]>([]); const [open, setOpen] = useState<string | null>(null);
+  const [recips, setRecips] = useState<any[]>([]); const [bookings, setBookings] = useState<any[]>([]); const [open, setOpen] = useState<string | null>(null); const [readings, setReadings] = useState<any>(null);
   const load = useCallback(async () => { const [r, b] = await Promise.all([api<any[]>("/api/recipients"), api<any[]>("/api/bookings")]); setRecips(r); setBookings(b); }, []);
   useEffect(() => { load().catch(() => {}); const t = setInterval(() => load().catch(() => {}), 10000); return () => clearInterval(t); }, [load]);
   if (open) return <BookingDetail id={open} onBack={() => { setOpen(null); load(); }} />;
+  if (readings) return <Readings r={readings} onBack={() => setReadings(null)} />;
   const live = bookings.filter((b) => !["closed", "cancelled", "released"].includes(b.status));
   return (
     <Screen>
@@ -19,6 +20,7 @@ export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }
           <T size={28} weight="bold">{r.name}</T>
           <T weight="semi">{help ? "Asked for help today" : today ? "Checked in today" : "Not checked in yet today"}{today ? ` at ${new Date(r.last_checkin.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}` : ""}</T>
           {!today && <Button title="I spoke to them today" tone="teal" onPress={() => api("/api/checkins", { status: "ok", recipientId: r.id }).then(load)} />}
+          <Button title="Readings and devices" tone="outline" onPress={() => setReadings(r)} />
         </Card>); })}
       <T size={28} weight="bold" style={{ marginTop: 8 }}>Care bookings</T>
       {!live.length && <T color={C.inkSoft}>No active bookings.</T>}
@@ -64,6 +66,33 @@ function BookingDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {["offered", "proposal", "accepted", "enroute"].includes(b.status) && !quote && <Button title="Cancel booking" tone="outline" onPress={() => api(`/api/bookings/${id}/quote`).then(setQuote).catch((e) => setErr(e.message))} />}
       {quote && <Card><T weight="bold">Cancel this booking?</T><T>Fee {inr(quote.feePaise)} · Refund {inr(quote.refundPaise)}</T><T color={C.inkSoft}>Free up to 4 hours before a shift, then 20% of one day of care.</T>
         <Button title="Yes, cancel" tone="night" busy={busy} onPress={() => act({ action: "cancel" })} /><Button title="Keep booking" tone="outline" onPress={() => setQuote(null)} /></Card>}
+      <ErrorText msg={err} />
+    </Screen>
+  );
+}
+
+/** Readings from caregivers, family and devices, plus wearable connections. */
+function Readings({ r, onBack }: { r: any; onBack: () => void }) {
+  const [rows, setRows] = useState<any[]>([]); const [devs, setDevs] = useState<any[]>([]); const [err, setErr] = useState(""); const [hint, setHint] = useState<Record<string, string>>({});
+  const load = useCallback(() => { api<any[]>(`/api/recipients/${r.id}/readings`).then(setRows).catch((e) => setErr(e.message)); api<any[]>(`/api/recipients/${r.id}/devices`).then(setDevs).catch(() => {}); }, [r.id]);
+  useEffect(() => { load(); }, [load]);
+  const latest: Record<string, any> = {}; rows.forEach((x) => { latest[x.kind] = x; });
+  async function conn(d: string, off: boolean) { try { const x: any = await api(`/api/recipients/${r.id}/devices`, { device: d, disconnect: off }); setHint({ ...hint, [d]: x.next ?? "" }); load(); } catch (e: any) { setErr(e.message); } }
+  return (
+    <Screen>
+      <Button title="Back" tone="outline" onPress={onBack} style={{ alignSelf: "flex-start", paddingHorizontal: 28 }} />
+      <T size={34} weight="bold">{r.name}: readings</T>
+      {!Object.keys(latest).length && <T color={C.inkSoft}>No readings yet. They come from the caregiver's log, your entries on the website, and connected devices.</T>}
+      {Object.entries(latest).filter(([k]) => k !== "bp_dia").map(([k, x]) => <Card key={k}><T weight="semi">{k === "bp_sys" ? "Blood pressure" : READING[k][0]}</T>
+        <T size={34} weight="bold">{x.value}{k === "bp_sys" && latest.bp_dia ? `/${latest.bp_dia.value}` : ""} {READING[k][1]}</T>
+        <T color={C.inkSoft}>{SOURCE[x.source]} · {new Date(x.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</T></Card>)}
+      <T size={28} weight="bold" style={{ marginTop: 8 }}>Devices</T>
+      {devs.map((d) => { const on = ["connected", "pending"].includes(d.status); return (<Card key={d.id} tone={d.status === "connected" ? "teal" : "cream"}>
+        <T size={24} weight="bold">{d.name}</T><T color={C.inkSoft}>{d.path}</T>
+        {d.verify ? <T color={C.amberDeep}>Support being confirmed</T> : null}
+        {d.status === "pending" ? <T weight="semi">Waiting for the first sync</T> : d.status === "connected" ? <T weight="semi">✓ Connected</T> : null}
+        {hint[d.id] ? <T>{hint[d.id]}</T> : null}
+        <Button title={on ? "Disconnect" : "Connect"} tone={on ? "outline" : "night"} onPress={() => conn(d.id, on)} /></Card>); })}
       <ErrorText msg={err} />
     </Screen>
   );

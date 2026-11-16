@@ -35,6 +35,7 @@ export function Dashboard() {
             <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
               {!r.has_health && <Link className="text-indigo-600" href={`/app/health/${r.id}`}>Add health details (optional)</Link>}
               {r.has_health && <Link className="text-indigo-600" href={`/app/health/${r.id}`}>Health details</Link>}
+              <Link className="text-indigo-600" href={`/app/readings/${r.id}`}>Readings and devices</Link>
               {!today && <button className="text-indigo-600" disabled={busy === r.id} onClick={() => checkFor(r.id)}>I spoke to them today</button>}
             </div></div>); })}</div>}
       </section>

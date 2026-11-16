@@ -9,6 +9,6 @@ export default function Page() {
   return (<>
     <PageHero eyebrow="Partners" title="Elder care programmes your customers keep" lead="Uday runs the care layer so your organisation can serve senior citizens and their families every day, not as a one time benefit." img="woman" alt="An elderly woman at home" pos="62% 30%" />
     <Section><div className="grid gap-4 md:grid-cols-2">{P.map(([t, d]) => <div key={t} className="card"><h2 className="text-lg font-bold">{t}</h2><p className="mt-2">{d}</p></div>)}</div>
-      <Link href="/contact" className="btn mt-8">Start a partner conversation</Link></Section>
+      <div className="mt-8 flex flex-wrap gap-3"><Link href="/contact" className="btn">Start a partner conversation</Link><Link href="/partner" className="btn-ghost">List your care facility</Link></div></Section>
   </>);
 }
