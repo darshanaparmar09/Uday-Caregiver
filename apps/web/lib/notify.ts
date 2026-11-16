@@ -10,7 +10,7 @@ import { pushToUser, type PushMessage } from "./push";
 export type Template =
   | "booking_requested" | "booking_offer" | "booking_accepted" | "booking_proposal" | "booking_released"
   | "caregiver_enroute" | "caregiver_arrived" | "shift_started" | "shift_log" | "shift_ended"
-  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review";
+  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event";
 
 export async function notify(userId: string | null, template: Template, payload: Record<string, unknown> = {}, channel: "push" | "whatsapp" | "sms" | "email" = "push") {
   await q("INSERT INTO notifications (user_id, channel, template, payload) VALUES ($1,$2,$3,$4)", [userId, channel, template, payload]);
@@ -31,6 +31,12 @@ const PUSH_TEXT: Partial<Record<Template, PushMessage>> = {
   rate_request: { title: "Care completed", body: "Please rate the care." },
   booking_cancelled: { title: "Booking cancelled", body: "A booking was cancelled." },
   checkin_help: { title: "Help requested", body: "Your parent asked for help. Please call them now.", urgent: true },
+  checkin_medical: { title: "Medical help needed", body: "Your parent asked for medical help. Call them now. If serious, call 112.", urgent: true },
+  checkin_lonely: { title: "A call would help today", body: "Your parent said they feel lonely. A call from you would mean a lot." },
+  checkin_reminder: { title: "Good morning", body: "Tap the sun to tell your family you are well." },
+  safety_report: { title: "Safety report", body: "Your parent reported fraud or a crime in Uday. Please call them.", urgent: true },
+  namaste: { title: "Someone said namaste", body: "Open Uday to say namaste back." },
+  senior_event: { title: "Your parent is going to an event", body: "They have signed up for an Uday community event." },
   checkin_missed: { title: "No check in yet", body: "Your parent has not checked in today.", urgent: true },
   vitals_alert: { title: "Check on your parent", body: "Today's readings were outside the usual range. Open Uday for details.", urgent: true },
   visit_requested: { title: "New visit request", body: "A family wants to visit. Open Uday to confirm." },

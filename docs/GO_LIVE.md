@@ -19,6 +19,8 @@ What is built, and what must be finished or connected before real families and r
 - Five area caregiver ratings, averaged; a rating is required before rehiring the same caregiver.
 - Readings from caregivers, families and devices in one encrypted stream; wearable connections.
 
+- Senior mode restored from the first builds: four check in moods, home with streak and SOS, medicines taken, three brain games, interest groups, events, people nearby (opt in), cyber fraud and crime help, call back requests, check in reminder at the senior's chosen time.
+
 ## Must be connected before launch
 
 | Item | Owner | Where |
@@ -49,3 +51,5 @@ What is built, and what must be finished or connected before real families and r
 - Facility plan prices: ₹4,999 and ₹9,999 a month plus GST.
 - Home commitment wording, including live in breaks (2 hours day, 8 hours night) and a weekly day off with relief cover: check with your lawyer.
 - Facility licence check: ops confirms the licence with the issuing authority before a listing goes live.
+- Senior community: posts with phone numbers or links are blocked; two reports hide a post. Uday ops must review reported posts daily.
+- Not built yet from the first prototype: AI companion chat, telehealth, insurance, Tablet Hub (each needs a partner or provider decision).

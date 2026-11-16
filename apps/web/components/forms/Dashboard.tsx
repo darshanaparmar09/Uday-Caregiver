@@ -30,8 +30,9 @@ export function Dashboard() {
           const today = r.last_checkin && new Date(r.last_checkin.at).toDateString() === new Date().toDateString();
           return (<div key={r.id} className="card">
             <div className="flex items-center justify-between gap-2"><h3 className="text-lg font-bold">{r.name}</h3><span className="text-sm text-muted">{r.locality}</span></div>
-            <div className={`mt-3 rounded-xl px-3 py-2 text-sm ${today ? (r.last_checkin.status === "help" ? "bg-coral-50 text-coral-600" : "bg-teal-50 text-teal-600") : "bg-orange-50 text-orange-600"}`}>
-              {today ? (r.last_checkin.status === "help" ? "Asked for help today at " : "Checked in today at ") + new Date(r.last_checkin.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }) : `No check in yet today (expected by ${String(r.checkin_by).slice(0, 5)})`}</div>
+            <div className={`mt-3 rounded-xl px-3 py-2 text-sm ${today ? (["help", "medical"].includes(r.last_checkin.status) ? "bg-coral-50 text-coral-600" : r.last_checkin.status === "lonely" ? "bg-orange-50 text-orange-600" : "bg-teal-50 text-teal-600") : "bg-orange-50 text-orange-600"}`}>
+              {today ? `"${MOOD[r.last_checkin.status] ?? "Checked in"}" today at ` + new Date(r.last_checkin.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }) : `No check in yet today (expected by ${String(r.checkin_by).slice(0, 5)})`}</div>
+            <Week id={r.id} />
             <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
               {!r.has_health && <Link className="text-indigo-600" href={`/app/health/${r.id}`}>Add health details (optional)</Link>}
               {r.has_health && <Link className="text-indigo-600" href={`/app/health/${r.id}`}>Health details</Link>}
@@ -53,4 +54,18 @@ export function Dashboard() {
       </section>
     </div>
   );
+}
+
+const MOOD: Record<string, string> = { ok: "I am okay", help: "I need some help", medical: "I need medical help", lonely: "I feel lonely" };
+const DOT: Record<string, string> = { ok: "bg-teal-500", help: "bg-orange-500", medical: "bg-coral-500", lonely: "bg-orange-300" };
+/** Last seven days of check ins, medicines today, brain games and groups. */
+function Week({ id }: { id: string }) {
+  const [w, setW] = useState<any>(null);
+  useEffect(() => { api(`/api/recipients/${id}/week`).then(setW).catch(() => {}); }, [id]);
+  if (!w) return null;
+  return (<div className="mt-3">
+    <div className="flex justify-between" aria-label="Check ins in the last seven days">{w.week.map((d: any) => <div key={d.day} className="grid justify-items-center gap-1 text-xs text-muted">
+      <span title={d.status ? MOOD[d.status] : "No check in"} className={`h-6 w-6 rounded-full border-2 border-indigo-950 ${d.status ? DOT[d.status] : "bg-white"}`} />
+      {new Date(d.day + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short" })}</div>)}</div>
+    <p className="mt-2 text-sm">{w.streak} day streak{w.meds.total ? ` · medicines ${w.meds.taken} of ${w.meds.total} today` : ""} · brain games {w.gameDays} of 7 days{w.groups ? ` · ${w.groups} group${w.groups > 1 ? "s" : ""}` : ""}</p></div>);
 }

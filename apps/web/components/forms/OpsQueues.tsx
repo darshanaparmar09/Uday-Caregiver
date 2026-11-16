@@ -34,3 +34,35 @@ export function OpsQueues() {
     </div>
   );
 }
+
+/** Community moderation, safety reports, callback requests and events. */
+export function OpsCommunity() {
+  const [d, setD] = useState<any>(null); const [msg, setMsg] = useState("");
+  const [ev, setEv] = useState({ title: "", place: "", startsAt: "", capacity: "", groupId: "" });
+  const load = () => api("/api/ops/community").then(setD).catch(() => {});
+  useEffect(() => { load(); }, []);
+  async function go(body: any, done: string) { try { await api("/api/ops/community", { body }); setMsg(done); load(); } catch (e: any) { setMsg(e.message); } }
+  if (!d) return null;
+  return (
+    <div className="grid gap-6">
+      <h2 className="text-2xl font-extrabold">Seniors: safety and community</h2>
+      {msg && <p role="status" className="rounded-lg bg-indigo-50 px-3 py-2 text-sm">{msg}</p>}
+      <div className="card"><h3 className="mb-3 font-bold">Safety reports ({d.safety.length})</h3>
+        {d.safety.map((s: any) => <div key={s.code} className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm"><span><b className="text-ink">{s.code}</b> · {s.name} · {s.kind} · {s.category} · {s.happened ?? ""}{s.amount_paise ? ` · ₹${(s.amount_paise / 100).toLocaleString("en-IN")}` : ""}</span>
+          <button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go({ action: "close", kind: "safety", id: s.code }, `${s.code} closed`)}>Called and closed</button></div>)}
+        <p className="note mt-1">Call the senior, help them file with 1930 or the police, and inform the family.</p></div>
+      <div className="card"><h3 className="mb-3 font-bold">Call back requests ({d.callbacks.length})</h3>
+        {d.callbacks.map((c: any) => <div key={c.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm"><span><b className="text-ink">{c.name}</b> · {c.locality} · {{ talk: "Wants to talk", doctor: "Doctor call", lonely: "Feeling lonely" }[c.reason as string]} · {new Date(c.created_at).toLocaleString("en-IN")}</span>
+          <button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go({ action: "close", kind: "callback", id: c.id }, "Marked as called")}>Called</button></div>)}</div>
+      <div className="card"><h3 className="mb-3 font-bold">Reported posts ({d.reported.length})</h3>
+        {d.reported.map((p: any) => <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm"><span><b className="text-ink">{p.group_name}</b> · {p.reports} report{p.reports > 1 ? "s" : ""} · {p.status} · "{p.body}"</span>
+          <span className="flex gap-2"><button className="btn min-h-[40px] px-3 text-sm" onClick={() => go({ action: "post", id: p.id, status: "live" }, "Post restored")}>Restore</button><button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go({ action: "post", id: p.id, status: "hidden" }, "Post hidden")}>Hide</button></span></div>)}
+        <p className="note mt-1">Two reports hide a post automatically until reviewed.</p></div>
+      <div className="card grid gap-3"><h3 className="font-bold">Create a community event</h3>
+        <div className="grid gap-3 sm:grid-cols-2"><input className="input" placeholder="Title, e.g. Morning walk" value={ev.title} onChange={(e) => setEv({ ...ev, title: e.target.value })} /><input className="input" placeholder="Place" value={ev.place} onChange={(e) => setEv({ ...ev, place: e.target.value })} />
+          <input className="input" type="datetime-local" value={ev.startsAt} onChange={(e) => setEv({ ...ev, startsAt: e.target.value })} /><input className="input" type="number" placeholder="Places (optional)" value={ev.capacity} onChange={(e) => setEv({ ...ev, capacity: e.target.value })} />
+          <select className="input" value={ev.groupId} onChange={(e) => setEv({ ...ev, groupId: e.target.value })}><option value="">No group</option>{d.groups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
+        <button className="btn justify-self-start" disabled={!ev.title || !ev.place || !ev.startsAt} onClick={() => go({ action: "event", title: ev.title, place: ev.place, startsAt: new Date(ev.startsAt).toISOString(), capacity: ev.capacity ? Number(ev.capacity) : undefined, groupId: ev.groupId || undefined }, "Event published")}>Publish event</button></div>
+    </div>
+  );
+}

@@ -1,6 +1,126 @@
 {
  "shots": [
   {
+   "title": "Uday app · senior mode (restored from the first builds)",
+   "wide": false,
+   "items": [
+    {
+     "src": "shots/sn01.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Morning sunrise check in"
+    },
+    {
+     "src": "shots/sn02.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Four answers"
+    },
+    {
+     "src": "shots/sn03.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "\"I feel lonely\" response"
+    },
+    {
+     "src": "shots/sn04.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Home: streak, SOS"
+    },
+    {
+     "src": "shots/sn05.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Your people, your day"
+    },
+    {
+     "src": "shots/sn06.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Thought of the day"
+    },
+    {
+     "src": "shots/sn07.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Medicines taken"
+    },
+    {
+     "src": "shots/sn09.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Brain games"
+    },
+    {
+     "src": "shots/sn10.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Memory Match"
+    },
+    {
+     "src": "shots/sn11.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Daily Trivia"
+    },
+    {
+     "src": "shots/sn12.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Word Scramble"
+    },
+    {
+     "src": "shots/sn13.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Interest groups"
+    },
+    {
+     "src": "shots/sn14.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Group posts"
+    },
+    {
+     "src": "shots/sn16.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Events"
+    },
+    {
+     "src": "shots/sn17.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "People nearby, namaste"
+    },
+    {
+     "src": "shots/sn18.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Safety"
+    },
+    {
+     "src": "shots/sn19.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Cheated online: 1930"
+    },
+    {
+     "src": "shots/sn20.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Me: settings"
+    },
+    {
+     "src": "shots/sn21.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Family sees the week"
+    }
+   ]
+  },
+  {
    "title": "Care facilities · website",
    "wide": true,
    "items": [
@@ -198,36 +318,6 @@
     {
      "src": "shots/w_m_booking.webp",
      "cap": "Booking, waiting",
-     "w": 390,
-     "h": 664
-    }
-   ],
-   "wide": false
-  },
-  {
-   "title": "Uday app · senior mode",
-   "items": [
-    {
-     "src": "shots/g7_family_welcome.webp",
-     "w": 390,
-     "h": 664,
-     "cap": "Who is using this phone"
-    },
-    {
-     "src": "shots/a_2sun.webp",
-     "cap": "Sunrise check in",
-     "w": 390,
-     "h": 664
-    },
-    {
-     "src": "shots/a_3ask.webp",
-     "cap": "How are you today",
-     "w": 390,
-     "h": 664
-    },
-    {
-     "src": "shots/a_4thanks.webp",
-     "cap": "Checked in",
      "w": 390,
      "h": 664
     }
@@ -943,6 +1033,16 @@
      "phase": "Year 1 pilot",
      "owner": "Claude",
      "notes": "Phone devices need the native health module; Withings needs its API; 6 devices marked to verify"
+    },
+    {
+     "id": "39",
+     "module": "Senior",
+     "feature": "Week view on dashboard",
+     "what": "Same as the app",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
     }
    ]
   },
@@ -1069,6 +1169,126 @@
      "phase": "Year 1 pilot",
      "owner": "Claude",
      "notes": "Upload and dedupe done; native module needs a development build"
+    },
+    {
+     "id": "13",
+     "module": "Check in",
+     "feature": "Four ways to check in",
+     "what": "I am okay, I need some help, I need medical help, I feel lonely; each with its own response",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "14",
+     "module": "Home",
+     "feature": "Home screen",
+     "what": "Streak, SOS, your people (tap to call), medicines, game, event, namastes, thought of the day",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "15",
+     "module": "Health",
+     "feature": "Medicines taken",
+     "what": "Today by time of day, Taken button, add own medicine; family sees count",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Medicine reminders by push: next step"
+    },
+    {
+     "id": "16",
+     "module": "Games",
+     "feature": "Brain games",
+     "what": "Memory Match, Daily Trivia (same 5 questions for all each day), Word Scramble; scores and streak",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Trivia answers checked; Hindi and Marathi words to add"
+    },
+    {
+     "id": "17",
+     "module": "Community",
+     "feature": "Interest groups",
+     "what": "7 groups; join, post, report; no phone numbers or links allowed; 2 reports hide a post",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "18",
+     "module": "Community",
+     "feature": "Events",
+     "what": "Walks, bhajans, meetups; RSVP with capacity; family told",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "3 sample events for testing"
+    },
+    {
+     "id": "19",
+     "module": "Community",
+     "feature": "People nearby",
+     "what": "Opt in only; first name and area; namaste greeting; no phone numbers shown",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Private messaging between seniors not built on purpose"
+    },
+    {
+     "id": "20",
+     "module": "Safety",
+     "feature": "Cyber fraud and crime help",
+     "what": "Guided report, call 1930 or 112, family and Uday told, reference number, do now steps",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "21",
+     "module": "Support",
+     "feature": "Call back from Uday",
+     "what": "Talk to the team, feeling lonely, doctor call request",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Doctor partner to be chosen"
+    },
+    {
+     "id": "22",
+     "module": "Settings",
+     "feature": "Check in time, language, be found",
+     "what": "Reminder at chosen time",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Hindi and Marathi screens to be translated"
+    },
+    {
+     "id": "23",
+     "module": "Companion",
+     "feature": "AI companion chat (from first build)",
+     "what": "Talk to Uday by chat or voice",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Needs an AI provider and a safety review"
+    },
+    {
+     "id": "24",
+     "module": "Extras",
+     "feature": "Telehealth, insurance, Tablet Hub (from first build)",
+     "what": "Partner led features",
+     "status": "Pending",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Need partners: doctors, insurers, tablet hardware"
     }
    ]
   },
@@ -1211,6 +1431,16 @@
      "module": "Health",
      "feature": "Readings and devices",
      "what": "Latest readings by source; connect wearables",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "15",
+     "module": "Senior",
+     "feature": "Week view",
+     "what": "7 day check in dots by mood, streak, medicines today, game days, groups",
      "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Claude",
@@ -1767,6 +1997,16 @@
      "phase": "Year 1 pilot",
      "owner": "Claude",
      "notes": "Razorpay subscription plans to be created by the agency"
+    },
+    {
+     "id": "24",
+     "module": "Seniors",
+     "feature": "Senior life data",
+     "what": "Moods, medicine doses, game plays, groups, posts, events, namastes, safety reports, callbacks",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
     }
    ]
   },
@@ -1939,6 +2179,16 @@
      "module": "Facilities",
      "feature": "Facility approval queue",
      "what": "Check licence, go live or pause",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "18",
+     "module": "Seniors",
+     "feature": "Safety, callbacks, moderation, events",
+     "what": "Close safety reports, call backs, restore or hide posts, publish events",
      "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Claude",

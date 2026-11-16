@@ -250,3 +250,127 @@ export const FACILITY_PLANS = { listed: { name: "Listed", pricePaise: 499900, fe
   featured: { name: "Featured", pricePaise: 999900, features: ["Everything in Listed", "Shown first in search", "Monthly enquiry report"] } } as const;
 export type FacilityPlan = keyof typeof FACILITY_PLANS;
 export const FACILITY_REVIEW_AREAS = [["care", "Care"], ["staff", "Staff"], ["cleanliness", "Cleanliness"], ["activities", "Activities"], ["value", "Value for money"]] as const;
+
+// ───────── senior mode: daily content ─────────
+/** Four ways to check in, from the first Uday build. */
+export const CHECKIN_MOODS = {
+  ok: { label: "I am okay", reply: "Thank you. Your family knows you are well today." },
+  help: { label: "I need some help", reply: "Your family and the Uday team have been told. Someone will call you soon." },
+  medical: { label: "I need medical help", reply: "Your family and the Uday team have been alerted now. If it is serious, call 112." },
+  lonely: { label: "I feel lonely", reply: "You are not alone. Your family has been asked to call you today." },
+} as const;
+export type CheckinMood = keyof typeof CHECKIN_MOODS;
+
+/** Thoughts of the day, written by Uday (no borrowed quotes, so nothing is misattributed). */
+export const THOUGHTS = [
+  "Every sunrise is a fresh page. Write one kind line on it today.",
+  "A short walk and a long talk are both good medicine.",
+  "Call someone you have not spoken to in a while. They are thinking of you too.",
+  "Your stories are a gift. Tell one to someone younger today.",
+  "Drink a glass of water now. Small habits keep the body happy.",
+  "Patience is not waiting. It is how we behave while we wait.",
+  "Notice three good things before lunch.",
+  "A garden grows one leaf at a time. So do friendships.",
+  "Laugh at least once today, even at yourself.",
+  "Learning keeps the mind young. Try one new word or one new game.",
+  "Rest is not laziness. It is how strength returns.",
+  "Share a meal, share a smile, share a memory.",
+  "What you give with love comes back in many forms.",
+  "Sit in the sun for ten minutes. Let it warm your thoughts.",
+  "Forgive one small thing today and feel lighter.",
+  "A clear morning routine makes a calm day.",
+  "Ask for help when you need it. That is wisdom, not weakness.",
+  "Music can carry us to places the feet cannot.",
+  "Keep your medicines on time. Your future self will thank you.",
+  "Kind words cost nothing and are worth a great deal.",
+  "Teach someone a recipe today. Taste is memory.",
+  "Look out of the window and name five things you can see.",
+  "Gratitude turns what we have into enough.",
+  "A good conversation is a walk for the mind.",
+  "Every age has its own beauty. Enjoy this one.",
+  "Stretch your arms up high. Breathe in slowly. Breathe out slowly.",
+  "Write down one thing you want to remember from today.",
+  "Old friends are treasures. New friends are treasures too.",
+  "Slow down at the stairs. There is no hurry.",
+  "Your experience is a lamp for others. Let it shine.",
+  "End the day with one thank you, said out loud.",
+] as const;
+
+/** Daily trivia bank. Five questions a day, the same for everyone that day. Answers checked against standard references. */
+export const TRIVIA: { q: string; options: string[]; answer: number }[] = [
+  { q: "Who wrote the Ramayana in Sanskrit?", options: ["Tulsidas", "Valmiki", "Vyasa", "Kalidasa"], answer: 1 },
+  { q: "In which year did India become independent?", options: ["1945", "1947", "1950", "1952"], answer: 1 },
+  { q: "What is the national flower of India?", options: ["Rose", "Sunflower", "Lotus", "Jasmine"], answer: 2 },
+  { q: "Which planet is closest to the Sun?", options: ["Venus", "Earth", "Mars", "Mercury"], answer: 3 },
+  { q: "Who wrote the national anthem, Jana Gana Mana?", options: ["Bankim Chandra Chatterjee", "Rabindranath Tagore", "Sarojini Naidu", "Subramania Bharati"], answer: 1 },
+  { q: "Which fort near Pune is known as the birthplace of Chhatrapati Shivaji Maharaj?", options: ["Sinhagad", "Shivneri", "Raigad", "Pratapgad"], answer: 1 },
+  { q: "How many players are on the field for one cricket team?", options: ["9", "10", "11", "12"], answer: 2 },
+  { q: "Which is the national animal of India?", options: ["Lion", "Elephant", "Tiger", "Peacock"], answer: 2 },
+  { q: "In which city is the Gateway of India?", options: ["Delhi", "Mumbai", "Kolkata", "Chennai"], answer: 1 },
+  { q: "What is the capital of Maharashtra?", options: ["Pune", "Nagpur", "Mumbai", "Nashik"], answer: 2 },
+  { q: "Who was the first Prime Minister of India?", options: ["Sardar Patel", "Jawaharlal Nehru", "Lal Bahadur Shastri", "Rajendra Prasad"], answer: 1 },
+  { q: "Which festival is called the festival of lights?", options: ["Holi", "Diwali", "Onam", "Pongal"], answer: 1 },
+  { q: "How many days are there in a leap year?", options: ["364", "365", "366", "367"], answer: 2 },
+  { q: "Which river flows through the city of Pune?", options: ["Mula Mutha", "Godavari", "Tapi", "Krishna"], answer: 0 },
+  { q: "Who composed the song Vande Mataram?", options: ["Rabindranath Tagore", "Bankim Chandra Chatterjee", "Muhammad Iqbal", "Kabir"], answer: 1 },
+  { q: "Which is the largest ocean on Earth?", options: ["Atlantic", "Indian", "Arctic", "Pacific"], answer: 3 },
+  { q: "Which Indian city is known as the Pink City?", options: ["Jaipur", "Udaipur", "Jodhpur", "Agra"], answer: 0 },
+  { q: "What is frozen water called?", options: ["Steam", "Ice", "Dew", "Fog"], answer: 1 },
+  { q: "How many states does India have?", options: ["26", "28", "29", "30"], answer: 1 },
+  { q: "Who was the first woman to be Governor of an Indian state?", options: ["Indira Gandhi", "Sarojini Naidu", "Vijaya Lakshmi Pandit", "Sucheta Kripalani"], answer: 1 },
+  { q: "The Taj Mahal stands on the bank of which river?", options: ["Ganga", "Yamuna", "Narmada", "Sabarmati"], answer: 1 },
+  { q: "Which is the tallest mountain in the world?", options: ["K2", "Kangchenjunga", "Mount Everest", "Nanda Devi"], answer: 2 },
+  { q: "Which leader popularised Ganeshotsav as a public festival in Pune?", options: ["Lokmanya Tilak", "Gopal Krishna Gokhale", "Mahatma Phule", "Veer Savarkar"], answer: 0 },
+  { q: "How many colours are there in a rainbow?", options: ["5", "6", "7", "8"], answer: 2 },
+  { q: "Which vitamin does the body make from sunlight?", options: ["Vitamin A", "Vitamin B12", "Vitamin C", "Vitamin D"], answer: 3 },
+  { q: "Which instrument did Pandit Ravi Shankar play?", options: ["Tabla", "Sitar", "Sarod", "Flute"], answer: 1 },
+  { q: "What is the national bird of India?", options: ["Peacock", "Parrot", "Eagle", "Swan"], answer: 0 },
+  { q: "Which is the longest river in India?", options: ["Godavari", "Ganga", "Yamuna", "Brahmaputra"], answer: 1 },
+  { q: "How many minutes are there in two hours?", options: ["100", "120", "140", "160"], answer: 1 },
+  { q: "Who wrote the Gitanjali?", options: ["Premchand", "Rabindranath Tagore", "R. K. Narayan", "Harivansh Rai Bachchan"], answer: 1 },
+];
+
+/** Word scramble: everyday words, with a hint. */
+export const WORDS: { word: string; hint: string }[] = [
+  { word: "MANGO", hint: "King of fruits" }, { word: "TEMPLE", hint: "A place of prayer" }, { word: "GARDEN", hint: "Flowers grow here" },
+  { word: "MONSOON", hint: "The rainy season" }, { word: "SAREE", hint: "Six yards of grace" }, { word: "TABLA", hint: "A pair of drums" },
+  { word: "CHAI", hint: "A hot morning drink" }, { word: "DIWALI", hint: "Festival of lights" }, { word: "RANGOLI", hint: "Colours at the door" },
+  { word: "MARKET", hint: "Where we buy vegetables" }, { word: "PARROT", hint: "A green bird that talks" }, { word: "LETTER", hint: "Sent by post" },
+  { word: "SUNRISE", hint: "Uday means this" }, { word: "PICKLE", hint: "Achaar" }, { word: "CRICKET", hint: "Bat and ball game" },
+  { word: "RAILWAY", hint: "Trains run on it" }, { word: "JASMINE", hint: "A fragrant white flower" }, { word: "HARMONIUM", hint: "Keys and bellows" },
+  { word: "POETRY", hint: "Words with rhythm" }, { word: "BALCONY", hint: "Sit outside, upstairs" },
+];
+
+/** Same daily set for everyone, picked by date. */
+export function dailyPick<T>(list: readonly T[], day: string, n: number): T[] {
+  let seed = [...day].reduce((s, ch) => (s * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const idx = list.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) >>> 0; const j = seed % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  return idx.slice(0, n).map((i) => list[i]);
+}
+
+/** Medicine times are free text ("8 AM and 9 PM", "after lunch", "night"). Map them to slots. */
+export function medSlots(times: string): ("morning" | "afternoon" | "evening" | "night" | "daily")[] {
+  const t = (times || "").toLowerCase(); const out = new Set<"morning" | "afternoon" | "evening" | "night">();
+  if (/morning|breakfast|subah/.test(t)) out.add("morning");
+  if (/afternoon|lunch|dopahar/.test(t)) out.add("afternoon");
+  if (/evening|shaam|tea time/.test(t)) out.add("evening");
+  if (/night|dinner|bed|raat/.test(t)) out.add("night");
+  for (const m of t.matchAll(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/g)) {
+    let h = Number(m[1]); const ap = m[3]; if (h > 23) continue;
+    if (ap === "pm" && h < 12) h += 12; if (ap === "am" && h === 12) h = 0;
+    out.add(h < 12 ? "morning" : h < 16 ? "afternoon" : h < 20 ? "evening" : "night");
+  }
+  const order = ["morning", "afternoon", "evening", "night"] as const;
+  return out.size ? order.filter((s) => out.has(s)) : ["daily"];
+}
+
+/** Posts in senior groups cannot carry phone numbers or links: the commonest route for scams. */
+export function postProblem(body: string): string | null {
+  const b = body.trim();
+  if (b.length < 2) return "Write a little more";
+  if (b.length > 300) return "Keep it under 300 letters";
+  if (/https?:|www\.|\.com|\.in\b|bit\.ly/i.test(b)) return "Links are not allowed in groups, to keep everyone safe";
+  if (/(\d[\s-]?){10,}/.test(b)) return "Phone numbers are not allowed in groups, to keep everyone safe";
+  return null;
+}

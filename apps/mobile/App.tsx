@@ -8,7 +8,7 @@ import { T, Screen, Button } from "./src/shared/ui";
 import { C } from "./src/shared/theme";
 import { Welcome } from "./src/screens/Welcome";
 import { SignIn } from "./src/shared/SignIn";
-import { SeniorHome } from "./src/screens/SeniorHome";
+import { SeniorApp } from "./src/senior/SeniorApp";
 import { FamilyHome } from "./src/screens/FamilyHome";
 
 export type Role = "senior" | "family";
@@ -26,7 +26,7 @@ export default function App() {
   if (fonts && me === null) screen = intent ? <SignIn role={intent} onBack={() => setIntent(null)} onDone={load} /> : <Welcome onPick={setIntent} />;
   if (fonts && me) {
     const r = me.user.role;
-    screen = r === "senior" ? <SeniorHome name={me.user.name} onSignOut={signOut} />
+    screen = r === "senior" ? <SeniorApp onSignOut={signOut} />
       : r === "caregiver" ? <Screen tone="night"><T size={30} weight="bold" color={C.onNight}>Please use the Uday Caregiver app</T><T color={C.onNightSoft}>This app is for families and seniors. Caregivers have their own app with jobs, schedule and pay.</T><Button title="Sign out" onPress={signOut} /></Screen>
       : <FamilyHome me={me} onSignOut={signOut} />;
   }

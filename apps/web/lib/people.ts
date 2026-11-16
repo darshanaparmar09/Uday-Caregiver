@@ -102,7 +102,7 @@ export async function getHealth(u: SessionUser, recipientId: string) {
 
 // ───────── daily check in ─────────
 /** The senior taps the sunrise, then "I am well" or "I need help". Family members may also check in on their behalf. */
-export async function checkIn(u: SessionUser, status: "ok" | "help", recipientId?: string) {
+export async function checkIn(u: SessionUser, status: "ok" | "help" | "medical" | "lonely", recipientId?: string) {
   let rid = recipientId;
   if (u.role === "senior") {
     const r = await one<{ id: string }>("SELECT id FROM care_recipients WHERE senior_user_id=$1 ORDER BY created_at LIMIT 1", [u.id]);
@@ -111,17 +111,11 @@ export async function checkIn(u: SessionUser, status: "ok" | "help", recipientId
   } else if (!rid || !(await familyRole(u.id, rid))) throw new AppError("Not allowed", 403);
   await q("INSERT INTO checkins (care_recipient_id, status, source) VALUES ($1,$2,$3)", [rid, status, u.role === "senior" ? "app" : "family"]);
   const fam = await q<{ user_id: string }>("SELECT user_id FROM family_members WHERE care_recipient_id=$1 AND accepted_at IS NOT NULL", [rid]);
-  for (const f of fam) await notify(f.user_id, status === "ok" ? "checkin_ok" : "checkin_help", { recipientId: rid }, status === "help" ? "sms" : "push");
-  if (status === "help") await notify(null, "checkin_help", { recipientId: rid, escalate: true });
+  const tpl = ({ ok: "checkin_ok", help: "checkin_help", medical: "checkin_medical", lonely: "checkin_lonely" } as const)[status];
+  const urgent = status === "help" || status === "medical";
+  for (const f of fam) await notify(f.user_id, tpl, { recipientId: rid }, urgent ? "sms" : "push");
+  if (urgent) await notify(null, tpl, { recipientId: rid, escalate: true });
   return { ok: true, recipientId: rid };
-}
-
-export async function seniorHome(u: SessionUser) {
-  const r = await one<any>("SELECT id, name, checkin_by FROM care_recipients WHERE senior_user_id=$1 ORDER BY created_at LIMIT 1", [u.id]);
-  if (!r) return { linked: false };
-  const last = await one<any>("SELECT status, at FROM checkins WHERE care_recipient_id=$1 ORDER BY at DESC LIMIT 1", [r.id]);
-  const today = last && new Date(last.at).toDateString() === new Date().toDateString();
-  return { linked: true, name: r.name, checkedInToday: !!today, lastStatus: last?.status ?? null, lastAt: last?.at ?? null };
 }
 
 /** Missed check ins: family and local contact are alerted. Run by the cron endpoint. */
@@ -130,6 +124,12 @@ export async function sweepMissedCheckins() {
       AND (now() AT TIME ZONE 'Asia/Kolkata')::time > r.checkin_by + interval '1 hour'
       AND NOT EXISTS (SELECT 1 FROM checkins k WHERE k.care_recipient_id=r.id AND (k.at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date)
       AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.template='checkin_missed' AND n.payload->>'recipientId' = r.id::text AND n.at > now() - interval '20 hours')`);
+  // Gentle reminder to the senior at their own check in time, once a day.
+  const remind = await q<{ id: string; senior_user_id: string }>(`SELECT r.id, r.senior_user_id FROM care_recipients r WHERE r.senior_user_id IS NOT NULL
+      AND (now() AT TIME ZONE 'Asia/Kolkata')::time > r.checkin_by
+      AND NOT EXISTS (SELECT 1 FROM checkins k WHERE k.care_recipient_id=r.id AND (k.at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date)
+      AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.template='checkin_reminder' AND n.payload->>'recipientId' = r.id::text AND n.at > now() - interval '20 hours')`);
+  for (const r of remind) await notify(r.senior_user_id, "checkin_reminder", { recipientId: r.id });
   for (const r of rows) {
     const fam = await q<{ user_id: string }>("SELECT user_id FROM family_members WHERE care_recipient_id=$1", [r.id]);
     for (const f of fam) await notify(f.user_id, "checkin_missed", { recipientId: r.id }, "whatsapp");

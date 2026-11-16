@@ -59,5 +59,14 @@ for (const [name, types, loc, from, to, entry, dem, pets, ratio, mratio, acts] o
     [name, types, loc, "Sample listing for testing the directory. Not a real facility.", ratio, mratio, from * 100, to * 100, entry * 100, dem, pets, acts]);
 }
 console.log("sample facilities: 4");
+// SAMPLE community events, a few weeks ahead, clearly marked sample. Remove before launch.
+const EV = [["Sample: Morning walk at Kamala Nehru Park", "walkers", "Kamala Nehru Park, Erandwane", 10, 7, 40],
+  ["Sample: Bhajan sandhya", "bhajan", "Community hall, Sopanbaug", 17, 18, 60],
+  ["Sample: Chess afternoon", "chess", "Uday centre, Kothrud (to be confirmed)", 24, 16, 20]] as const;
+for (const [title, slug, place, days, hour, cap] of EV)
+  await c.query(`INSERT INTO community_events (group_id, title, about, place, starts_at, capacity, sample)
+    SELECT g.id, $1, 'Sample event for testing. Not a real event.', $3, (current_date + $4::int + make_interval(hours => $5::int)) AT TIME ZONE 'Asia/Kolkata', $6, true
+    FROM community_groups g WHERE g.slug=$2 AND NOT EXISTS (SELECT 1 FROM community_events WHERE title=$1)`, [title, slug, place, days, hour, cap]);
+console.log("sample events: 3");
 console.log("ops: sign in with +919000000099");
 await c.end();

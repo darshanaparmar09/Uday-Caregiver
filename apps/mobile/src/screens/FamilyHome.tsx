@@ -15,11 +15,12 @@ export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }
     <Screen>
       <T size={34} weight="bold">Namaste{me.user.name ? `, ${me.user.name.split(" ")[0]}` : ""}</T>
       {!recips.length && <Card><T weight="semi">Add your parent's profile on the Uday website to start.</T><Button title="Open the website" onPress={() => Linking.openURL(API + "/app/onboarding")} /></Card>}
-      {recips.map((r) => { const today = r.last_checkin && new Date(r.last_checkin.at).toDateString() === new Date().toDateString(); const help = today && r.last_checkin.status === "help";
+      {recips.map((r) => { const today = r.last_checkin && new Date(r.last_checkin.at).toDateString() === new Date().toDateString(); const help = today && ["help", "medical"].includes(r.last_checkin.status);
         return (<Card key={r.id} tone={help ? "coral" : today ? "teal" : "amber"}>
           <T size={28} weight="bold">{r.name}</T>
-          <T weight="semi">{help ? "Asked for help today" : today ? "Checked in today" : "Not checked in yet today"}{today ? ` at ${new Date(r.last_checkin.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}` : ""}</T>
+          <T weight="semi">{help ? "Asked for help today" : today ? `Checked in today: "${MOOD[r.last_checkin.status] ?? "okay"}"` : "Not checked in yet today"}{today ? ` at ${new Date(r.last_checkin.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}` : ""}</T>
           {!today && <Button title="I spoke to them today" tone="teal" onPress={() => api("/api/checkins", { status: "ok", recipientId: r.id }).then(load)} />}
+          <Week id={r.id} />
           <Button title="Readings and devices" tone="outline" onPress={() => setReadings(r)} />
         </Card>); })}
       <T size={28} weight="bold" style={{ marginTop: 8 }}>Care bookings</T>
@@ -96,4 +97,22 @@ function Readings({ r, onBack }: { r: any; onBack: () => void }) {
       <ErrorText msg={err} />
     </Screen>
   );
+}
+
+const MOOD: Record<string, string> = { ok: "I am okay", help: "I need some help", medical: "I need medical help", lonely: "I feel lonely" };
+const DOT: Record<string, string> = { ok: C.teal, help: C.amberDeep, medical: C.coral, lonely: C.amber };
+/** The last seven days of check ins, medicines today, and how active they have been. */
+function Week({ id }: { id: string }) {
+  const [w, setW] = useState<any>(null);
+  useEffect(() => { api(`/api/recipients/${id}/week`).then(setW).catch(() => {}); }, [id]);
+  if (!w) return null;
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }} accessibilityLabel="Check ins in the last seven days">
+        {w.week.map((d: any) => <View key={d.day} style={{ alignItems: "center", gap: 4 }}>
+          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: d.status ? DOT[d.status] : "#fff", borderWidth: 2, borderColor: C.night }} />
+          <T>{new Date(d.day + "T00:00:00").toLocaleDateString("en-IN", { weekday: "narrow" })}</T></View>)}
+      </View>
+      <T>{w.streak} day streak{w.meds.total ? ` · medicines ${w.meds.taken} of ${w.meds.total} today` : ""} · games {w.gameDays} of 7 days{w.groups ? ` · ${w.groups} group${w.groups > 1 ? "s" : ""}` : ""}</T>
+    </View>);
 }
