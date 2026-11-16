@@ -1,6 +1,7 @@
+import { meta } from "@/lib/seo";
 import { PageHero, Section, Head } from "@/components/Section";
 import { CareersForm } from "@/components/forms/CareersForm";
-export const metadata = { title: "Careers" };
+export const metadata = meta("/careers");
 export default function Page() {
   return (<>
     <PageHero eyebrow="Careers at Uday" title="Respect, protection and a path up" lead="Care work is skilled work. Uday certifies your skills, protects your income and funds your way to the next tier." img="mobility" alt="An Uday caregiver helps an elderly patient stand beside a hospital bed" pos="center 30%" />

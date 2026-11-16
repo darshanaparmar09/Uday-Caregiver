@@ -1,5 +1,6 @@
+import { meta } from "@/lib/seo";
 import { PageHero, Section } from "@/components/Section";
-export const metadata = { title: "Contact" };
+export const metadata = meta("/contact");
 export default function Page() {
   return (<>
     <PageHero eyebrow="Contact" title="Talk to Uday" lead="Families, caregivers and partners. Contact details go live with the pilot." />

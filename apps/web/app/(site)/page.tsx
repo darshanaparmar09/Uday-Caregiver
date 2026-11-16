@@ -1,4 +1,11 @@
 import Link from "next/link";
+import { meta, SITE_URL } from "@/lib/seo";
+import { JsonLd } from "@/components/JsonLd";
+export const metadata = meta("/");
+// Organization details for search results. Phone and social links to be added once live.
+const ORG = { "@context": "https://schema.org", "@type": "Organization", name: "Uday", url: SITE_URL, logo: `${SITE_URL}/icon.svg`,
+  description: "Certified caregivers by the day, night or live in, with a free daily check in for parents. Pune, India.",
+  areaServed: { "@type": "City", name: "Pune" }, address: { "@type": "PostalAddress", addressLocality: "Pune", addressRegion: "Maharashtra", addressCountry: "IN" } };
 import { Section, Head, Photo } from "@/components/Section";
 
 const TIERS = [
@@ -10,6 +17,7 @@ const TIERS = [
 export default function Home() {
   return (
     <>
+      <JsonLd data={ORG} />
       <div className="relative overflow-hidden bg-indigo-900">
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-orange-500/30 via-orange-500/5 to-transparent" />
         <div aria-hidden className="absolute -bottom-56 left-1/2 h-[28rem] w-[56rem] -translate-x-1/2 rounded-full bg-orange-400/40 blur-3xl" />

@@ -51,6 +51,12 @@ Most services are now connected from the admin screen, **Operations, Settings** 
 - Facility plans: create Listed and Featured monthly plans in Razorpay and set `RAZORPAY_PLAN_LISTED`, `RAZORPAY_PLAN_FEATURED`.
 - Withings: register an API app and implement the account link in `lib/readings.ts` `connect()`.
 
+## Search engines at launch
+
+- Set `SITE_URL` to the live domain **before building** the website, and `UDAY_ENV=production`. Canonical links, the sitemap and share cards use it. Staging keeps `UDAY_ENV=staging`, which blocks all crawlers.
+- Add the domain to Google Search Console and Bing Webmaster Tools, put their verification codes in `GOOGLE_SITE_VERIFICATION` and `BING_SITE_VERIFICATION`, and submit `https://YOUR_DOMAIN/sitemap.xml`.
+- Page titles and descriptions live in `apps/web/lib/seo.ts`. Caregiver profiles, sign in, account and operations pages are never indexed. Sample facility listings are left out of the sitemap.
+
 ## Test build on a real phone (health sync and push)
 
 Health sync and push cannot run in a browser or Expo Go. They need an installed build. The code and config are ready: `react-native-health` (iPhone) and `react-native-health-connect` (Android) are installed, permissions are in `apps/mobile/app.json`, and the readers in `apps/mobile/src/health` register at start. They have not yet run on a device.

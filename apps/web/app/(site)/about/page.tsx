@@ -1,5 +1,6 @@
+import { meta } from "@/lib/seo";
 import { PageHero, Section } from "@/components/Section";
-export const metadata = { title: "About" };
+export const metadata = meta("/about");
 export default function Page() {
   return (<>
     <PageHero eyebrow="About" title="Uday means sunrise" lead="Every morning, families wake up wondering if their parents are alright. Uday exists so that question has an answer." img="sunrise" alt="Sunrise over the sea" />

@@ -1,6 +1,7 @@
+import { meta } from "@/lib/seo";
 import Link from "next/link";
 import { PageHero, Section } from "@/components/Section";
-export const metadata = { title: "How it works" };
+export const metadata = meta("/how-it-works");
 const STEPS = [
   ["Create your account", "Sign in with your mobile number, from India or abroad. Add family members with their own roles: owner, care manager, payer or viewer."],
   ["Tell us about your parent", "Address, languages, care needs and two emergency contacts. Allergies, medicines and prescriptions are optional, and you decide what a caregiver may see."],

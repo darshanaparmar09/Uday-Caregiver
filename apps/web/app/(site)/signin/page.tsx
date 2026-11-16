@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { SignIn } from "@/components/forms/SignIn";
-export const metadata = { title: "Sign in or register" };
+export const metadata = { title: "Sign in or register", robots: { index: false, follow: true } };
 export default function Page() {
   return (
     <div className="bg-gradient-to-b from-indigo-50 to-paper py-12 sm:py-20">

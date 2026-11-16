@@ -1,6 +1,7 @@
+import { meta } from "@/lib/seo";
 import Link from "next/link";
 import { PageHero, Section, Head, Photo } from "@/components/Section";
-export const metadata = { title: "For families" };
+export const metadata = meta("/families");
 export default function Page() {
   return (<>
     <PageHero eyebrow="For families" title="Reliable care for your parents, visible from anywhere" lead="You do not need a cheaper caretaker. You need one who shows up, is trained for your parent's needs, and is replaced by someone briefed when absent." img="call" alt="A father in Pune on a video call with his son's family abroad" pos="center 40%" />

@@ -1,6 +1,7 @@
+import { meta } from "@/lib/seo";
 import Link from "next/link";
 import { PageHero, Section } from "@/components/Section";
-export const metadata = { title: "Partners" };
+export const metadata = meta("/partners");
 const P = [["Senior living operators", "A care layer for residents: check ins, certified caregivers on call, and a shared view for your front desk."],
   ["Hospitals", "Discharge to home care with a briefed caregiver and logs your team can follow up on."],
   ["Banks and insurers", "An elder care benefit your customers actually use, with clear reporting."],

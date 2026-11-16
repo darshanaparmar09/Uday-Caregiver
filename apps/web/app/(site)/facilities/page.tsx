@@ -1,8 +1,9 @@
+import { meta } from "@/lib/seo";
 import Link from "next/link";
 import { PageHero, Section, Head } from "@/components/Section";
 import { Directory } from "@/components/forms/Directory";
 import { FACILITY_TYPES_EXPLAINED, CHOOSING_STEPS } from "@/components/facilityGuide";
-export const metadata = { title: "Care facilities" };
+export const metadata = meta("/facilities");
 export default function Page() {
   return (<>
     <PageHero eyebrow="Care facilities" title="When home care is no longer enough" lead="Compare assisted living, nursing homes, memory care and retirement communities in Pune. Read reviews from families who visited, book a visit, and use our checklist when you go." img="clinic" alt="An Uday staff member assists an elderly woman at a reception desk" pos="center 60%" />

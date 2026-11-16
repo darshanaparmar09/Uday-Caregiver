@@ -1,5 +1,6 @@
+import { meta } from "@/lib/seo";
 import { PageHero, Section, Head } from "@/components/Section";
-export const metadata = { title: "Trust and safety" };
+export const metadata = meta("/trust");
 const CHECKS = [["Identity", "Checked through a licensed verification partner. Uday never stores Aadhaar numbers."],
   ["Police verification", "Done by an independent third party. You see a Police verified tick; the report stays with the provider."],
   ["References", "Two past employers or families, called and recorded."], ["Training and tier", "Uday academy modules and a practical assessment set the tier."],

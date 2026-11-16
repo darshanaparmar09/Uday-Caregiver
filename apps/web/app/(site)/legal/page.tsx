@@ -1,5 +1,6 @@
+import { meta } from "@/lib/seo";
 import { PageHero, Section } from "@/components/Section";
-export const metadata = { title: "Privacy and terms" };
+export const metadata = meta("/legal");
 export default function Page() {
   return (<>
     <PageHero eyebrow="Legal" title="Privacy and terms" lead="Final versions are being prepared with counsel and will be published before the pilot takes any booking." />
