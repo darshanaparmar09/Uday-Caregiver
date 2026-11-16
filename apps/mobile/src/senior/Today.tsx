@@ -4,6 +4,8 @@ import { Button, Card, Screen, T } from "../shared/ui";
 import { C } from "../shared/theme";
 import { Medicines } from "./Medicines";
 import { useState } from "react";
+import { Companion } from "./Companion";
+import { tr } from "../shared/i18n";
 import type { Tab } from "./SeniorApp";
 
 const MOOD: Record<string, string> = { ok: "I am okay", help: "I need some help", medical: "I need medical help", lonely: "I feel lonely" };
@@ -11,9 +13,10 @@ const SLOT: Record<string, string> = { morning: "Morning", afternoon: "Afternoon
 
 /** Home: check in status and streak, SOS, your people, medicines, thought of the day, today's game. */
 export function Today({ h, reload, go, onCheckIn }: { h: any; reload: () => Promise<any>; go: (t: Tab) => void; onCheckIn: () => void }) {
-  const [meds, setMeds] = useState(false); const [sos, setSos] = useState(false); const [asked, setAsked] = useState(false);
+  const [meds, setMeds] = useState(false); const [sos, setSos] = useState(false); const [asked, setAsked] = useState(false); const [talk, setTalk] = useState(false);
   if (meds) return <Medicines onBack={() => { setMeds(false); reload(); }} />;
   const first = (h.name || "").split(" ")[0]; const hour = new Date().getHours(); const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  if (talk) return <Companion onBack={() => setTalk(false)} onSos={() => { setTalk(false); raiseSos(); }} />;
   async function raiseSos() { setSos(true); api("/api/sos", {}).catch(() => {}); Linking.openURL("tel:112").catch(() => {}); }
   const n = h.meds?.next;
   return (
@@ -26,7 +29,7 @@ export function Today({ h, reload, go, onCheckIn }: { h: any; reload: () => Prom
       {h.checkedInToday ? (
         <Card tone={h.lastStatus === "ok" ? "teal" : h.lastStatus === "lonely" ? "amber" : "coral"}>
           <T size={26} weight="bold">✓ Checked in today</T>
-          <T>"{MOOD[h.lastStatus] ?? "Checked in"}" at {new Date(h.lastAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}. Your family can see it.</T>
+          <T>{`"${tr(MOOD[h.lastStatus] ?? "Checked in")}" at ${new Date(h.lastAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}. Your family can see it.`}</T>
           <Button title="Change my answer" tone="outline" onPress={onCheckIn} />
         </Card>
       ) : <Button title="Check in now" sub="Tell your family you are well" tone="amber" onPress={onCheckIn} style={{ minHeight: 100 }} />}
@@ -56,6 +59,7 @@ export function Today({ h, reload, go, onCheckIn }: { h: any; reload: () => Prom
       {h.nextEvent && <Pressable accessibilityRole="button" onPress={() => go("groups")}><Card tone="teal"><T size={26} weight="bold">📅 {h.nextEvent.title}</T>
         <T>{new Date(h.nextEvent.starts_at).toLocaleString("en-IN", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })} · {h.nextEvent.place}</T></Card></Pressable>}
       {h.newNamastes > 0 && <Pressable accessibilityRole="button" onPress={() => go("groups")}><Card tone="amber"><T size={26} weight="bold">🙏 {h.newNamastes} new namaste{h.newNamastes > 1 ? "s" : ""}</T><T>Tap to see who greeted you.</T></Card></Pressable>}
+      <Button title="Talk to Uday" sub="Chat any time. Uday listens." tone="teal" onPress={() => setTalk(true)} />
       <Card tone="night"><T weight="semi" color={C.amber}>THOUGHT OF THE DAY</T><T size={28} weight="semi" color="#fff">{h.thought}</T></Card>
       {asked ? <Card tone="teal"><T size={26} weight="bold">The Uday team will call you</T><T>Usually within a few hours, between 9 AM and 7 PM.</T></Card>
         : <Button title="Talk to the Uday team" sub="We will call you back" tone="night" onPress={() => api("/api/senior/callback", { reason: "talk" }).then(() => setAsked(true)).catch(() => {})} />}

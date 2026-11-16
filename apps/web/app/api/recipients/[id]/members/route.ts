@@ -1,0 +1,10 @@
+export const dynamic = "force-dynamic";
+import { z } from "zod";
+import { currentUser, requireUser } from "@/lib/auth";
+import { handle, body } from "@/lib/http";
+import { members, invite, cancelInvite, removeMember, InviteIn } from "@/lib/family";
+type C = { params: { id: string } };
+const I = z.discriminatedUnion("action", [InviteIn.extend({ action: z.literal("invite") }), z.object({ action: z.literal("cancel"), inviteId: z.string().uuid() }), z.object({ action: z.literal("remove"), userId: z.string().uuid() })]);
+export const GET = handle(async (_r: Request, { params }: C) => members(await requireUser("family"), params.id));
+export const POST = handle(async (req: Request, { params }: C) => { const u = await requireUser("family"); const i = I.parse(await body(req));
+  if (i.action === "invite") return invite(u, params.id, i); if (i.action === "cancel") return cancelInvite(u, params.id, i.inviteId); return removeMember(u, params.id, i.userId); });

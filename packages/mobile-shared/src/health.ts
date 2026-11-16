@@ -11,12 +11,17 @@ import { api } from "./api";
  *            SleepAnalysis, BloodPressureSystolic/Diastolic, BodyMass.
  *   Android: add react-native-health-connect and expo-health-connect config plugin, request the
  *            same record types.
- * Then implement readStore() below. Everything after it (mapping, upload, dedupe) is done.
+ * Adapters are written in packages/mobile-shared/native-health (untested on a device). The device build
+ * installs the module, imports the adapter and calls registerHealthReader(). Upload and dedupe are done.
  */
 export type Sample = { kind: "pulse" | "spo2" | "steps" | "sleep_hours" | "bp_sys" | "bp_dia" | "weight_kg"; value: number; at: string };
 
-async function readStore(_since: Date): Promise<Sample[] | null> {
-  return null; // native module not installed yet
+type Reader = (since: Date) => Promise<Sample[]>;
+let reader: Reader | null = null;
+/** The device build registers a reader from packages/mobile-shared/native-health (ios.ts or android.ts). */
+export function registerHealthReader(r: Reader) { reader = r; }
+async function readStore(since: Date): Promise<Sample[] | null> {
+  return reader ? reader(since) : null; // null: native module not in this build
 }
 
 export async function syncHealth(device: string, since: Date): Promise<{ supported: boolean; saved?: number; reason?: string }> {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, inr, TYPE, DUR, TIER, STATUS } from "../api";
 import { RateCare } from "./RateCare";
+import { LiveMap, Chat } from "./BookingExtras";
 
 const STEPS = ["Requested", "Accepted", "On the way", "Arrived", "Care", "Done"];
 const IDX: Record<string, number> = { offered: 0, proposal: 0, accepted: 1, enroute: 2, arrived: 3, active: 4, completed: 5, closed: 5 };
@@ -51,7 +52,7 @@ export function BookingView({ id }: { id: string }) {
           <div><b className="text-ink">{b.proposal.display_name}</b><div className="text-sm text-muted">{TIER[b.proposal.tier]} · ★ {b.proposal.rating} · {b.proposal.experience_years} yrs · {b.proposal.area}</div><div className="text-sm">{b.proposal.skills.join(", ")}</div></div></div>
         <div className="mt-4 flex flex-wrap gap-3"><button className="btn" disabled={busy} onClick={() => act({ action: "approve" })}>Send request to {b.proposal.display_name.split(" ")[0]}</button><button className="btn-ghost" disabled={busy} onClick={() => act({ action: "reject" })}>No, cancel and release hold</button></div></div>}
       {b.status === "accepted" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">Confirmed</div><p className="mt-2">{first} is booked{b.daysDone ? " for the next shift" : ""}. {inr(b.paidPaise || b.fees.totalPaise)} {b.billing === "weekly" ? "paid for the first week" : "captured"}. The caregiver is paid one completed day at a time.</p></div>}
-      {b.status === "enroute" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">On the way</div><p className="mt-2">{first} has started travelling.</p></div>}
+      {b.status === "enroute" && <LiveMap id={id} name={first} />}
       {b.status === "arrived" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">Arrived · location checked</div><p className="mt-2">Check it is {first}{b.caregiver.photo ? " (photo above)" : ""}, then share this start code at the door.</p></div>}
       {b.status === "active" && !b.codes?.length && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">{b.away ? `${first}'s day off` : "Care in progress"}</div>
         <p className="mt-2">{b.away ? "The relief caregiver is covering today. Codes appear here when she arrives." : b.isLive ? `${first} closes each day with the care log. The end code appears on the last day.` : "The end code appears here during the shift."}</p></div>}
@@ -69,6 +70,7 @@ export function BookingView({ id }: { id: string }) {
       {b.extension?.status === "requested" && <div className="card border-orange-400 bg-orange-50"><div className="eyebrow">Extension requested</div><p className="mt-1">Waiting for {first} to confirm another {b.extension.days === 7 ? "week" : "month"}.</p></div>}
       {(b.status === "cancelled" || b.status === "released") && <div className="card"><div className="eyebrow text-muted">{s[1]}</div><p className="mt-2">{b.events.slice(-1)[0]?.message}</p>{b.refundPaise != null && <p className="mt-2 font-semibold text-ink">Refund {inr(b.refundPaise)}{b.cancelFeePaise ? ` · fee ${inr(b.cancelFeePaise)}` : ""}. Back to your payment method in 5 to 7 working days (gateway dependent).</p>}</div>}
 
+      {b.viewer === "family" && <Chat id={id} name={first} />}
       {!!b.logs?.length && <div className="card"><h2 className="text-lg font-bold">Shift log</h2><div className="mt-3 grid gap-3">{b.logs.slice().reverse().map((l: any, k: number) => (
         <div key={k} className="border-l-4 border-teal-500 pl-3 text-sm"><b className="text-ink">Day {l.day} · {new Date(l.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</b><div>{[l.checklist && `${Object.keys(l.checklist).length} care tasks done`, l.meal && "Meal given", l.meds && "Medicines given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</div>
         {l.vitals && <div>{[l.vitals.bpSys && `BP ${l.vitals.bpSys}/${l.vitals.bpDia}`, l.vitals.pulse && `Pulse ${l.vitals.pulse}`, l.vitals.tempC && `Temp ${l.vitals.tempC}°C`, l.vitals.pain != null && `Pain ${l.vitals.pain}/10`, l.vitals.appetite && `Appetite ${l.vitals.appetite}`, l.vitals.skinConcern && "Skin concern noted"].filter(Boolean).join(" · ")}</div>}
@@ -104,7 +106,8 @@ export function BookingView({ id }: { id: string }) {
       {panel === "invoice" && <div className="card grid gap-1 text-sm"><h2 className="mb-2 text-lg font-bold">Invoice {b.code.replace("UDY", "INV")}</h2>
         {[[`Care fee · ${inr(b.fees.ratePaise)} × ${b.days}`, b.fees.carePaise], ["Uday platform fee", b.fees.platformPaise], ["GST on platform fee", b.fees.gstPaise]].map(([t, v]) => <div key={t} className="flex justify-between"><span>{t}</span><b className="text-ink">{inr(v)}</b></div>)}
         <div className="mt-1 flex justify-between border-t border-line pt-2"><span className="font-semibold text-ink">Total</span><b className="font-display text-lg text-ink">{inr(b.fees.totalPaise)}</b></div>
-        <p className="note mt-2">GST invoice PDF is emailed once the GSTIN is registered.</p></div>}
+        <a className="btn-ghost mt-3 justify-self-start" href={`/api/bookings/${id}/invoice`} target="_blank" rel="noreferrer">Download PDF invoice</a>
+        <p className="note mt-2">Marked draft until Uday's GSTIN is registered. Tax treatment to be confirmed by the CA.</p></div>}
       {panel === "help" && <div className="card grid gap-3"><h2 className="text-lg font-bold">Get help with this booking</h2>
         <select className="input" value={cat} onChange={(e) => setCat(e.target.value)}>{["Caregiver is late or did not arrive", "Safety concern", "Care quality", "Caregiver conduct", "Payment or refund", "Change the care plan", "Something else"].map((c) => <option key={c}>{c}</option>)}</select>
         <textarea className="input min-h-[90px] py-3" value={txt} onChange={(e) => setTxt(e.target.value)} placeholder="Tell us more" />

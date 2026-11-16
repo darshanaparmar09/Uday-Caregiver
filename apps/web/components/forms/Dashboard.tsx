@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, inr, TYPE, DUR, STATUS } from "../api";
+import { InviteBanner } from "./FamilyTools";
 
 export function Dashboard() {
   const router = useRouter();
@@ -19,9 +20,10 @@ export function Dashboard() {
     <div className="grid gap-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><div className="eyebrow">My Uday</div><h1 className="mt-1 text-3xl font-extrabold">Namaste{me?.user?.name ? `, ${me.user.name.split(" ")[0]}` : ""}</h1></div>
-        <div className="flex gap-2"><Link href="/hire" className="btn">Hire a caregiver</Link><button onClick={logout} className="btn-ghost">Sign out</button></div>
+        <div className="flex gap-2"><Link href="/hire" className="btn">Hire a caregiver</Link><Link href="/app/account" className="btn-ghost">My account</Link><button onClick={logout} className="btn-ghost">Sign out</button></div>
       </div>
 
+      <InviteBanner />
       <Intros />
       <section>
         <div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-bold">Your parents</h2><Link href="/app/onboarding" className="text-sm font-semibold text-indigo-600">+ Add a person</Link></div>
@@ -38,6 +40,7 @@ export function Dashboard() {
               {!r.has_health && <Link className="text-indigo-600" href={`/app/health/${r.id}`}>Add health details (optional)</Link>}
               {r.has_health && <Link className="text-indigo-600" href={`/app/health/${r.id}`}>Health details</Link>}
               <Link className="text-indigo-600" href={`/app/readings/${r.id}`}>Readings and devices</Link>
+              <Link className="text-indigo-600" href={`/app/family/${r.id}`}>Family and check in</Link>
               {!today && <button className="text-indigo-600" disabled={busy === r.id} onClick={() => checkFor(r.id)}>I spoke to them today</button>}
             </div></div>); })}</div>}
       </section>

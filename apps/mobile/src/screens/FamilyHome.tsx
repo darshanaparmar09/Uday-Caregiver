@@ -1,20 +1,32 @@
 import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { api, API, countdown, inr, PLAN, READING, SOURCE, STATUS, TYPE } from "../shared/api";
-import { Button, Card, ErrorText, Screen, T } from "../shared/ui";
+import { Button, Card, ErrorText, Field, Screen, T, Chips } from "../shared/ui";
+import { registerForPush, onNotificationTap } from "../shared/push";
+import { Hire } from "../family/Hire";
+import { Onboard } from "../family/Onboard";
+import { Health } from "../family/Health";
 import { C } from "../shared/theme";
 
 export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }) {
   const [recips, setRecips] = useState<any[]>([]); const [bookings, setBookings] = useState<any[]>([]); const [open, setOpen] = useState<string | null>(null); const [readings, setReadings] = useState<any>(null);
+  const [view, setView] = useState<"home" | "hire" | "onboard">("home"); const [health, setHealth] = useState<any>(null); const [invites, setInvites] = useState<any[]>([]);
+  useEffect(() => { registerForPush(); api<any[]>("/api/invites").then(setInvites).catch(() => {});
+    return onNotificationTap((d) => { if (d?.bookingId) setOpen(d.bookingId); }); }, []);
   const load = useCallback(async () => { const [r, b] = await Promise.all([api<any[]>("/api/recipients"), api<any[]>("/api/bookings")]); setRecips(r); setBookings(b); }, []);
   useEffect(() => { load().catch(() => {}); const t = setInterval(() => load().catch(() => {}), 10000); return () => clearInterval(t); }, [load]);
   if (open) return <BookingDetail id={open} onBack={() => { setOpen(null); load(); }} />;
   if (readings) return <Readings r={readings} onBack={() => setReadings(null)} />;
+  if (health) return <Health r={health} onBack={() => setHealth(null)} />;
+  if (view === "hire") return <Hire onBack={() => setView("home")} onBooked={(id) => { setView("home"); setOpen(id); }} />;
+  if (view === "onboard") return <Onboard onBack={() => setView("home")} onDone={() => { setView("home"); load(); }} />;
   const live = bookings.filter((b) => !["closed", "cancelled", "released"].includes(b.status));
   return (
     <Screen>
       <T size={34} weight="bold">Namaste{me.user.name ? `, ${me.user.name.split(" ")[0]}` : ""}</T>
-      {!recips.length && <Card><T weight="semi">Add your parent's profile on the Uday website to start.</T><Button title="Open the website" onPress={() => Linking.openURL(API + "/app/onboarding")} /></Card>}
+      {invites.map((i) => <Card key={i.id} tone="amber"><T weight="semi">{i.inviter ?? "A family member"} invited you to help care for {i.senior}.</T>
+        <Button title="Join" tone="teal" onPress={() => api(`/api/invites/${i.id}`, { accept: true }).then(() => { setInvites(invites.filter((x) => x.id !== i.id)); load(); })} /></Card>)}
+      {!recips.length && <Card><T weight="semi">Start by adding your parent. It takes about five minutes.</T><Button title="Add your parent" onPress={() => setView("onboard")} /></Card>}
       {recips.map((r) => { const today = r.last_checkin && new Date(r.last_checkin.at).toDateString() === new Date().toDateString(); const help = today && ["help", "medical"].includes(r.last_checkin.status);
         return (<Card key={r.id} tone={help ? "coral" : today ? "teal" : "amber"}>
           <T size={28} weight="bold">{r.name}</T>
@@ -22,6 +34,7 @@ export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }
           {!today && <Button title="I spoke to them today" tone="teal" onPress={() => api("/api/checkins", { status: "ok", recipientId: r.id }).then(load)} />}
           <Week id={r.id} />
           <Button title="Readings and devices" tone="outline" onPress={() => setReadings(r)} />
+          <Button title="Health details" tone="outline" onPress={() => setHealth(r)} />
         </Card>); })}
       <T size={28} weight="bold" style={{ marginTop: 8 }}>Care bookings</T>
       {!live.length && <T color={C.inkSoft}>No active bookings.</T>}
@@ -33,7 +46,8 @@ export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }
             <T weight="semi" color={b.status === "proposal" ? C.amberDeep : C.teal}>{STATUS[b.status]}{b.status === "offered" ? ` · ${countdown(b.offer_expires_at)}` : ""}</T>
           </Card>
         </Pressable>))}
-      <Button title="Book care" onPress={() => Linking.openURL(API + "/hire")} />
+      <Button title="Hire a caregiver" onPress={() => setView("hire")} />
+      {!!recips.length && <Button title="Add another person" tone="outline" onPress={() => setView("onboard")} />}
       <Button title="Sign out" tone="outline" onPress={onSignOut} />
     </Screen>
   );
@@ -70,9 +84,34 @@ function BookingDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {["offered", "proposal", "accepted", "enroute"].includes(b.status) && !quote && <Button title="Cancel booking" tone="outline" onPress={() => api(`/api/bookings/${id}/quote`).then(setQuote).catch((e) => setErr(e.message))} />}
       {quote && <Card><T weight="bold">Cancel this booking?</T><T>Fee {inr(quote.feePaise)} · Refund {inr(quote.refundPaise)}</T><T color={C.inkSoft}>Free up to 4 hours before a shift, then 20% of one day of care.</T>
         <Button title="Yes, cancel" tone="night" busy={busy} onPress={() => act({ action: "cancel" })} /><Button title="Keep booking" tone="outline" onPress={() => setQuote(null)} /></Card>}
+      {["accepted", "enroute", "arrived", "active", "completed"].includes(b.status) && <FamilyChat id={id} name={first} />}
+      <HelpForm onSend={(cat, text) => act({ action: "ticket", category: cat, text })} busy={busy} />
       <ErrorText msg={err} />
     </Screen>
   );
+}
+
+function HelpForm({ onSend, busy }: { onSend: (cat: string, text: string) => void; busy: boolean }) {
+  const [open, setOpen] = useState(false); const [cat, setCat] = useState<string[]>([]); const [text, setText] = useState("");
+  const CATS = ["Caregiver is late or did not arrive", "Safety concern", "Care quality", "Payment or refund", "Something else"];
+  if (!open) return <Button title="Get help" tone="outline" onPress={() => setOpen(true)} />;
+  return (<Card><T size={24} weight="bold">Get help with this booking</T><Chips options={CATS} value={cat} multi={false} onChange={setCat} />
+    <Field label="Tell us more" value={text} onChangeText={setText} multiline style={{ minHeight: 90, textAlignVertical: "top", paddingTop: 12 }} />
+    <T color={C.coral} weight="semi">If anyone is in danger, call 112 first.</T>
+    <Button title="Send to Uday" busy={busy} onPress={() => { if (cat[0]) { onSend(cat[0], text); setOpen(false); setText(""); } }} /></Card>);
+}
+
+function FamilyChat({ id, name }: { id: string; name: string }) {
+  const [d, setD] = useState<any>(null); const [text, setText] = useState(""); const [err, setErr] = useState(""); const [note, setNote] = useState("");
+  const load = useCallback(() => api(`/api/bookings/${id}/messages`).then(setD).catch(() => {}), [id]);
+  useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, [load]);
+  if (!d?.open) return null;
+  return (<Card><T size={24} weight="bold">Messages with {name}</T>
+    {d.messages.slice(-8).map((m: any) => <View key={m.id} style={{ alignSelf: m.mine ? "flex-end" : "flex-start", maxWidth: "88%", backgroundColor: m.mine ? C.night : "#fff", borderRadius: 16, padding: 10 }}><T color={m.mine ? "#fff" : C.ink}>{m.body}</T></View>)}
+    <Field label="Message" value={text} onChangeText={setText} maxLength={500} />
+    <Button title="Send" tone="teal" onPress={() => api(`/api/bookings/${id}/messages`, { body: text }).then(() => { setText(""); setErr(""); load(); }).catch((e) => setErr(e.message))} />
+    <Button title={`Call ${name} through Uday`} tone="outline" onPress={() => api(`/api/bookings/${id}/call`, {}).then((r: any) => setNote(r.status === "simulated" ? "Test mode: your phone would ring and connect you." : "Your phone will ring now.")).catch((e) => setErr(e.message))} />
+    {note ? <T color={C.teal} weight="semi">{note}</T> : null}{err ? <T color={C.coral}>{err}</T> : null}</Card>);
 }
 
 /** Readings from caregivers, family and devices, plus wearable connections. */

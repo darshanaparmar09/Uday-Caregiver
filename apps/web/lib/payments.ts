@@ -27,6 +27,8 @@ export interface Gateway {
   /** Monthly charge for a facility listing plan. Returns the subscription reference. */
   subscribe(planId: string, amountPaise: number, reference: string): Promise<{ ref: string; status: "active" | "pending_customer"; checkoutUrl?: string }>;
   chargeRenewal(subscriptionRef: string, amountPaise: number): Promise<{ ok: boolean }>;
+  /** Checks the signature the checkout returns after the family pays. */
+  verifyPayment(orderId: string, paymentId: string, signature: string): boolean;
 }
 
 class MockGateway implements Gateway {
@@ -39,6 +41,7 @@ class MockGateway implements Gateway {
   async verifyBank(_a: string, _i: string, _h: string) { return { ref: "mock_fa_" + randomUUID().slice(0, 8), nameMatch: true }; }
   async subscribe(_p: string, amountPaise: number) { if (amountPaise <= 0) throw new Error("bad amount"); return { ref: "mock_sub_" + randomUUID().slice(0, 8), status: "active" as const }; }
   async chargeRenewal() { return { ok: true }; }
+  verifyPayment() { return true; }
   async payout(_ref: string, amountPaise: number) { if (amountPaise <= 0) throw new Error("bad amount"); return { ref: "mock_po_" + randomUUID().slice(0, 8), status: "paid" as const }; }
 }
 
@@ -70,7 +73,19 @@ class RazorpayGateway implements Gateway {
     const sub = await this.call("/subscriptions", { plan_id: process.env[`RAZORPAY_PLAN_${planId.toUpperCase()}`], total_count: 120, notes: { reference } });
     return { ref: sub.id as string, status: "pending_customer" as const, checkoutUrl: sub.short_url as string };
   }
-  async chargeRenewal() { return { ok: true }; /* Razorpay charges renewals itself and reports by webhook */ }
+  async chargeRenewal(tokenRef: string, amountPaise: number) {
+    // Weekly care: a recurring payment on the token saved at the first payment (UPI AutoPay or card mandate).
+    // tokenRef is "customerId:tokenId". Facility plans use Razorpay Subscriptions and are charged by Razorpay itself.
+    const [customer_id, token] = tokenRef.split(":");
+    if (!token) return { ok: true };
+    try { const o = await this.call("/orders", { amount: amountPaise, currency: "INR", payment_capture: 1 });
+      await this.call("/payments/create/recurring", { email: "care@uday.app", contact: "", amount: amountPaise, currency: "INR", order_id: o.id, customer_id, token, recurring: "1", description: "Uday weekly care" });
+      return { ok: true }; } catch { return { ok: false }; }
+  }
+  verifyPayment(orderId: string, paymentId: string, signature: string) {
+    const exp = createHmac("sha256", process.env.RAZORPAY_KEY_SECRET ?? "").update(`${orderId}|${paymentId}`).digest("hex");
+    return exp.length === signature.length && timingSafeEqual(Buffer.from(exp), Buffer.from(signature));
+  }
   async payout(bankRef: string, amountPaise: number, reference: string) {
     const p = await this.call("/payouts", { account_number: process.env.RAZORPAYX_ACCOUNT, fund_account_id: bankRef, amount: amountPaise, currency: "INR", mode: "IMPS", purpose: "payout", reference_id: reference });
     return { ref: p.id as string, status: "processing" as const };

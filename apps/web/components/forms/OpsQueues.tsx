@@ -98,3 +98,21 @@ export function OpsCare() {
     </div>
   );
 }
+
+/** Family side: partner leads (insurance, tablet), coupons, Uday Plus members. */
+export function OpsFamily() {
+  const [d, setD] = useState<any>(null); const [msg, setMsg] = useState(""); const [code, setCode] = useState(""); const [pct, setPct] = useState("20"); const [uses, setUses] = useState("");
+  const load = () => api("/api/ops/family").then(setD).catch(() => {}); useEffect(() => { load(); }, []);
+  async function go(body: any, done: string) { try { await api("/api/ops/family", { body }); setMsg(done); load(); } catch (e: any) { setMsg(e.message); } }
+  if (!d) return null;
+  return (
+    <div className="grid gap-6"><h2 className="text-2xl font-extrabold">Families: leads, coupons, Uday Plus</h2>{msg && <p role="status" className="rounded-lg bg-indigo-50 px-3 py-2 text-sm">{msg}</p>}
+      <div className="card"><h3 className="mb-3 font-bold">Partner leads ({d.leads.length})</h3>{d.leads.map((l: any) => <div key={l.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm">
+        <span><b className="text-ink">{l.kind}</b> · {l.name ?? "Family"}, {l.locality ?? ""}{l.note ? ` · "${l.note}"` : ""}</span><button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go({ action: "lead_done", id: l.id }, "Lead closed")}>Done</button></div>)}
+        <p className="note mt-1">Pass to the insurance or tablet partner once agreements are signed.</p></div>
+      <div className="card grid gap-3"><h3 className="font-bold">Coupons · Uday Plus members: {d.members}</h3>
+        {d.coupons.map((c: any) => <div key={c.code} className="text-sm">{c.code} · {c.fee_discount_bps / 100}% off the Uday fee · used {c.used}{c.max_uses ? ` of ${c.max_uses}` : ""}{c.valid_until ? ` · until ${String(c.valid_until).slice(0, 10)}` : ""}</div>)}
+        <div className="grid gap-2 sm:grid-cols-4"><input className="input" placeholder="CODE" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} /><input className="input" type="number" aria-label="Percent off the fee" value={pct} onChange={(e) => setPct(e.target.value)} />
+          <input className="input" type="number" placeholder="Max uses" value={uses} onChange={(e) => setUses(e.target.value)} /><button className="btn" disabled={!code} onClick={() => go({ action: "coupon", code, feeDiscountBps: Number(pct) * 100, maxUses: uses ? Number(uses) : undefined }, "Coupon created")}>Create</button></div>
+        <p className="note">Coupons lower only the Uday platform fee. Caregiver pay never changes.</p></div></div>);
+}

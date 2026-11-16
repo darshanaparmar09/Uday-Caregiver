@@ -29,6 +29,10 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
   }, []);
   useEffect(() => { load().catch(() => {}); const t = setInterval(() => load().catch(() => {}), offline ? 20000 : 8000); const c = setInterval(() => tick((n) => n + 1), 1000); return () => { clearInterval(t); clearInterval(c); }; }, [load, offline]);
   async function act(id: string, body: any) { setBusy(true); setErr(""); try { await api(`/api/bookings/${id}/action`, body); setCode(""); setDecline(null); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
+  // Share location with the family every minute while travelling.
+  useEffect(() => { if (active?.status !== "enroute") return; const send = async () => { const p = await where(); if (p.lat != null) api(`/api/bookings/${active.id}/location`, p).catch(() => {}); };
+    send(); const t = setInterval(send, 60000); return () => clearInterval(t); }, [active?.id, active?.status]);
+  const [chat, setChat] = useState(false);
   async function rAct(id: string, body: any) { setBusy(true); setErr(""); try { await api(`/api/relief/${id}`, body); setCode(""); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
   async function raiseSos() { setSos(true); const p = await where(); api("/api/sos", { bookingId: active?.id, ...p }).catch(() => {}); }
   const offers = online ? jobs.filter((j) => j.status === "offered") : [];
@@ -54,6 +58,7 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
             {o.care_need_label ? <T weight="bold" color={C.teal}>Care needed: {o.care_need_label}{o.care_need_note ? `. ${o.care_need_note}` : ""}</T> : null}
             <T>Starts {o.start_date} at {String(o.start_time).slice(0, 5)} · {o.locality}</T>
             <T weight="bold">You earn {inr(o.rate_paise)} a shift · {inr(o.care_paise)} total</T>
+            {o.family_verified ? <T weight="semi" color={C.teal}>✓ Family ID verified</T> : null}
             {decline === o.id ? <>{REASONS.map((r) => <Button key={r} title={r} tone="outline" busy={busy} onPress={() => act(o.id, { action: "decline", reason: r })} />)}<Button title="Back" tone="night" onPress={() => setDecline(null)} /></>
               : <><Button title="Accept" tone="teal" busy={busy} onPress={() => act(o.id, { action: "accept" })} /><Button title="Decline" tone="outline" onPress={() => setDecline(o.id)} /></>}
           </Card>))}
@@ -75,6 +80,9 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
             {active.status === "enroute" && <Button title="I have arrived" busy={busy} onPress={async () => act(active.id, { action: "arrive", ...(await where()) })} />}
             {active.status === "arrived" && <><Field label="Start code from the family" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
               <Button title="Start shift" tone="teal" busy={busy} onPress={() => act(active.id, { action: "start", code })} /></>}
+            {chat ? <ChatBox id={active.id} onClose={() => setChat(false)} /> : <View style={{ flexDirection: "row", gap: 10 }}>
+              <Button title="Message family" tone="outline" onPress={() => setChat(true)} style={{ flex: 1 }} />
+              <Button title="Call family" tone="outline" onPress={() => api(`/api/bookings/${active.id}/call`, {}).then((r: any) => setNote(r.status === "simulated" ? "Test mode: your phone would ring and connect you." : "Your phone will ring now.")).catch((e) => setErr(e.message))} style={{ flex: 1 }} /></View>}
             {active.extension?.status === "requested" && <Card tone="amber" style={{ padding: 14 }}><T weight="bold">The family wants you to continue for {active.extension.days === 7 ? "another week" : "another month"}</T>
               <Button title="Yes, I will continue" tone="teal" busy={busy} onPress={() => act(active.id, { action: "extension", accept: true })} /><Button title="No, I cannot" tone="outline" onPress={() => act(active.id, { action: "extension", accept: false })} /></Card>}
             {active.status === "active" && active.away && <Card tone="teal" style={{ padding: 14 }}><T size={26} weight="bold">Your day off</T>
@@ -125,4 +133,21 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
         <T size={26} weight="bold" color="#fff">SOS</T></Pressable>
     </View>
   );
+}
+
+/** Messages with the family. Numbers stay private; phone numbers and links are blocked. */
+function ChatBox({ id, onClose }: { id: string; onClose: () => void }) {
+  const [d, setD] = useState<any>(null); const [text, setText] = useState(""); const [err, setErr] = useState("");
+  const load = useCallback(() => api(`/api/bookings/${id}/messages`).then(setD).catch(() => {}), [id]);
+  useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, [load]);
+  return (
+    <Card tone="cream" style={{ padding: 14 }}>
+      <T weight="bold">Messages with the family</T>
+      {(d?.messages ?? []).slice(-8).map((m: any) => <View key={m.id} style={{ alignSelf: m.mine ? "flex-end" : "flex-start", maxWidth: "88%", backgroundColor: m.mine ? C.night : "#fff", borderRadius: 16, padding: 10 }}>
+        <T color={m.mine ? "#fff" : C.ink}>{m.body}</T></View>)}
+      <Field label="Your message" value={text} onChangeText={setText} maxLength={500} />
+      <Button title="Send" tone="teal" onPress={() => api(`/api/bookings/${id}/messages`, { body: text }).then(() => { setText(""); setErr(""); load(); }).catch((e) => setErr(e.message))} />
+      {err ? <T color={C.coral}>{err}</T> : null}
+      <Button title="Close messages" tone="outline" onPress={onClose} />
+    </Card>);
 }

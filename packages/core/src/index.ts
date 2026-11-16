@@ -34,11 +34,13 @@ export const POLICY = {
 
 export interface Fees { ratePaise: number; days: number; carePaise: number; platformPaise: number; gstPaise: number; totalPaise: number }
 
-export function fees(ratePaise: number, days: number, policy = POLICY): Fees {
+/** Fees. feeDiscountBps reduces only the Uday platform fee (coupons, Uday Plus); the caregiver's pay never changes. */
+export function fees(ratePaise: number, days: number, policy = POLICY, feeDiscountBps = 0): Fees {
   if (!Number.isInteger(ratePaise) || ratePaise <= 0) throw new Error("rate must be positive paise");
   if (!Number.isInteger(days) || days <= 0) throw new Error("days must be a positive integer");
   const carePaise = ratePaise * days;
-  const platformPaise = Math.round((carePaise * policy.platformFeeBps) / 10000);
+  const d = Math.max(0, Math.min(10000, feeDiscountBps));
+  const platformPaise = Math.round((carePaise * policy.platformFeeBps * (10000 - d)) / 1e8);
   const gstPaise = Math.round((platformPaise * policy.gstOnPlatformFeeBps) / 10000);
   return { ratePaise, days, carePaise, platformPaise, gstPaise, totalPaise: carePaise + platformPaise + gstPaise };
 }
@@ -377,10 +379,10 @@ export function postProblem(body: string): string | null {
 
 // ───────── long bookings ─────────
 /** Monthly and quarterly care is billed a week at a time. Each cycle is priced on its own days. */
-export function billingCycles(ratePaise: number, days: number, firstDay = 1, policy = POLICY) {
+export function billingCycles(ratePaise: number, days: number, firstDay = 1, policy = POLICY, feeDiscountBps = 0) {
   const out: { cycleNo: number; fromDay: number; toDay: number; care: number; platform: number; gst: number; amount: number }[] = [];
   for (let d = 0, k = 1; d < days; d += 7, k++) {
-    const n = Math.min(7, days - d); const f = fees(ratePaise, n, policy);
+    const n = Math.min(7, days - d); const f = fees(ratePaise, n, policy, feeDiscountBps);
     out.push({ cycleNo: k, fromDay: firstDay + d, toDay: firstDay + d + n - 1, care: f.carePaise, platform: f.platformPaise, gst: f.gstPaise, amount: f.totalPaise });
   }
   return out;
@@ -395,3 +397,7 @@ export function reliefDays(startDate: string, days: number, dayOff: number | nul
   return out;
 }
 export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+
+// ───────── membership and coupons ─────────
+/** Uday Plus for families. Price and benefits are assumptions to confirm. */
+export const PLUS = { name: "Uday Plus", pricePaise: 49900, feeDiscountBps: 2000, benefits: ["20% off the Uday platform fee on every booking", "Free cancellation at any time", "Replacement caregiver proposed within 4 hours"] } as const;

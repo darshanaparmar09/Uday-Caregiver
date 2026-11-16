@@ -1,6 +1,60 @@
 {
  "shots": [
   {
+   "title": "Uday app · senior mode in Hindi and Marathi, companion chat, tablet",
+   "wide": false,
+   "items": [
+    {
+     "src": "shots/lg01.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Home in Hindi"
+    },
+    {
+     "src": "shots/lg02.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Brain games in Hindi"
+    },
+    {
+     "src": "shots/lg03.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Settings in Hindi"
+    },
+    {
+     "src": "shots/lg04.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Home in Marathi"
+    },
+    {
+     "src": "shots/lg05.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Talk to Uday, replying in Marathi"
+    },
+    {
+     "src": "shots/lg06.webp",
+     "w": 390,
+     "h": 844,
+     "cap": "Health sync and partner interest cards"
+    },
+    {
+     "src": "shots/lg07.webp",
+     "w": 1180,
+     "h": 820,
+     "cap": "Tablet layout: side tabs, wider cards"
+    },
+    {
+     "src": "shots/lg08.webp",
+     "w": 1180,
+     "h": 820,
+     "cap": "Tablet layout: groups"
+    }
+   ]
+  },
+  {
    "title": "Uday app · senior mode (restored from the first builds)",
    "wide": false,
    "items": [
@@ -662,7 +716,7 @@
      "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Works in test mode. Needs an SMS provider to send real codes"
+     "notes": "Works in test mode. SMS adapters for MSG91 and Twilio built; needs your account"
     },
     {
      "id": "02",
@@ -739,20 +793,20 @@
      "module": "Health (optional)",
      "feature": "Prescription and report upload",
      "what": "Photo or PDF upload",
-     "status": "Pending",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Needs encrypted file storage"
+     "notes": "Upload, view and delete prescriptions and reports, stored encrypted"
     },
     {
      "id": "10",
      "module": "Identity (optional)",
      "feature": "Customer Aadhaar check",
      "what": "Voluntary check through KYC partner",
-     "status": "Pending",
+     "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Optional per your decision. Needs KYC partner"
+     "notes": "Screen and status built. Needs a KYC partner account to verify for real"
     },
     {
      "id": "11",
@@ -769,10 +823,10 @@
      "module": "Family",
      "feature": "Invite family members with roles",
      "what": "Owner, care manager, payer, viewer, local contact",
-     "status": "Partial",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Roles exist and are enforced. Invite screens not built"
+     "notes": "Invite by phone with a role, accept or decline, remove members"
     },
     {
      "id": "13",
@@ -819,10 +873,10 @@
      "module": "Hire",
      "feature": "Caregiver profile page",
      "what": "Full profile with reviews and calendar",
-     "status": "Pending",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": ""
+     "notes": "Public profile with photo, ratings by area, written reviews and a 30 day calendar"
     },
     {
      "id": "18",
@@ -842,7 +896,7 @@
      "status": "Partial",
      "phase": "Year 1, before launch",
      "owner": "Agency",
-     "notes": "Works with test payments. Real gateway to connect after quotes"
+     "notes": "Razorpay checkout, signature check and webhook built. Needs your live Razorpay keys"
     },
     {
      "id": "20",
@@ -922,7 +976,7 @@
      "status": "Partial",
      "phase": "Year 1, before launch",
      "owner": "Agency",
-     "notes": "GST invoice PDF pending CA and GSTIN"
+     "notes": "Invoice PDF built. GSTIN and CA review needed before real use"
     },
     {
      "id": "28",
@@ -939,40 +993,40 @@
      "module": "Booking",
      "feature": "Live location map",
      "what": "Caregiver travel on a map",
-     "status": "Pending",
+     "status": "Completed",
      "phase": "Year 2",
      "owner": "Agency",
-     "notes": "Optional for pilot"
+     "notes": "Live map while the caregiver is on the way (OpenStreetMap tiles; check their usage policy at scale)"
     },
     {
      "id": "30",
      "module": "Booking",
      "feature": "Masked calling and chat",
      "what": "Talk without sharing numbers",
-     "status": "Pending",
+     "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Needs a calling provider"
+     "notes": "Chat built. Masked calls built as an Exotel adapter; needs your Exotel account"
     },
     {
      "id": "31",
      "module": "Billing",
      "feature": "Membership and coupons",
      "what": "Backup guarantee plan, codes",
-     "status": "Pending",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": ""
+     "notes": "Uday Plus (Rs 499 a month, 20% off fees, free cancellation: assumptions) and coupons"
     },
     {
      "id": "32",
      "module": "Billing",
      "feature": "Recurring billing",
      "what": "Weekly or monthly auto debit for long plans",
-     "status": "Pending",
+     "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "UPI AutoPay or card mandate through gateway"
+     "notes": "Weekly renewals built. Automatic charges need Razorpay mandates on your account"
     },
     {
      "id": "33",
@@ -1032,7 +1086,7 @@
      "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Claude",
-     "notes": "Phone devices need the native health module; Withings needs its API; 6 devices marked to verify"
+     "notes": "Phone adapters written for Apple Health and Health Connect, untested on a device. Withings needs its API"
     },
     {
      "id": "39",
@@ -1072,7 +1126,7 @@
      "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Claude",
-     "notes": "Needs Razorpay mandates for automatic charges"
+     "notes": "Weekly billing runs. Automatic charges need Razorpay mandates"
     },
     {
      "id": "43",
@@ -1112,7 +1166,7 @@
      "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Claude",
-     "notes": "Video provider to choose"
+     "notes": "Intro call request and trial day built. Video room link needs a video provider"
     }
    ]
   },
@@ -1138,7 +1192,7 @@
      "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Works in test mode. Needs SMS provider"
+     "notes": "Works in test mode. Needs SMS provider account"
     },
     {
      "id": "03",
@@ -1188,17 +1242,17 @@
      "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Logic built (alert after 11 AM, assumption). Needs WhatsApp or push delivery"
+     "notes": "Alert built; SMS and WhatsApp adapters ready. Needs provider accounts"
     },
     {
      "id": "08",
      "module": "Alerts",
      "feature": "Morning reminder to senior",
      "what": "Notification to check in",
-     "status": "Pending",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Needs push notifications"
+     "notes": "Reminder sent at the senior's check in time if not checked in"
     },
     {
      "id": "09",
@@ -1215,20 +1269,20 @@
      "module": "Access",
      "feature": "Hindi and Marathi",
      "what": "Translated app",
-     "status": "Pending",
+     "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Translations needed"
+     "notes": "Every senior screen in Hindi and Marathi. Written by Claude: needs a native speaker review"
     },
     {
      "id": "11",
      "module": "Access",
      "feature": "Check in by phone call",
      "what": "For seniors without a smartphone",
-     "status": "Pending",
+     "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Needs a calling or voice provider"
+     "notes": "Daily call and keypad answer built as an Exotel voice adapter. Needs your Exotel account"
     },
     {
      "id": "12",
@@ -1238,7 +1292,7 @@
      "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Claude",
-     "notes": "Upload and dedupe done; native module needs a development build"
+     "notes": "Adapters written for Apple Health and Health Connect, untested. Needs a device build"
     },
     {
      "id": "13",
@@ -1335,30 +1389,30 @@
      "module": "Settings",
      "feature": "Check in time, language, be found",
      "what": "Reminder at chosen time",
-     "status": "Partial",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Claude",
-     "notes": "Hindi and Marathi screens to be translated"
+     "notes": "Language changes every screen at once"
     },
     {
      "id": "23",
      "module": "Companion",
      "feature": "AI companion chat (from first build)",
      "what": "Talk to Uday by chat or voice",
-     "status": "Pending",
+     "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Claude",
-     "notes": "Needs an AI provider and a safety review"
+     "notes": "Talk to Uday built. Danger words alert family. Replies use Claude when a key is set, scripted lines until then. Needs safety review"
     },
     {
      "id": "24",
      "module": "Extras",
      "feature": "Telehealth, insurance, Tablet Hub (from first build)",
      "what": "Partner led features",
-     "status": "Pending",
+     "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Claude",
-     "notes": "Need partners: doctors, insurers, tablet hardware"
+     "notes": "Insurance and Uday tablet interest buttons send leads to ops. Telehealth, insurer and tablet partners still needed"
     },
     {
      "id": "25",
@@ -1384,7 +1438,7 @@
      "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Needs SMS provider"
+     "notes": "Needs SMS provider account"
     },
     {
      "id": "02",
@@ -1471,40 +1525,40 @@
      "module": "Bookings",
      "feature": "Book care in the app",
      "what": "Native hire and checkout",
-     "status": "Partial",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Currently opens the website hire page"
+     "notes": "Hire inside the app: search, profile, dates, checkout"
     },
     {
      "id": "11",
      "module": "Profile",
      "feature": "Onboarding and health details in the app",
      "what": "Native forms",
-     "status": "Partial",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Currently done on the website"
+     "notes": "Four step add parent inside the app"
     },
     {
      "id": "12",
      "module": "Help",
      "feature": "Help requests from the app",
      "what": "Same as website",
-     "status": "Pending",
+     "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": ""
+     "notes": "Help requests from the app"
     },
     {
      "id": "13",
      "module": "Alerts",
      "feature": "Push notifications",
      "what": "Accepted, arrived, log, help, missed check in",
-     "status": "Pending",
+     "status": "Partial",
      "phase": "Year 1 pilot",
      "owner": "Agency",
-     "notes": "Needs push service setup"
+     "notes": "Push built with tap to open the right screen. Needs Expo push credentials in the store builds"
     },
     {
      "id": "14",

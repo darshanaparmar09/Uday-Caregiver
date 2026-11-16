@@ -178,8 +178,14 @@ export async function caregiverProfile(id: string) {
   const avg: Record<string, number> = {};
   for (const [k] of RATING_AREAS) { const v = reviews.map((r) => r.areas?.[k]).filter((x) => typeof x === "number"); if (v.length) avg[k] = Math.round((v.reduce((s, x) => s + x, 0) / v.length) * 10) / 10; }
   const done = await one<{ n: number }>("SELECT count(*)::int AS n FROM bookings WHERE caregiver_id=$1 AND status IN ('completed','closed')", [id]);
+  // Next 30 days: which dates are already taken (booked, leave or day off), so families can plan.
+  const today = new Date().toISOString().slice(0, 10);
+  const busy = await q<{ d: string }>(`SELECT DISTINCT d::date::text AS d FROM (
+      SELECT day AS d FROM caregiver_unavailable WHERE caregiver_id=$1 AND day BETWEEN $2::date AND $2::date + 29
+      UNION SELECT generate_series(GREATEST(start_date, $2::date), LEAST(start_date + days - 1, $2::date + 29), interval '1 day') FROM bookings
+        WHERE caregiver_id=$1 AND status IN ('offered','accepted','enroute','arrived','active') AND start_date <= $2::date + 29 AND start_date + days - 1 >= $2::date) x ORDER BY 1`, [id, today]);
   const { photo_status, ...rest } = c;
-  return { ...rest, photo: photoUrl(c.id, photo_status), completedBookings: done?.n ?? 0, areaAverages: avg,
+  return { ...rest, photo: photoUrl(c.id, photo_status), completedBookings: done?.n ?? 0, areaAverages: avg, busyDates: busy.map((b) => b.d), calendarFrom: today,
     reviews: reviews.map((r) => ({ overall: r.overall, tags: r.tags, text: r.public_text, month: new Date(r.created_at).toLocaleDateString("en-IN", { month: "long", year: "numeric" }), careType: r.care_type, days: r.days, familyCity: r.city })) };
 }
 export async function photo(id: string, viewer?: SessionUser | null) {

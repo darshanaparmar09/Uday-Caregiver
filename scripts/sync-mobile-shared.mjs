@@ -7,8 +7,8 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = join(root, "packages/mobile-shared/src");
 const APPS = {
-  "apps/mobile": ["api.ts", "theme.ts", "ui.tsx", "push.ts", "SignIn.tsx"],
-  "apps/caregiver": ["api.ts", "theme.ts", "ui.tsx", "push.ts", "offline.ts", "SignIn.tsx"],
+  "apps/mobile": ["api.ts", "theme.ts", "ui.tsx", "push.ts", "SignIn.tsx", "i18n.ts", "health.ts"],
+  "apps/caregiver": ["api.ts", "theme.ts", "ui.tsx", "push.ts", "offline.ts", "SignIn.tsx", "i18n.ts"],
 };
 const check = process.argv.includes("--check");
 let drift = 0;

@@ -1,6 +1,8 @@
 import { q } from "./db";
 import { TEST_MODE } from "./env";
 import { pushToUser, type PushMessage } from "./push";
+import { sendSmsAuto, sendWhatsApp } from "./providers";
+import { dec } from "./crypto";
 
 /**
  * Notifications. Every message is recorded in the notifications table; delivery goes through a provider.
@@ -10,13 +12,19 @@ import { pushToUser, type PushMessage } from "./push";
 export type Template =
   | "booking_requested" | "booking_offer" | "booking_accepted" | "booking_proposal" | "booking_released"
   | "caregiver_enroute" | "caregiver_arrived" | "shift_started" | "shift_log" | "shift_ended"
-  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event" | "day_closed" | "caregiver_back" | "extension_request" | "extension_accepted" | "extension_declined" | "shift_reminder" | "caregiver_late" | "relief_offer" | "relief_assigned" | "relief_unfilled" | "payment_failed" | "payment_taken" | "intro_request" | "intro_confirmed" | "intro_declined";
+  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event" | "day_closed" | "caregiver_back" | "extension_request" | "extension_accepted" | "extension_declined" | "shift_reminder" | "caregiver_late" | "relief_offer" | "relief_assigned" | "relief_unfilled" | "payment_failed" | "payment_taken" | "intro_request" | "intro_confirmed" | "intro_declined" | "new_message";
 
 export async function notify(userId: string | null, template: Template, payload: Record<string, unknown> = {}, channel: "push" | "whatsapp" | "sms" | "email" = "push") {
   await q("INSERT INTO notifications (user_id, channel, template, payload) VALUES ($1,$2,$3,$4)", [userId, channel, template, payload]);
   if (process.env.NOTIFY_LOG === "1") console.log(`[notify] ${channel} ${template} -> ${userId}`, payload);
   const m = PUSH_TEXT[template];
   if (userId && m) await pushToUser(userId, { ...m, data: { template, ...payload } }).catch((e) => console.error("push failed", e.message));
+  // Urgent family alerts also go by WhatsApp or SMS, so they reach phones without the app.
+  if (userId && m && (channel === "sms" || channel === "whatsapp")) {
+    const u = (await q<{ phone_enc: string }>("SELECT phone_enc FROM users WHERE id=$1", [userId]))[0]; const phone = u ? dec(u.phone_enc) : null;
+    if (phone) { const send = channel === "whatsapp" ? sendWhatsApp(phone, `uday_${template}`, []) : sendSmsAuto(phone, `Uday: ${m.title}. ${m.body}`);
+      await send.catch((e) => console.error(`${channel} failed`, e.message)); }
+  }
 }
 
 /** Short, plain messages. Urgent ones wake the phone with high priority. */
@@ -52,6 +60,7 @@ const PUSH_TEXT: Partial<Record<Template, PushMessage>> = {
   intro_request: { title: "A family wants to meet you", body: "Choose a time for a short video call." },
   intro_confirmed: { title: "Intro call confirmed", body: "Open Uday for the time and link." },
   intro_declined: { title: "Intro call not possible", body: "The caregiver cannot do these times. Try other times or another caregiver." },
+  new_message: { title: "New message", body: "Open Uday to read it." },
   checkin_missed: { title: "No check in yet", body: "Your parent has not checked in today.", urgent: true },
   vitals_alert: { title: "Check on your parent", body: "Today's readings were outside the usual range. Open Uday for details.", urgent: true },
   visit_requested: { title: "New visit request", body: "A family wants to visit. Open Uday to confirm." },
@@ -61,12 +70,5 @@ const PUSH_TEXT: Partial<Record<Template, PushMessage>> = {
 };
 
 export async function sendOtp(phoneE164: string, code: string) {
-  const provider = process.env.SMS_PROVIDER ?? "log";
-  if (provider === "log") {
-    if (!TEST_MODE) throw new Error("SMS_PROVIDER must be configured in production");
-    console.log(`[otp] ${phoneE164.slice(0, 3)}******${phoneE164.slice(-2)} code ${code}`);
-    return;
-  }
-  // Agency: implement the chosen SMS or WhatsApp OTP provider here (for example MSG91, Gupshup, Twilio Verify).
-  throw new Error(`SMS provider ${provider} not implemented`);
+  await sendSmsAuto(phoneE164, "", { otp: code });
 }
