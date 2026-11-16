@@ -48,10 +48,10 @@ export type Actor = "family" | "caregiver" | "system" | "ops";
 const T: Record<BookingStatus, Partial<Record<BookingStatus, Actor[]>>> = {
   offered:   { accepted: ["caregiver", "ops"], proposal: ["caregiver", "system", "ops"], released: ["system", "ops"], cancelled: ["family", "ops"] },
   proposal:  { offered: ["family", "ops"], released: ["family", "system", "ops"], cancelled: ["family", "ops"] },
-  accepted:  { enroute: ["caregiver"], proposal: ["caregiver", "ops"], cancelled: ["family", "ops"] },
-  enroute:   { arrived: ["caregiver"], cancelled: ["family", "ops"], proposal: ["ops"] },
+  accepted:  { enroute: ["caregiver"], proposal: ["caregiver", "family", "ops"], cancelled: ["family", "ops"] },
+  enroute:   { arrived: ["caregiver"], cancelled: ["family", "ops"], proposal: ["family", "caregiver", "ops"] },
   arrived:   { active: ["caregiver"], cancelled: ["ops"] },
-  active:    { accepted: ["caregiver", "system"], completed: ["caregiver", "system"] },
+  active:    { accepted: ["caregiver", "system"], completed: ["caregiver", "system"], proposal: ["family", "caregiver", "ops"] },
   completed: { closed: ["family", "system"] },
   closed: {}, cancelled: {}, released: {},
 };
@@ -374,3 +374,24 @@ export function postProblem(body: string): string | null {
   if (/(\d[\s-]?){10,}/.test(b)) return "Phone numbers are not allowed in groups, to keep everyone safe";
   return null;
 }
+
+// ───────── long bookings ─────────
+/** Monthly and quarterly care is billed a week at a time. Each cycle is priced on its own days. */
+export function billingCycles(ratePaise: number, days: number, firstDay = 1, policy = POLICY) {
+  const out: { cycleNo: number; fromDay: number; toDay: number; care: number; platform: number; gst: number; amount: number }[] = [];
+  for (let d = 0, k = 1; d < days; d += 7, k++) {
+    const n = Math.min(7, days - d); const f = fees(ratePaise, n, policy);
+    out.push({ cycleNo: k, fromDay: firstDay + d, toDay: firstDay + d + n - 1, care: f.carePaise, platform: f.platformPaise, gst: f.gstPaise, amount: f.totalPaise });
+  }
+  return out;
+}
+export const WEEKLY_BILLING_FROM_DAYS = 30;
+
+/** Day numbers (1 based) that fall on the weekly day off. Never the first or last day of the booking. */
+export function reliefDays(startDate: string, days: number, dayOff: number | null | undefined, fromDay = 2): { dayNo: number; date: string }[] {
+  if (dayOff == null) return [];
+  const out: { dayNo: number; date: string }[] = []; const base = Date.parse(startDate.slice(0, 10) + "T00:00:00Z");
+  for (let n = Math.max(2, fromDay); n < days; n++) { const d = new Date(base + (n - 1) * 864e5); if (d.getUTCDay() === dayOff) out.push({ dayNo: n, date: d.toISOString().slice(0, 10) }); }
+  return out;
+}
+export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;

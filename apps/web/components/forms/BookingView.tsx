@@ -12,6 +12,7 @@ function countdown(iso?: string) { if (!iso) return ""; const s = Math.max(0, Ma
 export function BookingView({ id }: { id: string }) {
   const [b, setB] = useState<any>(null); const [err, setErr] = useState(""); const [panel, setPanel] = useState<string | null>(null);
   const [quote, setQuote] = useState<any>(null); const [busy, setBusy] = useState(false); const [, tick] = useState(0);
+  const [reason, setReason] = useState(""); const [concern, setConcern] = useState("");
   const [date, setDate] = useState(""); const [cat, setCat] = useState("Caregiver is late or did not arrive"); const [txt, setTxt] = useState("");
   const load = useCallback(() => api(`/api/bookings/${id}`).then(setB).catch((e) => setErr(e.message)), [id]);
   useEffect(() => { load(); const a = setInterval(load, 5000); const t = setInterval(() => tick((n) => n + 1), 1000); return () => { clearInterval(a); clearInterval(t); }; }, [load]);
@@ -25,7 +26,8 @@ export function BookingView({ id }: { id: string }) {
       <Link href="/app" className="text-sm font-semibold text-indigo-600">← My Uday</Link>
       <div className="card">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-full bg-indigo-900 font-display font-bold text-orange-400">{b.caregiver.initials}</span>
+          <div className="flex items-center gap-3">{b.caregiver.photo ? <img src={b.caregiver.photo} alt={`Photo of ${b.caregiver.name}, checked by Uday`} className="h-14 w-14 rounded-full object-cover" />
+            : <span className="grid h-12 w-12 place-items-center rounded-full bg-indigo-900 font-display font-bold text-orange-400">{b.caregiver.initials}</span>}
             <div><h1 className="text-2xl font-extrabold">{b.caregiver.name}</h1><p className="text-sm text-muted">{TIER[b.tier]} · {b.code}</p></div></div>
           <span className={s[0]}>{s[1]}</span></div>
         {i !== undefined && <div className="mt-5"><div className="flex gap-1">{STEPS.map((_, k) => <div key={k} className={`h-1.5 flex-1 rounded-full ${k <= i ? "bg-teal-500" : "bg-line"}`} />)}</div>
@@ -35,7 +37,9 @@ export function BookingView({ id }: { id: string }) {
           <dt className="text-muted">Plan</dt><dd className="text-ink">{DUR[b.days]}{b.days > 1 ? ` · day ${Math.min(b.daysDone + 1, b.days)} of ${b.days}` : ""}</dd>
           <dt className="text-muted">Starts</dt><dd className="text-ink">{b.startDate} · {String(b.startTime).slice(0, 5)}</dd>
           <dt className="text-muted">For</dt><dd className="text-ink">{b.recipient.name}, {b.recipient.locality}</dd>
-          {b.careNeed && <><dt className="text-muted">Care needed</dt><dd className="text-ink">{b.careNeed.label}{b.careNeed.note ? `: ${b.careNeed.note}` : ""}</dd></>}</dl>
+          {b.careNeed && <><dt className="text-muted">Care needed</dt><dd className="text-ink">{b.careNeed.label}{b.careNeed.note ? `: ${b.careNeed.note}` : ""}</dd></>}
+          {b.dayOffName && <><dt className="text-muted">Day off</dt><dd className="text-ink">Every {b.dayOffName}, covered by a relief caregiver</dd></>}
+          {b.billing === "weekly" && <><dt className="text-muted">Billing</dt><dd className="text-ink">Weekly, charged two days before each week</dd></>}</dl>
         {!!b.homeCommitments?.length && <details className="mt-3 text-sm"><summary className="cursor-pointer font-semibold text-indigo-600">What you agreed to provide at home ({b.homeCommitments.length})</summary><ul className="mt-2 list-disc pl-5">{b.homeCommitments.map((h: any) => <li key={h.id}>{h.label}</li>)}</ul></details>}
       </div>
 
@@ -46,10 +50,23 @@ export function BookingView({ id }: { id: string }) {
         <div className="mt-4 flex items-center gap-3 rounded-xl bg-white p-3"><span className="grid h-11 w-11 place-items-center rounded-full bg-indigo-900 text-sm font-bold text-orange-400">{b.proposal.initials}</span>
           <div><b className="text-ink">{b.proposal.display_name}</b><div className="text-sm text-muted">{TIER[b.proposal.tier]} · ★ {b.proposal.rating} · {b.proposal.experience_years} yrs · {b.proposal.area}</div><div className="text-sm">{b.proposal.skills.join(", ")}</div></div></div>
         <div className="mt-4 flex flex-wrap gap-3"><button className="btn" disabled={busy} onClick={() => act({ action: "approve" })}>Send request to {b.proposal.display_name.split(" ")[0]}</button><button className="btn-ghost" disabled={busy} onClick={() => act({ action: "reject" })}>No, cancel and release hold</button></div></div>}
-      {b.status === "accepted" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">Confirmed</div><p className="mt-2">{first} is booked{b.daysDone ? " for the next shift" : ""}. {inr(b.fees.totalPaise)} captured. The caregiver is paid one completed shift at a time.</p></div>}
+      {b.status === "accepted" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">Confirmed</div><p className="mt-2">{first} is booked{b.daysDone ? " for the next shift" : ""}. {inr(b.paidPaise || b.fees.totalPaise)} {b.billing === "weekly" ? "paid for the first week" : "captured"}. The caregiver is paid one completed day at a time.</p></div>}
       {b.status === "enroute" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">On the way</div><p className="mt-2">{first} has started travelling.</p></div>}
-      {b.status === "arrived" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">Arrived · location checked</div><p className="mt-2">Share this start code with {first} only when they are at the door.</p><div className="mt-2 font-display text-5xl font-extrabold tracking-[.3em] text-ink">{b.startCode}</div></div>}
-      {b.status === "active" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">Care in progress</div><p className="mt-2">At the end of the shift, give this end code.</p><div className="mt-2 font-display text-5xl font-extrabold tracking-[.3em] text-ink">{b.endCode}</div></div>}
+      {b.status === "arrived" && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">Arrived · location checked</div><p className="mt-2">Check it is {first}{b.caregiver.photo ? " (photo above)" : ""}, then share this start code at the door.</p></div>}
+      {b.status === "active" && !b.codes?.length && <div className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">{b.away ? `${first}'s day off` : "Care in progress"}</div>
+        <p className="mt-2">{b.away ? "The relief caregiver is covering today. Codes appear here when she arrives." : b.isLive ? `${first} closes each day with the care log. The end code appears on the last day.` : "The end code appears here during the shift."}</p></div>}
+      {b.codes?.map((c: any) => <div key={c.kind} className="card border-teal-500 bg-teal-50"><div className="eyebrow text-teal-600">{c.label}</div>
+        <p className="mt-1 text-sm">{c.kind.includes("start") || c.kind === "return" ? "Share it only at the door." : "Share it when care for the day is complete."}</p><div className="mt-2 font-display text-5xl font-extrabold tracking-[.3em] text-ink">{c.code}</div></div>)}
+      {b.isLive && b.daysDone > 0 && !["completed", "closed", "cancelled", "released"].includes(b.status) && (() => { const d = b.daysDone; const done = b.dayChecks?.some((x: any) => x.day === d); return done ? null : (
+        <div className="card grid gap-3 border-orange-400 bg-orange-50"><div className="eyebrow">Day {d} of {b.days}</div><p>Was everything well with care yesterday? Read the log below.</p>
+          <div className="flex flex-wrap gap-2"><button className="btn" disabled={busy} onClick={() => act({ action: "day_check", day: d, ok: true })}>Yes, all well</button>
+            <button className="btn-ghost" disabled={busy} onClick={() => setPanel("concern")}>Something was wrong</button></div>
+          {panel === "concern" && <><textarea className="input min-h-[80px] py-3" value={concern} onChange={(e) => setConcern(e.target.value)} placeholder="What happened? The care manager will call you." />
+            <button className="btn justify-self-start" disabled={busy || !concern} onClick={() => act({ action: "day_check", day: d, ok: false, note: concern })}>Send to the care manager</button></>}</div>); })()}
+      {!!b.relief?.length && <div className="card"><h2 className="text-lg font-bold">Day off cover</h2><p className="note">{first} has a weekly day off. A relief caregiver of the same tier covers it.</p>
+        <div className="mt-2 grid gap-1 text-sm">{b.relief.map((r: any) => <div key={r.id} className="flex flex-wrap justify-between gap-2 border-t border-line py-1.5"><span>Day {r.dayNo} · {new Date(r.day + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}</span>
+          <span className="text-ink">{r.caregiver ? r.caregiver.name : { open: "Finding a relief caregiver", offered: "Asking a relief caregiver", covered: `${first} stays this day` }[r.status as string] ?? r.status}{r.status === "done" ? " ✓" : ""}</span></div>)}</div></div>}
+      {b.extension?.status === "requested" && <div className="card border-orange-400 bg-orange-50"><div className="eyebrow">Extension requested</div><p className="mt-1">Waiting for {first} to confirm another {b.extension.days === 7 ? "week" : "month"}.</p></div>}
       {(b.status === "cancelled" || b.status === "released") && <div className="card"><div className="eyebrow text-muted">{s[1]}</div><p className="mt-2">{b.events.slice(-1)[0]?.message}</p>{b.refundPaise != null && <p className="mt-2 font-semibold text-ink">Refund {inr(b.refundPaise)}{b.cancelFeePaise ? ` · fee ${inr(b.cancelFeePaise)}` : ""}. Back to your payment method in 5 to 7 working days (gateway dependent).</p>}</div>}
 
       {!!b.logs?.length && <div className="card"><h2 className="text-lg font-bold">Shift log</h2><div className="mt-3 grid gap-3">{b.logs.slice().reverse().map((l: any, k: number) => (
@@ -61,6 +78,9 @@ export function BookingView({ id }: { id: string }) {
       <div className="flex flex-wrap gap-2">
         {["offered", "proposal", "accepted", "enroute"].includes(b.status) && <button className="btn-ghost" onClick={() => open("cancel")}>Cancel booking</button>}
         {b.status === "accepted" && !b.daysDone && <button className="btn-ghost" onClick={() => open("resch")}>Reschedule</button>}
+        {["accepted", "enroute", "arrived", "active"].includes(b.status) && b.days - b.daysDone <= 7 && b.extension?.status !== "requested" && <button className="btn" onClick={() => setPanel(panel === "extend" ? null : "extend")}>Extend care</button>}
+        {["accepted", "enroute", "active"].includes(b.status) && <button className="btn-ghost" onClick={() => setPanel(panel === "replace" ? null : "replace")}>Ask for a different caregiver</button>}
+        {!!b.cycles?.length && <button className="btn-ghost" onClick={() => setPanel(panel === "billing" ? null : "billing")}>Weekly payments</button>}
         {b.status === "completed" && <button className="btn" onClick={() => setPanel("rate")}>Rate the care</button>}
         {!["offered", "proposal", "released"].includes(b.status) && <button className="btn-ghost" onClick={() => setPanel(panel === "invoice" ? null : "invoice")}>Invoice</button>}
         <button className="btn-ghost" onClick={() => setPanel(panel === "help" ? null : "help")}>Get help</button>
@@ -72,6 +92,14 @@ export function BookingView({ id }: { id: string }) {
         <div className="flex gap-2"><button className="inline-flex min-h-[48px] items-center rounded-xl border border-coral-500 px-5 font-semibold text-coral-600" disabled={busy} onClick={() => act({ action: "cancel" })}>Yes, cancel</button><button className="btn-ghost" onClick={() => setPanel(null)}>Keep booking</button></div></div>}
       {panel === "resch" && <div className="card grid gap-3"><h2 className="text-lg font-bold">Move the start date</h2><input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
         <p className="note">{quote?.feePaise ? `Inside 4 hours of the shift, so a ${inr(quote.feePaise)} fee applies.` : "Free to reschedule."}</p><button className="btn" disabled={busy} onClick={() => act({ action: "reschedule", startDate: date })}>Confirm new date</button></div>}
+      {panel === "extend" && <div className="card grid gap-3"><h2 className="text-lg font-bold">Continue care with {first}</h2><p className="note">{first} has 24 hours to confirm. The same daily rate applies{b.billing === "weekly" ? " and it is billed weekly" : " and is charged when she confirms"}.</p>
+        <div className="flex flex-wrap gap-2">{[[7, "Another week"], [30, "Another month"]].map(([d, t]) => <button key={d} className="btn" disabled={busy} onClick={() => act({ action: "extend", days: d })}>{t as string} · {inr(b.fees.ratePaise * (d as number))} + fees</button>)}</div></div>}
+      {panel === "replace" && <div className="card grid gap-3"><h2 className="text-lg font-bold">Ask for a different caregiver</h2>
+        <p className="note">Uday proposes a caregiver of the same tier for the remaining {b.days - b.daysDone} days. You approve first. The price stays the same and nothing is charged again.</p>
+        <select className="input" value={reason} onChange={(e) => setReason(e.target.value)}><option value="">Choose a reason (optional)</option>{["Language or communication", "Care quality", "Punctuality", "Personality fit", "Caregiver asked to stop", "Other"].map((r) => <option key={r}>{r}</option>)}</select>
+        <button className="btn justify-self-start" disabled={busy} onClick={() => act({ action: "replace", reason: reason || undefined })}>Find a replacement</button></div>}
+      {panel === "billing" && <div className="card text-sm"><h2 className="mb-2 text-lg font-bold">Weekly payments</h2>{b.cycles.map((c: any) => <div key={c.cycle_no} className="flex flex-wrap justify-between gap-2 border-t border-line py-1.5">
+        <span>Week {c.cycle_no} · days {c.from_day} to {c.to_day}</span><span className="text-ink">{inr(c.amount_paise)} · {{ paid: "Paid", held: "Held", due: `Due ${new Date(c.due_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`, failed: "Failed, retrying", cancelled: "Cancelled" }[c.status as string]}</span></div>)}</div>}
       {panel === "rate" && <div className="card"><RateCare bookingId={id} name={first} onDone={() => { setPanel(null); load(); }} /></div>}
       {panel === "invoice" && <div className="card grid gap-1 text-sm"><h2 className="mb-2 text-lg font-bold">Invoice {b.code.replace("UDY", "INV")}</h2>
         {[[`Care fee · ${inr(b.fees.ratePaise)} × ${b.days}`, b.fees.carePaise], ["Uday platform fee", b.fees.platformPaise], ["GST on platform fee", b.fees.gstPaise]].map(([t, v]) => <div key={t} className="flex justify-between"><span>{t}</span><b className="text-ink">{inr(v)}</b></div>)}

@@ -1,5 +1,5 @@
-import { Linking, Pressable, View } from "react-native";
-import { api } from "../shared/api";
+import { Image, Linking, Pressable, View } from "react-native";
+import { api, API } from "../shared/api";
 import { Button, Card, Screen, T } from "../shared/ui";
 import { C } from "../shared/theme";
 import { Medicines } from "./Medicines";
@@ -31,6 +31,12 @@ export function Today({ h, reload, go, onCheckIn }: { h: any; reload: () => Prom
         </Card>
       ) : <Button title="Check in now" sub="Tell your family you are well" tone="amber" onPress={onCheckIn} style={{ minHeight: 100 }} />}
 
+      {h.caregiver && <Card tone="teal"><View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}>
+          {h.caregiver.photo ? <Image source={{ uri: API + h.caregiver.photo }} style={{ width: 84, height: 84, borderRadius: 42 }} accessibilityLabel={`Photo of ${h.caregiver.name}`} />
+            : <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: C.night, alignItems: "center", justifyContent: "center" }}><T size={30} weight="bold" color={C.amber}>{h.caregiver.first[0]}</T></View>}
+          <View style={{ flex: 1 }}><T size={28} weight="bold">{h.caregiver.first} is {h.caregiver.status}</T>
+            <T>{h.caregiver.relief ? "Covering your regular caregiver's day off." : `Uday caregiver${h.caregiver.days > 1 ? `, day ${h.caregiver.day} of ${h.caregiver.days}` : ""}.`}</T></View></View>
+        <T color={C.inkSoft}>Open the door only to the person in this photo.</T></Card>}
       {sos ? <Card tone="coral"><T size={30} weight="bold">Emergency alert sent</T><T>Calling 112. Your family and the Uday team have been alerted.</T>
           <T>Stay where you are. Speak clearly when connected. If you can, unlock your front door.</T><Button title="I am safe now" tone="outline" onPress={() => setSos(false)} /></Card>
         : <Button title="SOS: I need help now" sub="Calls 112 and alerts your family" tone="coral" onPress={raiseSos} style={{ minHeight: 100 }} />}

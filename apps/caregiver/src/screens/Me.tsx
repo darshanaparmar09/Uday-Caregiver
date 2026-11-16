@@ -12,6 +12,7 @@ const ICON: Record<string, [string, string]> = { clear: ["✓", C.teal], submitt
 
 export function Me({ me, onSignOut, onStatus }: { me: any; onSignOut: () => void; onStatus: (s: string) => void }) {
   const [d, setD] = useState<any>(null); const [r, setR] = useState<any>(null); const [open, setOpen] = useState<number | null>(null); const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
+  const [photo, setPhoto] = useState<string>(me.caregiver?.photo_status ?? "none");
   const load = useCallback(async () => { const o = await api("/api/caregiver/onboarding"); setD(o); onStatus(o.status); if (o.status === "active") setR(await api("/api/caregiver/ratings")); }, [onStatus]);
   useEffect(() => { load().catch((e) => setErr(e.message)); }, [load]);
   async function run(fn: () => Promise<any>, done: string) { setBusy(true); setErr(""); setMsg(""); try { await fn(); setMsg(done); setOpen(null); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
@@ -24,6 +25,14 @@ export function Me({ me, onSignOut, onStatus }: { me: any; onSignOut: () => void
         : <Card tone="amber"><T weight="bold">Onboarding · {doneCount} of 15 steps done</T><T>Finish the steps marked for you. Uday completes the others.</T></Card>}
       {msg ? <Card tone="teal"><T weight="semi">{msg}</T></Card> : null}
       <ErrorText msg={err} />
+      <Card tone={photo === "verified" ? "teal" : "amber"}>
+        <T size={26} weight="bold">Profile photo</T>
+        <T>{{ none: "Add a clear photo of your face. Families see it before you arrive, so they know it is you.", pending: "Uploaded. Uday checks it against your ID.", verified: "✓ Checked by Uday. Families can see it.", rejected: "Uday could not match it to your ID. Please upload a new, clear photo." }[photo] ?? ""}</T>
+        {photo !== "verified" && <Button title={photo === "none" ? "Add photo" : "Upload a new photo"} tone="night" busy={busy} onPress={async () => {
+          const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], base64: true, quality: 0.6, allowsEditing: true, aspect: [1, 1] });
+          if (res.canceled || !res.assets[0]?.base64) return; const a = res.assets[0];
+          run(() => api("/api/caregiver/documents", { kind: "photo", base64: a.base64, mime: a.mimeType ?? "image/jpeg" }).then(() => setPhoto("pending")), "Photo uploaded. Uday will check it."); }} />}
+      </Card>
 
       {r && <Card>
         <T size={26} weight="bold">Your ratings</T>

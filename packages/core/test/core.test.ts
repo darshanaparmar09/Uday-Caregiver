@@ -79,3 +79,16 @@ test("checklist hides vitals below Tier 3", () => {
   assert.ok(!checklistFor(2).flatMap((s) => s.items).some((i) => i.id === "vitals"));
   assert.ok(checklistFor(3).flatMap((s) => s.items).some((i) => i.id === "vitals"));
 });
+
+import { billingCycles, reliefDays } from "../src/index.ts";
+test("weekly billing cycles add up and cover every day", () => {
+  const c = billingCycles(220000, 30);
+  assert.equal(c.length, 5); assert.deepEqual(c.map((x) => [x.fromDay, x.toDay]), [[1, 7], [8, 14], [15, 21], [22, 28], [29, 30]]);
+  assert.equal(c.reduce((s, x) => s + x.care, 0), 220000 * 30);
+});
+test("relief days fall on the day off, never first or last day", () => {
+  const r = reliefDays("2026-11-17", 30, 0); // 17 Nov 2026 is a Tuesday; Sundays
+  assert.deepEqual(r.map((x) => x.date), ["2026-11-22", "2026-11-29", "2026-12-06", "2026-12-13"]);
+  assert.deepEqual(r.map((x) => x.dayNo), [6, 13, 20, 27]);
+  assert.equal(reliefDays("2026-11-17", 30, null).length, 0);
+});

@@ -10,7 +10,7 @@ import { pushToUser, type PushMessage } from "./push";
 export type Template =
   | "booking_requested" | "booking_offer" | "booking_accepted" | "booking_proposal" | "booking_released"
   | "caregiver_enroute" | "caregiver_arrived" | "shift_started" | "shift_log" | "shift_ended"
-  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event";
+  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event" | "day_closed" | "caregiver_back" | "extension_request" | "extension_accepted" | "extension_declined" | "shift_reminder" | "caregiver_late" | "relief_offer" | "relief_assigned" | "relief_unfilled" | "payment_failed" | "payment_taken" | "intro_request" | "intro_confirmed" | "intro_declined";
 
 export async function notify(userId: string | null, template: Template, payload: Record<string, unknown> = {}, channel: "push" | "whatsapp" | "sms" | "email" = "push") {
   await q("INSERT INTO notifications (user_id, channel, template, payload) VALUES ($1,$2,$3,$4)", [userId, channel, template, payload]);
@@ -37,6 +37,21 @@ const PUSH_TEXT: Partial<Record<Template, PushMessage>> = {
   safety_report: { title: "Safety report", body: "Your parent reported fraud or a crime in Uday. Please call them.", urgent: true },
   namaste: { title: "Someone said namaste", body: "Open Uday to say namaste back." },
   senior_event: { title: "Your parent is going to an event", body: "They have signed up for an Uday community event." },
+  day_closed: { title: "Today's care is done", body: "Read the care log. Was everything well today?" },
+  caregiver_back: { title: "Your caregiver is back", body: "She is back after her day off." },
+  extension_request: { title: "Family wants you to continue", body: "Open Uday to accept or decline within 24 hours.", urgent: true },
+  extension_accepted: { title: "Care extended", body: "Your caregiver will continue. Open Uday for details." },
+  extension_declined: { title: "Caregiver cannot continue", body: "Uday can find another caregiver for you." },
+  shift_reminder: { title: "Your shift starts in one hour", body: "Tap Start travel when you leave." },
+  caregiver_late: { title: "Caregiver not arrived yet", body: "Uday is calling her now. You can ask for a replacement in the app.", urgent: true },
+  relief_offer: { title: "Relief day available", body: "Cover a live in caregiver's day off. Open Uday to accept.", urgent: true },
+  relief_assigned: { title: "Day off covered", body: "A relief caregiver will cover your caregiver's day off." },
+  relief_unfilled: { title: "Day off not covered", body: "We could not find a relief caregiver. Your regular caregiver stays, and Uday will call you." },
+  payment_failed: { title: "Payment did not go through", body: "Next week's care payment failed. Please update your payment in Uday.", urgent: true },
+  payment_taken: { title: "Weekly payment received", body: "Thank you. Next week's care is paid." },
+  intro_request: { title: "A family wants to meet you", body: "Choose a time for a short video call." },
+  intro_confirmed: { title: "Intro call confirmed", body: "Open Uday for the time and link." },
+  intro_declined: { title: "Intro call not possible", body: "The caregiver cannot do these times. Try other times or another caregiver." },
   checkin_missed: { title: "No check in yet", body: "Your parent has not checked in today.", urgent: true },
   vitals_alert: { title: "Check on your parent", body: "Today's readings were outside the usual range. Open Uday for details.", urgent: true },
   visit_requested: { title: "New visit request", body: "A family wants to visit. Open Uday to confirm." },

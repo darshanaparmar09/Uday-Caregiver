@@ -19,14 +19,17 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
   const [active, setActive] = useState<any>(null); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const [decline, setDecline] = useState<string | null>(null); const [code, setCode] = useState(""); 
   const [sos, setSos] = useState(false); const [, tick] = useState(0); const [offline, setOffline] = useState(false); const [queued, setQueued] = useState(0); const [note, setNote] = useState("");
+  const [relief, setRelief] = useState<any[]>([]); const [intros, setIntros] = useState<any[]>([]); const [stop, setStop] = useState(false);
   const load = useCallback(async () => {
     await flush().catch(() => 0); setQueued(await pending());
     const r = await cachedGet<any[]>("/api/bookings"); setOffline(r.offline); const j = r.data ?? []; setJobs(j);
     const a = j.find((x) => ["accepted", "enroute", "arrived", "active"].includes(x.status));
     setActive(a ? (await cachedGet(`/api/bookings/${a.id}`)).data : null);
+    setRelief((await cachedGet<any[]>("/api/relief")).data ?? []); setIntros((await cachedGet<any[]>("/api/intros")).data ?? []);
   }, []);
   useEffect(() => { load().catch(() => {}); const t = setInterval(() => load().catch(() => {}), offline ? 20000 : 8000); const c = setInterval(() => tick((n) => n + 1), 1000); return () => { clearInterval(t); clearInterval(c); }; }, [load, offline]);
   async function act(id: string, body: any) { setBusy(true); setErr(""); try { await api(`/api/bookings/${id}/action`, body); setCode(""); setDecline(null); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
+  async function rAct(id: string, body: any) { setBusy(true); setErr(""); try { await api(`/api/relief/${id}`, body); setCode(""); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
   async function raiseSos() { setSos(true); const p = await where(); api("/api/sos", { bookingId: active?.id, ...p }).catch(() => {}); }
   const offers = online ? jobs.filter((j) => j.status === "offered") : [];
 
@@ -72,14 +75,48 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
             {active.status === "enroute" && <Button title="I have arrived" busy={busy} onPress={async () => act(active.id, { action: "arrive", ...(await where()) })} />}
             {active.status === "arrived" && <><Field label="Start code from the family" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
               <Button title="Start shift" tone="teal" busy={busy} onPress={() => act(active.id, { action: "start", code })} /></>}
-            {active.status === "active" && <>
+            {active.extension?.status === "requested" && <Card tone="amber" style={{ padding: 14 }}><T weight="bold">The family wants you to continue for {active.extension.days === 7 ? "another week" : "another month"}</T>
+              <Button title="Yes, I will continue" tone="teal" busy={busy} onPress={() => act(active.id, { action: "extension", accept: true })} /><Button title="No, I cannot" tone="outline" onPress={() => act(active.id, { action: "extension", accept: false })} /></Card>}
+            {active.status === "active" && active.away && <Card tone="teal" style={{ padding: 14 }}><T size={26} weight="bold">Your day off</T>
+              <T>{(() => { const r = active.relief?.find((x: any) => x.dayNo === active.daysDone + 1 || x.dayNo === active.daysDone); return r?.caregiver ? `${r.caregiver.name} covers day ${r.dayNo}.` : "A relief caregiver covers today."; })()} When you are back, ask the family for the welcome back code.</T>
+              <Field label="Welcome back code" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
+              <Button title="I am back" tone="teal" busy={busy} onPress={() => act(active.id, { action: "return", code })} /></Card>}
+            {active.status === "active" && !active.away && <>
+              {active.isLive && <T weight="semi" color={C.teal}>Day {active.daysDone + 1} of {active.days}{active.dayOffName ? ` · day off every ${active.dayOffName}` : ""}</T>}
               <CareChecklist template={active.checklistTemplate ?? []} tier={active.tier} busy={busy} onSave={async (p) => { setBusy(true); setErr(""); try { const r = await sendOrQueue(`/api/bookings/${active.id}/action`, { action: "log", ...p });
                 setNote(r.queued ? "No signal. Care log saved on your phone and will send automatically." : "Care log saved. The family can see it."); setQueued(await pending()); if (!r.queued) await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }} />
               {note ? <T weight="semi" color={C.teal}>{note}</T> : null}
-              <Field label="End code from the family" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
-              <Button title="End shift" tone="teal" busy={busy} onPress={() => act(active.id, { action: "end", code })} /></>}
+              {active.isLive && active.daysDone + 1 < active.days
+                ? <Button title={`Close day ${active.daysDone + 1}`} sub="After saving today's care log" tone="teal" busy={busy} onPress={() => act(active.id, { action: "day_close" })} />
+                : <><Field label="End code from the family" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
+                  <Button title={active.isLive ? "End care (last day)" : "End shift"} tone="teal" busy={busy} onPress={() => act(active.id, { action: "end", code })} /></>}
+              {stop ? <Card tone="coral" style={{ padding: 14 }}><T weight="bold">Stop caring for this family?</T><T>Uday will find a replacement. Please stay until the family is safe.</T>
+                  <Button title="Yes, I cannot continue" tone="coral" busy={busy} onPress={() => act(active.id, { action: "cg_cancel", reason: "Caregiver cannot continue" })} /><Button title="No, go back" tone="outline" onPress={() => setStop(false)} /></Card>
+                : <Button title="I cannot continue" tone="outline" onPress={() => setStop(true)} />}</>}
           </Card>)}
-        {online && !offers.length && !active && <Card><T>No requests right now. New requests appear here with a countdown.</T></Card>}
+        {relief.map((r) => (
+          <Card key={r.id} tone={r.status === "offered" ? "amber" : "cream"}>
+            <T weight="bold" color={C.teal}>{r.status === "offered" ? "Relief day request" : "Relief day"}</T>
+            <T size={26} weight="semi">{new Date(r.day + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })} · from {r.startTime}</T>
+            <T>Cover {r.mainCaregiver}'s day off with {r.recipient}, {r.locality}.{r.careNeed ? ` Care needed: ${r.careNeed}.` : ""}</T>
+            <T weight="bold">You earn {inr(r.ratePaise)}</T>
+            {r.address && <T>{r.address}</T>}
+            {r.status === "offered" && <><Button title="Accept" tone="teal" busy={busy} onPress={() => rAct(r.id, { action: "accept" })} /><Button title="Decline" tone="outline" onPress={() => rAct(r.id, { action: "decline" })} /></>}
+            {r.status === "accepted" && (r.ready ? <Button title="I have arrived" busy={busy} onPress={() => rAct(r.id, { action: "arrive" })} /> : <T color={C.inkSoft}>The arrive button opens when the regular caregiver hands over.</T>)}
+            {r.status === "arrived" && <><Field label="Start code from the family" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
+              <Button title="Start relief day" tone="teal" busy={busy} onPress={() => rAct(r.id, { action: "start", code })} /></>}
+            {r.status === "active" && <>
+              <CareChecklist template={r.checklistTemplate ?? []} tier={Math.min(r.tier ?? 1, 2)} busy={busy} onSave={async (p: any) => { const { vitals, ...rest } = p; await rAct(r.id, { action: "log", mood: rest.mood ?? "Calm", meal: rest.meal, meds: rest.meds, note: rest.note, checklist: rest.checklist }); setNote("Care log saved."); }} />
+              <Field label="End code from the family" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
+              <Button title="End relief day" tone="teal" busy={busy} onPress={() => rAct(r.id, { action: "end", code })} /></>}
+          </Card>))}
+        {intros.filter((i) => i.status === "requested" || i.status === "confirmed").map((i) => (
+          <Card key={i.id} tone="cream"><T weight="bold" color={C.teal}>Intro call</T><T>{i.recipient_name}'s family, {i.locality}, wants a short video call before hiring you.{i.note ? ` "${i.note}"` : ""}</T>
+            {i.status === "requested" ? <>{i.slots.map((sl: string) => <Button key={sl} title={new Date(sl).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} tone="outline"
+                onPress={() => api(`/api/intros/${i.id}`, { action: "choose", slot: sl }).then(load).catch((e) => setErr(e.message))} />)}
+              <Button title="I cannot do these times" tone="night" onPress={() => api(`/api/intros/${i.id}`, { action: "decline" }).then(load)} /></>
+              : <T weight="semi">Confirmed: {new Date(i.chosen).toLocaleString("en-IN", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}. {i.room_url ? "Open the link from Uday at that time." : "Uday will call you to connect."}</T>}</Card>))}
+        {online && !offers.length && !active && !relief.length && <Card><T>No requests right now. New requests appear here with a countdown.</T></Card>}
         <ErrorText msg={err} />
         <View style={{ height: 96 }} />
       </Screen>

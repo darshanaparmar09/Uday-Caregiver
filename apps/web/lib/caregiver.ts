@@ -105,7 +105,9 @@ export async function uploadDocument(u: SessionUser, kind: string, base64: strin
   const health = kind === "fitness" || kind === "vaccination";
   let put;
   try { put = await putEncrypted(Buffer.from(base64, "base64"), mime, health ? "health" : "pii"); } catch (e: any) { throw new AppError(e.message); }
-  await q("INSERT INTO caregiver_documents (caregiver_id, kind, storage_key, file_key_enc, mime, bytes) VALUES ($1,$2,$3,$4,$5,$6)", [c.id, kind, put.storageKey, put.fileKeyEnc, mime, put.bytes]);
+  const doc = await one<{ id: string }>("INSERT INTO caregiver_documents (caregiver_id, kind, storage_key, file_key_enc, mime, bytes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id", [c.id, kind, put.storageKey, put.fileKeyEnc, mime, put.bytes]);
+  // Profile photo: Uday checks it against the identity document before families can see it.
+  if (kind === "photo") { await q("UPDATE caregivers SET photo_doc_id=$2, photo_status='pending' WHERE id=$1", [c.id, doc!.id]); return { ok: true, photo: "pending" }; }
   const stage = health ? 9 : 8;
   const cur = await one<any>("SELECT status FROM onboarding_steps WHERE caregiver_id=$1 AND stage=$2", [c.id, stage]);
   if (cur?.status !== "clear") await setStage(c.id, stage, "submitted", u.id, "Waiting for Uday to check");

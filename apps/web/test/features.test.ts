@@ -25,7 +25,7 @@ async function family() {
 test("booking needs a care need and every home commitment", async () => {
   const { fam, rid } = await family();
   const cg = (await call(null, "/api/caregivers?type=live&tier=1")).j[0];
-  const base = { recipientId: rid, caregiverId: cg.id, careType: "live", days: 7, startDate: day(40), startTime: "09:00", method: "UPI" };
+  const base = { recipientId: rid, caregiverId: cg.id, careType: "live", days: 7, startDate: day(40), startTime: "09:00", method: "UPI", dayOff: 0 };
   assert.equal((await call(fam, "/api/bookings", { ...base, careNeed: "nonsense", homeCommitments: LIVE_HC })).status, 400);
   assert.equal((await call(fam, "/api/bookings", { ...base, careNeed: "other", homeCommitments: LIVE_HC })).status, 400, "other needs a note");
   const miss = await call(fam, "/api/bookings", { ...base, careNeed: "post_op", homeCommitments: DAY_HC });

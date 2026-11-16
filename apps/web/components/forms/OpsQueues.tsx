@@ -66,3 +66,35 @@ export function OpsCommunity() {
     </div>
   );
 }
+
+/** Care operations: relief cover for day offs, late caregivers, failed weekly payments, photos to check, intro calls to connect. */
+export function OpsCare() {
+  const [d, setD] = useState<any>(null); const [msg, setMsg] = useState("");
+  const load = () => api("/api/ops/care").then(setD).catch(() => {});
+  useEffect(() => { load(); }, []);
+  async function go(body: any, done: string) { try { await api("/api/ops/care", { body }); setMsg(done); load(); } catch (e: any) { setMsg(e.message); } }
+  if (!d) return null;
+  const Row = ({ children }: { children: React.ReactNode }) => <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm">{children}</div>;
+  return (
+    <div className="grid gap-6">
+      <h2 className="text-2xl font-extrabold">Care operations</h2>
+      {msg && <p role="status" className="rounded-lg bg-indigo-50 px-3 py-2 text-sm">{msg}</p>}
+      <div className="card"><h3 className="mb-3 font-bold">Caregivers not arrived ({d.late.length})</h3>
+        {d.late.map((l: any) => <Row key={l.code}><span><b className="text-ink">{l.display_name}</b> for {l.recipient_name} · {l.code} · {new Date(l.created_at).toLocaleTimeString("en-IN")}</span><span className="pill-wait">Urgent</span></Row>)}
+        <p className="note mt-1">Call the caregiver. If she cannot come, the family can ask for a replacement from the booking.</p></div>
+      <div className="card"><h3 className="mb-3 font-bold">Day off cover in the next 7 days ({d.relief.length})</h3>
+        {d.relief.map((r: any) => <Row key={r.id}><span><b className="text-ink">{new Date(r.day + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}</b> · {r.recipient_name}, {r.locality} · {r.main_name}'s day off · {r.relief_name ? `${r.relief_name} (${r.status})` : r.status}</span>
+          <button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go({ action: "cover", id: r.id }, "Regular caregiver covers this day")}>Regular caregiver covers</button></Row>)}
+        <p className="note mt-1">If nobody accepts, the regular caregiver stays that day. Decide her extra day allowance.</p></div>
+      <div className="card"><h3 className="mb-3 font-bold">Weekly payments failed ({d.billing.length})</h3>
+        {d.billing.map((b: any) => <Row key={b.booking_id + b.cycle_no}><span><b className="text-ink">{b.code}</b> · {b.recipient_name} · week {b.cycle_no} · ₹{Math.round(b.amount_paise / 100).toLocaleString("en-IN")} · {b.attempts} attempts</span></Row>)}
+        <p className="note mt-1">Retries every 24 hours. Call the family; care continues while you sort it out.</p></div>
+      <div className="card"><h3 className="mb-3 font-bold">Photos to check ({d.photos.length})</h3>
+        {d.photos.map((p: any) => <Row key={p.id}><span className="flex items-center gap-3"><img src={`/api/caregivers/${p.id}/photo`} alt="" className="h-12 w-12 rounded-full object-cover" /><b className="text-ink">{p.display_name}</b></span>
+          <span className="flex gap-2"><button className="btn min-h-[40px] px-3 text-sm" onClick={() => go({ action: "photo", caregiverId: p.id, verified: true }, "Photo verified")}>Matches ID</button><button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go({ action: "photo", caregiverId: p.id, verified: false }, "Photo rejected")}>Reject</button></span></Row>)}</div>
+      <div className="card"><h3 className="mb-3 font-bold">Intro calls ({d.introCalls.length})</h3>
+        {d.introCalls.map((i: any) => <Row key={i.id}><span><b className="text-ink">{i.display_name}</b> with {i.recipient_name}'s family · {new Date(i.chosen).toLocaleString("en-IN")}{i.room_url ? "" : " · connect by phone"}</span>
+          <button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go({ action: "intro_done", id: i.id }, "Marked done")}>Done</button></Row>)}</div>
+    </div>
+  );
+}

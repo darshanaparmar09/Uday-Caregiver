@@ -22,6 +22,7 @@ export function Dashboard() {
         <div className="flex gap-2"><Link href="/hire" className="btn">Hire a caregiver</Link><button onClick={logout} className="btn-ghost">Sign out</button></div>
       </div>
 
+      <Intros />
       <section>
         <div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-bold">Your parents</h2><Link href="/app/onboarding" className="text-sm font-semibold text-indigo-600">+ Add a person</Link></div>
         {!recips.length ? (
@@ -68,4 +69,14 @@ function Week({ id }: { id: string }) {
       <span title={d.status ? MOOD[d.status] : "No check in"} className={`h-6 w-6 rounded-full border-2 border-indigo-950 ${d.status ? DOT[d.status] : "bg-white"}`} />
       {new Date(d.day + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short" })}</div>)}</div>
     <p className="mt-2 text-sm">{w.streak} day streak{w.meds.total ? ` · medicines ${w.meds.taken} of ${w.meds.total} today` : ""} · brain games {w.gameDays} of 7 days{w.groups ? ` · ${w.groups} group${w.groups > 1 ? "s" : ""}` : ""}</p></div>);
+}
+
+/** Intro calls the family asked for before hiring. */
+function Intros() {
+  const [list, setList] = useState<any[]>([]);
+  useEffect(() => { api<any[]>("/api/intros").then((l) => setList(l.filter((x) => ["requested", "confirmed"].includes(x.status)))).catch(() => {}); }, []);
+  if (!list.length) return null;
+  return (<section className="card"><h2 className="text-lg font-bold">Intro calls</h2>{list.map((i) => <div key={i.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm">
+    <span><b className="text-ink">{i.display_name}</b> · {i.status === "confirmed" ? new Date(i.chosen).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "waiting for her to pick a time"}</span>
+    {i.status === "confirmed" && (i.room_url ? <a className="btn min-h-[40px] px-4 text-sm" href={i.room_url} target="_blank" rel="noreferrer">Join video call</a> : <span className="text-muted">Uday will call you both at this time</span>)}</div>)}</section>);
 }

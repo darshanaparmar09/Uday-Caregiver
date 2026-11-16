@@ -57,8 +57,11 @@ function BookingDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {b.status === "proposal" && b.proposal && <Card tone="amber"><T weight="semi">{first} cannot come. Uday suggests:</T><T size={28} weight="bold">{b.proposal.display_name}</T><T>Same tier · ★ {b.proposal.rating} · {b.proposal.area}</T>
         <Button title={`Yes, send to ${b.proposal.display_name.split(" ")[0]}`} tone="teal" busy={busy} onPress={() => act({ action: "approve" })} />
         <Button title="No, cancel and release hold" tone="outline" busy={busy} onPress={() => act({ action: "reject" })} /></Card>}
-      {b.status === "arrived" && <Card tone="teal"><T weight="semi">{first} is at the door. Give this start code:</T><T size={64} weight="bold" center style={{ letterSpacing: 16 }}>{b.startCode}</T></Card>}
-      {b.status === "active" && <Card tone="teal"><T weight="semi">Care in progress. At the end, give this end code:</T><T size={64} weight="bold" center style={{ letterSpacing: 16 }}>{b.endCode}</T></Card>}
+      {(b.codes ?? []).map((c: any) => <Card key={c.kind} tone="teal"><T weight="semi">{c.label}</T><T size={64} weight="bold" center style={{ letterSpacing: 16 }}>{c.code}</T></Card>)}
+      {b.status === "active" && !b.codes?.length && <Card tone="teal"><T weight="semi">{b.away ? `${first}'s day off. The relief caregiver is covering.` : b.isLive ? `Care in progress. ${first} closes each day with the care log.` : "Care in progress."}</T></Card>}
+      {b.isLive && b.daysDone > 0 && !b.dayChecks?.some((x: any) => x.day === b.daysDone) && b.status === "active" && <Card tone="amber"><T weight="semi">Day {b.daysDone}: was everything well?</T>
+        <Button title="Yes, all well" tone="teal" busy={busy} onPress={() => act({ action: "day_check", day: b.daysDone, ok: true })} />
+        <Button title="Something was wrong" tone="outline" onPress={() => act({ action: "day_check", day: b.daysDone, ok: false, note: "Flagged from the app" })} /></Card>}
       {b.logs?.slice(-3).reverse().map((l: any, i: number) => <Card key={i}><T weight="semi">Shift log · day {l.day}</T><T>{[l.checklist && `${Object.keys(l.checklist).length} care tasks done`, l.meal && "Meal given", l.meds && "Medicines given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</T>
         {l.vitals ? <T>{[l.vitals.bpSys && `BP ${l.vitals.bpSys}/${l.vitals.bpDia}`, l.vitals.pulse && `Pulse ${l.vitals.pulse}`, l.vitals.tempC && `Temp ${l.vitals.tempC}°C`, l.vitals.pain != null && `Pain ${l.vitals.pain}/10`].filter(Boolean).join(" · ")}</T> : null}
         {l.flags?.length ? <Card tone="coral" style={{ padding: 12 }}><T weight="semi">Outside usual range: {l.flags.join(", ")}</T></Card> : null}{l.note ? <T color={C.inkSoft}>{l.note}</T> : null}</Card>)}

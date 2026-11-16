@@ -44,11 +44,22 @@ export async function home(u: SessionUser) {
   const namastes = await one<{ n: number }>("SELECT count(*)::int AS n FROM namastes WHERE to_user=$1 AND seen_at IS NULL", [u.id]);
   const next = await one<any>(`SELECT e.id, e.title, e.place, e.starts_at FROM community_events e JOIN event_rsvps v ON v.event_id=e.id AND v.user_id=$1
     WHERE e.status='live' AND e.starts_at > now() ORDER BY e.starts_at LIMIT 1`, [u.id]);
+  // Who is caring for me today: the booked caregiver, or the relief caregiver on her day off.
+  const bk = await one<any>(`SELECT b.id, b.status, b.care_type, b.days, b.days_done, b.away, c.id AS cg_id, c.display_name, c.tier, c.photo_status FROM bookings b JOIN caregivers c ON c.id=b.caregiver_id
+    WHERE b.care_recipient_id=$1 AND b.status IN ('accepted','enroute','arrived','active') AND b.start_date <= current_date + 1 ORDER BY b.start_date LIMIT 1`, [r.id]);
+  let caregiver: any = null;
+  if (bk) {
+    const rel = bk.away ? await one<any>("SELECT c.id, c.display_name, c.tier, c.photo_status, r.status FROM relief_shifts r JOIN caregivers c ON c.id=r.caregiver_id WHERE r.booking_id=$1 AND r.day_no=$2", [bk.id, bk.days_done + 1]) : null;
+    const who = rel ?? { id: bk.cg_id, display_name: bk.display_name, tier: bk.tier, photo_status: bk.photo_status };
+    const st = rel ? ({ accepted: "coming today", arrived: "at your door", active: "with you today" } as any)[rel.status] ?? "coming today" : ({ accepted: "coming", enroute: "on the way", arrived: "at your door", active: "with you today" } as any)[bk.status];
+    caregiver = { name: who.display_name, first: who.display_name.split(" ")[0], tier: who.tier, relief: !!rel, status: st, photo: who.photo_status === "verified" ? `/api/caregivers/${who.id}/photo` : null,
+      day: Math.min(bk.days_done + 1, bk.days), days: bk.days, careType: bk.care_type };
+  }
   const dayOfYear = Math.floor((Date.parse(today) - Date.parse(today.slice(0, 4) + "-01-01")) / 864e5);
   return { linked: true, name: r.name, locality: r.locality, checkinBy: String(r.checkin_by).slice(0, 5), checkedInToday, lastStatus: last?.status ?? null, lastAt: last?.at ?? null,
     streak: await streak(r.id), contacts, thought: THOUGHTS[dayOfYear % THOUGHTS.length],
     meds: { due: m.items.filter((i) => !i.taken).length, total: m.items.length, next: m.items.find((i) => !i.taken) ?? null },
-    gamesToday: played.map((p) => p.game), newNamastes: namastes?.n ?? 0, nextEvent: next };
+    gamesToday: played.map((p) => p.game), caregiver, newNamastes: namastes?.n ?? 0, nextEvent: next };
 }
 
 // ───────── medicines ─────────
