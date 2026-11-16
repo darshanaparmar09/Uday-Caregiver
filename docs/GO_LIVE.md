@@ -21,6 +21,8 @@ What is built, and what must be finished or connected before real families and r
 
 - Senior mode restored from the first builds: four check in moods, home with streak and SOS, medicines taken, three brain games, interest groups, events, people nearby (opt in), cyber fraud and crime help, call back requests, check in reminder at the senior's chosen time.
 
+- Care operations: live in days (start code day 1, daily close, end code last day), weekly day off with relief caregivers, weekly billing for monthly and quarterly care, Extend care, Ask for a different caregiver, no show alerts (cron), verified caregiver photos, public reviews, intro calls and trial days, senior sees today's caregiver.
+
 ## Must be connected before launch
 
 | Item | Owner | Where |
@@ -53,3 +55,7 @@ What is built, and what must be finished or connected before real families and r
 - Facility licence check: ops confirms the licence with the issuing authority before a listing goes live.
 - Senior community: posts with phone numbers or links are blocked; two reports hide a post. Uday ops must review reported posts daily.
 - Not built yet from the first prototype: AI companion chat, telehealth, insurance, Tablet Hub (each needs a partner or provider decision).
+- Weekly billing needs Razorpay UPI Autopay or card mandates so weekly charges run without the family. Until then the mock gateway charges automatically.
+- Intro calls: set `VIDEO_ROOM_URL_TEMPLATE` (for example a Zoom or Meet link with {room}); without it ops connects both by phone.
+- Decision: extra allowance when the regular caregiver covers her own day off because no relief caregiver accepted.
+- Relief offers go out 7 days ahead; the cron must run every minute (default job) for relief, billing and no show alerts.

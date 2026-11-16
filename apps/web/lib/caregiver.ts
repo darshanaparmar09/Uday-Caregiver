@@ -189,10 +189,11 @@ export async function earnings(u: SessionUser) {
   const c = await cgFor(u);
   const acct = `caregiver:${c.id}`;
   const bal = await one<{ earned: number; paid: number }>("SELECT COALESCE(sum(credit_paise),0)::int AS earned, COALESCE(sum(debit_paise),0)::int AS paid FROM ledger_entries WHERE account=$1", [acct]);
-  const week = await one<{ n: number; p: number }>(`SELECT count(*)::int AS n, COALESCE(sum(credit_paise),0)::int AS p FROM ledger_entries WHERE account=$1 AND reason LIKE 'shift % pay' AND at >= date_trunc('week', now())`, [acct]);
+  const week = await one<{ n: number; p: number }>(`SELECT count(*)::int AS n, COALESCE(sum(credit_paise),0)::int AS p FROM ledger_entries WHERE account=$1 AND reason ~ '^(shift|day|relief day) [0-9]+ pay$' AND at >= date_trunc('week', now())`, [acct]);
   const lines = await q("SELECT reason, credit_paise, debit_paise, at FROM ledger_entries WHERE account=$1 ORDER BY at DESC LIMIT 30", [acct]);
   const payouts = await q("SELECT amount_paise, status, bank_last4, period_end, created_at, paid_at FROM payouts WHERE caregiver_id=$1 ORDER BY created_at DESC LIMIT 20", [c.id]);
-  const shifts = await one<{ n: number }>("SELECT count(*)::int AS n FROM attendance a JOIN bookings b ON b.id=a.booking_id WHERE b.caregiver_id=$1 AND a.kind='end'", [c.id]);
+  // Every paid day counts: day shifts, live in days and relief days.
+  const shifts = await one<{ n: number }>("SELECT count(*)::int AS n FROM ledger_entries WHERE account=$1 AND reason ~ '^(shift|day|relief day) [0-9]+ pay$'", [acct]);
   return { balancePaise: (bal?.earned ?? 0) - (bal?.paid ?? 0), lifetimePaise: bal?.earned ?? 0, thisWeek: { shifts: week?.n ?? 0, paise: week?.p ?? 0 },
     shiftsCompleted: shifts?.n ?? 0, nextPayout: nextMonday(), bankLast4: c.bank_last4, lines, payouts };
 }

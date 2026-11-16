@@ -1043,6 +1043,76 @@
      "phase": "Year 1 pilot",
      "owner": "Claude",
      "notes": ""
+    },
+    {
+     "id": "40",
+     "module": "Bookings",
+     "feature": "Live in daily care",
+     "what": "Start code day 1, daily close by caregiver, family \"all well?\", end code last day",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "41",
+     "module": "Bookings",
+     "feature": "Weekly day off and relief caregiver",
+     "what": "Day off at checkout, relief schedule, relief and welcome back codes",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Extra allowance when regular caregiver covers: decision"
+    },
+    {
+     "id": "42",
+     "module": "Payments",
+     "feature": "Weekly billing for monthly and quarterly care",
+     "what": "First week held, weekly charges, retries, payments list",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Needs Razorpay mandates for automatic charges"
+    },
+    {
+     "id": "43",
+     "module": "Bookings",
+     "feature": "Extend care",
+     "what": "Another week or month in the last week; caregiver confirms",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "44",
+     "module": "Bookings",
+     "feature": "Ask for a different caregiver",
+     "what": "Same tier, remaining days, same price",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "45",
+     "module": "Hire",
+     "feature": "Caregiver profile with reviews",
+     "what": "Ratings by area and public comments",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "46",
+     "module": "Hire",
+     "feature": "Meet first and trial day",
+     "what": "Intro call request; one day trial booking",
+     "status": "Partial",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": "Video provider to choose"
     }
    ]
   },
@@ -1289,6 +1359,16 @@
      "phase": "Year 1 pilot",
      "owner": "Claude",
      "notes": "Need partners: doctors, insurers, tablet hardware"
+    },
+    {
+     "id": "25",
+     "module": "Home",
+     "feature": "Who is coming today",
+     "what": "Caregiver photo and status, relief included",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
     }
    ]
   },
@@ -1441,6 +1521,16 @@
      "module": "Senior",
      "feature": "Week view",
      "what": "7 day check in dots by mood, streak, medicines today, game days, groups",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "16",
+     "module": "Bookings",
+     "feature": "Codes and daily check",
+     "what": "All codes including relief and welcome back; all well tap",
      "status": "Completed",
      "phase": "Year 1 pilot",
      "owner": "Claude",
@@ -1761,6 +1851,46 @@
      "phase": "Year 1 pilot",
      "owner": "Claude",
      "notes": ""
+    },
+    {
+     "id": "32",
+     "module": "Jobs",
+     "feature": "Live in day close and day off",
+     "what": "Close day, I am back with code, I cannot continue",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "33",
+     "module": "Jobs",
+     "feature": "Relief day jobs",
+     "what": "Accept, arrive, codes, care log, pay",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "34",
+     "module": "Jobs",
+     "feature": "Extension and intro call requests",
+     "what": "Accept or decline; pick a call time",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "35",
+     "module": "Profile",
+     "feature": "Profile photo",
+     "what": "Upload; checked by Uday against ID",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
     }
    ]
   },
@@ -2007,6 +2137,16 @@
      "phase": "Year 1 pilot",
      "owner": "Claude",
      "notes": ""
+    },
+    {
+     "id": "25",
+     "module": "Bookings",
+     "feature": "Care operations engine",
+     "what": "Live in days, relief shifts, billing cycles, extensions, replacements, no show sweep",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
     }
    ]
   },
@@ -2193,6 +2333,16 @@
      "phase": "Year 1 pilot",
      "owner": "Claude",
      "notes": ""
+    },
+    {
+     "id": "19",
+     "module": "Care",
+     "feature": "Care operations queue",
+     "what": "Late caregivers, day off cover, failed payments, photos, intro calls",
+     "status": "Completed",
+     "phase": "Year 1 pilot",
+     "owner": "Claude",
+     "notes": ""
     }
    ]
   },
@@ -2362,7 +2512,8 @@
     "text": "Name, mobile, area and experience. No app needed yet.",
     "src": "shots/j01.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Caregiver joins"
    },
    {
     "n": 2,
@@ -2371,7 +2522,8 @@
     "text": "Ops starts onboarding at Tier 2 (Trained caregiver).",
     "src": "shots/j02.webp",
     "w": 780,
-    "h": 548
+    "h": 548,
+    "stage": "Caregiver joins"
    },
    {
     "n": 3,
@@ -2380,25 +2532,28 @@
     "text": "The app shows the 15 onboarding steps and what to do next.",
     "src": "shots/j03.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Caregiver joins"
    },
    {
     "n": 4,
     "actor": "Caregiver",
-    "title": "Completes own steps",
-    "text": "Profile, Aadhaar check (last 4 digits kept), certificates, fitness note, contract, bank, and the academy quizzes for Tier 1 and 2.",
+    "title": "Completes her steps and adds a profile photo",
+    "text": "Profile, Aadhaar check (last 4 digits kept), certificates, fitness note, contract, bank, academy quizzes, and a clear photo of her face.",
     "src": "shots/j04.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Caregiver joins"
    },
    {
     "n": 5,
     "actor": "Uday team",
-    "title": "Checks and clears each stage",
-    "text": "Screening, references, police verification (result only), certificates, fitness, academy, insurance and kit, shadow shift.",
+    "title": "Checks the photo against her ID, clears each stage",
+    "text": "Screening, references, police verification (result only), certificates, fitness, academy, insurance and kit, shadow shift. The photo is shown to families only after this check.",
     "src": "shots/j05.webp",
     "w": 780,
-    "h": 548
+    "h": 548,
+    "stage": "Caregiver joins"
    },
    {
     "n": 6,
@@ -2407,7 +2562,8 @@
     "text": "Status becomes active. She switches Online to receive requests.",
     "src": "shots/j06.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Caregiver joins"
    },
    {
     "n": 7,
@@ -2416,225 +2572,334 @@
     "text": "Own details, then the parent: address, languages, care needs, two emergency contacts, consent. Health details optional.",
     "src": "shots/j07.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 8,
     "actor": "Family",
-    "title": "Dashboard",
-    "text": "Parent profile ready. Check in status, health details, readings.",
+    "title": "Chooses the care needed",
+    "text": "\"Back home from hospital\". Uday suggests Tier 2 or higher.",
     "src": "shots/j08.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 9,
     "actor": "Family",
-    "title": "Chooses the care needed",
-    "text": "\"Back home from hospital\". Uday suggests Tier 2 or higher.",
+    "title": "Compares Tier 2 caregivers",
+    "text": "Verified photo, rating or \"New on Uday\", verification ticks, skills, price. Links to read reviews, meet first, or book a trial day.",
     "src": "shots/j09.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 10,
     "actor": "Family",
-    "title": "Compares Tier 2 caregivers",
-    "text": "24 hour live in, monthly. Each card shows rating, number of ratings, experience, verification ticks and the price.",
+    "title": "Reads her profile",
+    "text": "Photo checked by Uday, verifications, ratings by area and what other families wrote. Lakshmi is new, so a short call or trial day is suggested.",
     "src": "shots/j10.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 11,
     "actor": "Family",
-    "title": "Request form",
-    "text": "Who needs care, start date, payment method, and the price: care fee, Uday fee and GST.",
+    "title": "Asks for a 15 minute video call first",
+    "text": "Offers up to three times. Free. Uday sends a video link or connects both by phone.",
     "src": "shots/j11.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 12,
-    "actor": "Family",
-    "title": "Confirms what the home provides",
-    "text": "Toilet, water, a safe place for belongings, and for live in: meals, bathing facility, a sleeping space, breaks and a weekly day off.",
+    "actor": "Caregiver",
+    "title": "Picks a time for the call",
+    "text": "The intro request shows in her Jobs tab.",
     "src": "shots/j12.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 13,
     "actor": "Family",
-    "title": "Request sent, money held not charged",
-    "text": "A countdown runs while the caregiver decides. No acceptance in time releases the hold.",
+    "title": "Call confirmed on the dashboard",
+    "text": "Without a video provider set up yet, Uday calls both at that time.",
     "src": "shots/j13.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 14,
-    "actor": "Caregiver",
-    "title": "Receives the request",
-    "text": "Urgent push alert. Care needed, dates and pay are shown; address stays hidden until she accepts.",
+    "actor": "Family",
+    "title": "Chooses the weekly day off",
+    "text": "Live in caregivers get a weekly day off. A relief caregiver of the same tier covers it at no extra cost.",
     "src": "shots/j14.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 15,
-    "actor": "Caregiver",
-    "title": "Accepts",
-    "text": "Address, getting in notes, allergies and medicines now appear, plus what the family agreed to provide.",
+    "actor": "Family",
+    "title": "Sees the weekly payments",
+    "text": "Total for the month, but only the first week is held now. Each next week is charged two days before it starts.",
     "src": "shots/j15.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 16,
     "actor": "Family",
-    "title": "Sees the confirmation",
-    "text": "Booking confirmed. The amount is now captured and held by Uday until each day is completed.",
+    "title": "Confirms what the home provides",
+    "text": "Toilet, water, a safe place for belongings; for live in also meals, bathing, a sleeping space, breaks and the weekly day off.",
     "src": "shots/j16.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 17,
     "actor": "Family",
-    "title": "Gives the start code at the door",
-    "text": "A 4 digit code appears when the caregiver arrives. It proves she is there in person.",
+    "title": "Request sent, first week held",
+    "text": "A countdown runs while Lakshmi decides. No acceptance in time releases the hold.",
     "src": "shots/j17.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Family hires"
    },
    {
     "n": 18,
     "actor": "Caregiver",
-    "title": "Enters the start code",
-    "text": "Arrival is time and location stamped.",
+    "title": "Receives the request",
+    "text": "Urgent alert. Care needed, dates and pay. Address stays hidden until she accepts.",
     "src": "shots/j18.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Booking confirmed"
    },
    {
     "n": 19,
-    "actor": "Caregiver",
-    "title": "Shift running: daily care checklist",
-    "text": "Time stamped tasks: hygiene, meals, medicines, mobility, environment; mood, pain, skin, appetite.",
+    "actor": "Family",
+    "title": "Sees the confirmation",
+    "text": "Booking confirmed with her photo. First week paid; day off cover listed.",
     "src": "shots/j19.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Booking confirmed"
    },
    {
     "n": 20,
-    "actor": "Family",
-    "title": "Reads the care log and sees the end code",
-    "text": "Same day, from anywhere. The end code is shown for the caregiver to finish the 24 hours.",
+    "actor": "Senior",
+    "title": "Ramesh sees who is coming",
+    "text": "His home screen shows Lakshmi's photo: \"Open the door only to the person in this photo.\"",
     "src": "shots/j20.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Booking confirmed"
    },
    {
     "n": 21,
     "actor": "Family",
-    "title": "Day 1 of 30 complete",
-    "text": "One day of pay moves from Uday to the caregiver. Next day starts with a new start code.",
+    "title": "Checks her face, gives the start code",
+    "text": "The code proves she is at the door; the photo proves who she is.",
     "src": "shots/j21.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Day 1"
    },
    {
     "n": 22,
-    "actor": "Family",
-    "title": "All 30 days done",
-    "text": "Day 30 of 30 complete. Every daily log is kept on the booking.",
+    "actor": "Caregiver",
+    "title": "Closes day 1 with the care log",
+    "text": "Live in: no travel taps and no end code each day. She saves the log and closes the day.",
     "src": "shots/j22.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Day 1"
    },
    {
     "n": 23,
     "actor": "Family",
-    "title": "Rates the care",
-    "text": "Five areas, averaged into one score so one hard day does not decide it. Here 4.8. Low scores reach the care manager.",
+    "title": "Answers \"all well?\" for the day",
+    "text": "One tap. \"Something was wrong\" goes straight to the care manager.",
     "src": "shots/j23.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Day 1"
    },
    {
     "n": 24,
-    "actor": "Family",
-    "title": "Rating saved, booking complete",
-    "text": "Events, all 30 daily logs and the invoice stay on the booking.",
+    "actor": "Relief caregiver",
+    "title": "Gets the day off request",
+    "text": "Meena, also Tier 2, is offered day 3. She sees the date, the family area and her pay.",
     "src": "shots/j24.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Day off cover"
    },
    {
     "n": 25,
     "actor": "Caregiver",
-    "title": "Sees earnings and the weekly payout",
-    "text": "Paid weekly to her bank. Her new rating appears on her profile.",
+    "title": "Goes on her day off",
+    "text": "Day 2 closed. Meena covers day 3; Lakshmi enters a welcome back code when she returns.",
     "src": "shots/j25.webp",
     "w": 390,
-    "h": 664
+    "h": 664,
+    "stage": "Day off cover"
+   },
+   {
+    "n": 26,
+    "actor": "Family",
+    "title": "Gives Meena her own start code",
+    "text": "Relief days have their own start and end codes.",
+    "src": "shots/j26.webp",
+    "w": 390,
+    "h": 664,
+    "stage": "Day off cover"
+   },
+   {
+    "n": 27,
+    "actor": "Family",
+    "title": "Welcome back code for Lakshmi",
+    "text": "Meena is paid for day 3. Lakshmi enters this code when she is back.",
+    "src": "shots/j27.webp",
+    "w": 390,
+    "h": 664,
+    "stage": "Day off cover"
+   },
+   {
+    "n": 28,
+    "actor": "Family",
+    "title": "Weekly payments",
+    "text": "Each week is charged two days ahead (here all charged by the test script). A failed charge retries daily and alerts Uday.",
+    "src": "shots/j28.webp",
+    "w": 390,
+    "h": 664,
+    "stage": "Weekly billing"
+   },
+   {
+    "n": 29,
+    "actor": "Family",
+    "title": "Last week: extend or change caregiver",
+    "text": "\"Extend care\" asks Lakshmi to continue a week or a month. \"Ask for a different caregiver\" moves the remaining days to someone of the same tier, at the same price.",
+    "src": "shots/j29.webp",
+    "w": 390,
+    "h": 664,
+    "stage": "Last week"
+   },
+   {
+    "n": 30,
+    "actor": "Family",
+    "title": "Day 30: the end code",
+    "text": "The only end code of the month, shown on the last day.",
+    "src": "shots/j30.webp",
+    "w": 390,
+    "h": 664,
+    "stage": "Last week"
+   },
+   {
+    "n": 31,
+    "actor": "Family",
+    "title": "Rates the care",
+    "text": "Five areas averaged (4.8), tags, and a public comment for other families. A private note goes only to Uday.",
+    "src": "shots/j31.webp",
+    "w": 390,
+    "h": 664,
+    "stage": "Feedback"
+   },
+   {
+    "n": 32,
+    "actor": "Family",
+    "title": "The review now helps the next family",
+    "text": "Her profile shows the rating by area and the comment, with care type and month, never the family name.",
+    "src": "shots/j32.webp",
+    "w": 390,
+    "h": 664,
+    "stage": "Feedback"
+   },
+   {
+    "n": 33,
+    "actor": "Caregiver",
+    "title": "Earnings and weekly payout",
+    "text": "29 days paid to Lakshmi. Day 3 was paid to Meena, the relief caregiver. Later day offs were covered by Lakshmi in this test run, because relief offers go out 7 days ahead.",
+    "src": "shots/j33.webp",
+    "w": 390,
+    "h": 664,
+    "stage": "Feedback"
+   },
+   {
+    "n": 34,
+    "actor": "Uday team",
+    "title": "Care operations queue",
+    "text": "Caregivers not arrived (alert 30 minutes after start), day off cover for the next 7 days, failed weekly payments, photos to check, intro calls to connect.",
+    "src": "shots/j34.webp",
+    "w": 780,
+    "h": 548,
+    "stage": "Behind the scenes"
    }
   ],
   "gaps": [
    [
-    "Live in handover is clumsy",
-    "Built as 30 separate 24 hour shifts. Each day the caregiver taps Start travel and I have arrived, then needs a start code and an end code, even though she never left the home.",
-    "Decide: one start code on day 1, a daily care log and a daily family confirmation, one end code on the last day.",
-    "Decision"
+    "Live in handover",
+    "Built: one start code on day 1, the caregiver closes each day with her care log, the family answers \"all well?\", one end code on the last day.",
+    "Done",
+    "Built"
    ],
    [
     "Weekly day off with relief caregiver",
-    "The family agrees to a weekly day off, but nothing schedules or pays the relief caregiver.",
-    "Build relief scheduling: pick the day, assign a same tier caregiver, brief her, pay her.",
-    "Pending"
-   ],
-   [
-    "Reading reviews before hiring",
-    "Families see the average and number of ratings only, not what other families wrote.",
-    "Add a caregiver profile page with recent reviews and tags.",
-    "Pending"
-   ],
-   [
-    "Meeting the caregiver first",
-    "No intro call or trial day before a month long booking.",
-    "Add a free 15 minute video intro, or a paid trial day.",
-    "Pending"
-   ],
-   [
-    "Caregiver photo at the door",
-    "The family sees name and initials only. The start code proves presence, not identity.",
-    "Show the verified photo on the booking and in the arrival alert.",
-    "Pending"
-   ],
-   [
-    "No show alert",
-    "If the caregiver has not arrived 30 minutes after start, nobody is alerted.",
-    "Alert family and ops, and offer a same tier replacement.",
-    "Pending"
-   ],
-   [
-    "Replacement mid booking",
-    "If the caregiver falls ill or leaves on day 10, there is no reassign for the remaining days.",
-    "Ops reassign with remaining days and money moved to the new caregiver.",
-    "Pending"
-   ],
-   [
-    "Paying for a month",
-    "The full ₹72,230 is captured when the caregiver accepts. Unused days are refunded on cancellation.",
-    "Decide: keep upfront, or weekly billing. Add an Extend button near the end of the month.",
+    "Built: family picks the day off; relief offered 7 days ahead to the next free caregiver of the same tier; own start and end codes; welcome back code; relief caregiver paid for that day. Unfilled: regular caregiver stays and Uday is alerted.",
+    "Decide the extra allowance when the regular caregiver covers her own day off.",
     "Decision"
    ],
    [
+    "Reading reviews before hiring",
+    "Built: profile with ratings by area and public comments (no phone numbers or links allowed, no family names shown).",
+    "Done",
+    "Built"
+   ],
+   [
+    "Meeting the caregiver first",
+    "Built: 15 minute intro call request with up to three times, and a \"Book a trial day\" link.",
+    "Choose a video provider (for example Zoom or Google Meet) and set its link; until then Uday connects by phone.",
+    "Partial"
+   ],
+   [
+    "Caregiver photo at the door",
+    "Built: photo upload in the caregiver app, Uday checks it against her ID, families and the senior see it before she arrives.",
+    "Done",
+    "Built"
+   ],
+   [
+    "No show alert",
+    "Built: reminder to the caregiver 1 hour before; 30 minutes after start with no arrival, the family and Uday are alerted and an urgent ticket opens.",
+    "Done",
+    "Built"
+   ],
+   [
+    "Replacement mid booking",
+    "Built: family \"Ask for a different caregiver\" or caregiver \"I cannot continue\"; Uday proposes a same tier caregiver for the remaining days; same price, nothing charged again; unused money refunded if no one is found.",
+    "Done",
+    "Built"
+   ],
+   [
+    "Paying for a month",
+    "Built: monthly and quarterly care billed weekly, first week held at request, each week charged two days ahead, failed charges retry daily and alert Uday; \"Extend care\" in the last week.",
+    "The agency must set up UPI Autopay or card mandates with Razorpay for automatic weekly charges.",
+    "Partial"
+   ],
+   [
     "Senior sees who is coming",
-    "The senior app does not show today's caregiver.",
-    "Add \"Lakshmi is with you today\" card with photo in senior mode.",
-    "Pending"
+    "Built: \"Lakshmi is coming\" card with her checked photo on the senior home screen, including relief caregivers.",
+    "Done",
+    "Built"
    ]
   ]
  }
