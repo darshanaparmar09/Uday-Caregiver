@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
-import { api, API, countdown, inr, PLAN, STATUS, TYPE } from "../api";
-import { Button, Card, ErrorText, Screen, T } from "../ui";
-import { C } from "../theme";
+import { api, API, countdown, inr, PLAN, STATUS, TYPE } from "../shared/api";
+import { Button, Card, ErrorText, Screen, T } from "../shared/ui";
+import { C } from "../shared/theme";
 
 export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }) {
   const [recips, setRecips] = useState<any[]>([]); const [bookings, setBookings] = useState<any[]>([]); const [open, setOpen] = useState<string | null>(null);
@@ -56,7 +56,9 @@ function BookingDetail({ id, onBack }: { id: string; onBack: () => void }) {
         <Button title="No, cancel and release hold" tone="outline" busy={busy} onPress={() => act({ action: "reject" })} /></Card>}
       {b.status === "arrived" && <Card tone="teal"><T weight="semi">{first} is at the door. Give this start code:</T><T size={64} weight="bold" center style={{ letterSpacing: 16 }}>{b.startCode}</T></Card>}
       {b.status === "active" && <Card tone="teal"><T weight="semi">Care in progress. At the end, give this end code:</T><T size={64} weight="bold" center style={{ letterSpacing: 16 }}>{b.endCode}</T></Card>}
-      {b.logs?.slice(-3).reverse().map((l: any, i: number) => <Card key={i}><T weight="semi">Shift log · day {l.day}</T><T>{[l.meal && "Meal given", l.meds && "Medicines given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</T>{l.note ? <T color={C.inkSoft}>{l.note}</T> : null}</Card>)}
+      {b.logs?.slice(-3).reverse().map((l: any, i: number) => <Card key={i}><T weight="semi">Shift log · day {l.day}</T><T>{[l.checklist && `${Object.keys(l.checklist).length} care tasks done`, l.meal && "Meal given", l.meds && "Medicines given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</T>
+        {l.vitals ? <T>{[l.vitals.bpSys && `BP ${l.vitals.bpSys}/${l.vitals.bpDia}`, l.vitals.pulse && `Pulse ${l.vitals.pulse}`, l.vitals.tempC && `Temp ${l.vitals.tempC}°C`, l.vitals.pain != null && `Pain ${l.vitals.pain}/10`].filter(Boolean).join(" · ")}</T> : null}
+        {l.flags?.length ? <Card tone="coral" style={{ padding: 12 }}><T weight="semi">Outside usual range: {l.flags.join(", ")}</T></Card> : null}{l.note ? <T color={C.inkSoft}>{l.note}</T> : null}</Card>)}
       {b.status === "completed" && <Card><T weight="semi">How was the care?</T><View style={{ flexDirection: "row", justifyContent: "space-between" }}>{[1, 2, 3, 4, 5].map((n) =>
         <Pressable key={n} accessibilityRole="button" accessibilityLabel={`${n} stars`} onPress={() => act({ action: "rate", stars: n, tags: [] })} style={{ minWidth: 56, minHeight: 72, alignItems: "center", justifyContent: "center" }}><T size={44} color={C.amber}>★</T></Pressable>)}</View></Card>}
       {["offered", "proposal", "accepted", "enroute"].includes(b.status) && !quote && <Button title="Cancel booking" tone="outline" onPress={() => api(`/api/bookings/${id}/quote`).then(setQuote).catch((e) => setErr(e.message))} />}

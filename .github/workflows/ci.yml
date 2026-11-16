@@ -30,4 +30,6 @@ jobs:
       - run: node db/migrate.mjs && npm run db:seed
       - run: npm run build -w @uday/web
       - run: (npm run start -w @uday/web &) && sleep 8 && BASE_URL=http://localhost:3000 npm run test -w @uday/web
+      - run: node scripts/sync-mobile-shared.mjs --check
       - run: cd apps/mobile && npm ci && npx tsc --noEmit
+      - run: cd apps/caregiver && npm ci && npx tsc --noEmit

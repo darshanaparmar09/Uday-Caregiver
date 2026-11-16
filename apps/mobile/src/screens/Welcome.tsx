@@ -1,8 +1,8 @@
 import { View } from "react-native";
-import { Button, Screen, T } from "../ui";
-import { C } from "../theme";
+import { Button, Screen, T } from "../shared/ui";
+import { C } from "../shared/theme";
 import { Sun } from "./Sun";
-import type { Role } from "../../App";
+type Role = "senior" | "family";
 
 export function Welcome({ onPick }: { onPick: (r: Role) => void }) {
   return (
@@ -16,7 +16,7 @@ export function Welcome({ onPick }: { onPick: (r: Role) => void }) {
         <T size={26} weight="semi" color={C.onNight}>Who is using this phone?</T>
         <Button title="I check in each day" sub="For parents and seniors" onPress={() => onPick("senior")} />
         <Button title="I look after a parent" sub="For family members" tone="teal" onPress={() => onPick("family")} />
-        <Button title="I am an Uday caregiver" sub="Jobs, shifts and earnings" tone="night" style={{ borderWidth: 3, borderColor: C.amber }} onPress={() => onPick("caregiver")} />
+        <T color={C.onNightSoft} center style={{ marginTop: 8 }}>Uday caregivers: please use the Uday Caregiver app.</T>
       </View>
     </Screen>
   );

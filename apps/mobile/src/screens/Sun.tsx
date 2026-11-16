@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, Easing, View } from "react-native";
-import { C } from "../theme";
+import { C } from "../shared/theme";
 
 /** The sunrise circle. With pulse, three soft rings breathe outward around a solid amber disc. */
 export function Sun({ size, pulse = true, color = C.amber, children }: { size: number; pulse?: boolean; color?: string; children?: React.ReactNode }) {

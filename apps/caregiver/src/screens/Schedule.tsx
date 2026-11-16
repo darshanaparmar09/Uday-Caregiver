@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
-import { api } from "../../api";
-import { Button, Card, ErrorText, Field, Screen, T } from "../../ui";
-import { C, S } from "../../theme";
+import { api } from "../shared/api";
+import { Button, Card, ErrorText, Field, Screen, T } from "../shared/ui";
+import { C, S } from "../shared/theme";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const label = (s: string) => new Date(s + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });

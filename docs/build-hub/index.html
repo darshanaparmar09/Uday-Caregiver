@@ -74,7 +74,7 @@ dialog::backdrop{background:rgba(10,7,32,.7)}
 
   <section id="v-status" hidden>
     <h1 style="font-size:28px">Feature status</h1>
-    <p class="lead">The single status list for the website and all three app modes. Completed means built and tested in code. Partial means built but waiting on an outside account or a decision. Pending means not built yet.</p>
+    <p class="lead">The single status list for the website, the Uday app and the Uday Caregiver app. Completed means built and tested in code. Partial means built but waiting on an outside account or a decision. Pending means not built yet.</p>
     <div class="kpis" id="kpis"></div>
     <div class="tblwrap" style="margin-bottom:22px"><table class="sumtbl" id="sum"></table></div>
     <div class="filters">
@@ -90,6 +90,7 @@ dialog::backdrop{background:rgba(10,7,32,.7)}
     <h1 style="font-size:28px">Changes</h1>
     <p class="lead">Newest first. Each entry matches a saved version in the project folder's history.</p>
     <ul class="log">
+      <li><time>16 Nov 2026</time><h3>Caregiver app is now a separate app, with a daily care checklist</h3><p>Two apps: <b>Uday</b> for families and seniors, and <b>Uday Caregiver</b> for caregivers, each with its own store listing. The caregiver app adds a welcome screen with your photo, an academy header, and the Uday daily care checklist: time stamped tasks for morning routine, health monitoring, mobility and environment. Tier 3 nurses record BP, pulse and temperature; pain, skin and appetite for everyone. Readings outside the usual range alert the family and Uday at once (limits to be confirmed by the clinical advisor). 18 end to end and 12 engine tests pass.</p></li>
       <li><time>16 Nov 2026</time><h3>Code saved to GitHub</h3><p>The project folder is now stored in the private GitHub repository <b>darshanaparmar09/Uday-Caregiver</b>, with its full history. Every future update is saved there.</p></li>
       <li><time>16 Nov 2026</time><h3>One project folder with history</h3><p>All code moved into one folder, <b>uday-caregiver</b>, with every change recorded.</p></li>
       <li><time>16 Nov 2026</time><h3>Caregiver app completed</h3><p>Five tabs: Jobs, Days, Pay, Learn, Me. 15 step onboarding with identity, documents, contract and bank; availability and leave; weekly payouts; academy lessons and quizzes; ratings and coaching; urgent push alerts; offline shift logs. Ops can convert applications, clear steps, approve leave and run payouts. 26 automated tests pass.</p></li>
@@ -102,7 +103,7 @@ dialog::backdrop{background:rgba(10,7,32,.7)}
 <dialog id="zoom"><button class="close" aria-label="Close">✕</button><img id="zimg" alt=""></dialog>
 
 <script>
-const NAMES={"Website":"Website","Family Web App":"Family web app","App Senior":"App · senior","App Family":"App · family","App Caregiver":"App · caregiver","Backend":"Backend","Ops and Finance":"Ops and finance","Integrations":"Integrations"};
+const NAMES={"Website":"Website","Family Web App":"Family web app","App Senior":"Uday app · senior","App Family":"Uday app · family","App Caregiver":"Caregiver app","Backend":"Backend","Ops and Finance":"Ops and finance","Integrations":"Integrations"};
 const views=["preview","status","changes"];
 function route(){const h=(location.hash||"#preview").slice(1);const v=views.includes(h)?h:"preview";
   views.forEach(x=>{document.getElementById("v-"+x).hidden=x!==v;document.querySelector(`.tabs a[href="#${x}"]`).setAttribute("aria-current",x===v?"page":"false")});}

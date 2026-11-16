@@ -69,3 +69,13 @@ test("offer window shorter for same day", () => {
   assert.equal(offerWindowMinutes(new Date("2026-11-16T05:00:00Z"), now), 30);
   assert.equal(offerWindowMinutes(new Date("2026-11-20T05:00:00Z"), now), 240);
 });
+
+import { vitalsFlags, checklistFor } from "../src/index.ts";
+test("vitals flags outside limits", () => {
+  assert.deepEqual(vitalsFlags({ bpSys: 120, bpDia: 80, pulse: 72, tempC: 36.8, pain: 2 }), []);
+  assert.deepEqual(vitalsFlags({ bpSys: 172, bpDia: 96, pulse: 118, tempC: 38.4, pain: 8 }), ["Blood pressure 172/96", "Pulse 118", "Temperature 38.4°C", "Pain 8 of 10"]);
+});
+test("checklist hides vitals below Tier 3", () => {
+  assert.ok(!checklistFor(2).flatMap((s) => s.items).some((i) => i.id === "vitals"));
+  assert.ok(checklistFor(3).flatMap((s) => s.items).some((i) => i.id === "vitals"));
+});

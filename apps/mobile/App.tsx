@@ -3,16 +3,16 @@ import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Hind_400Regular, Hind_500Medium, Hind_600SemiBold, Hind_700Bold } from "@expo-google-fonts/hind";
-import { api, tokenStore } from "./src/api";
-import { C } from "./src/theme";
+import { api, tokenStore } from "./src/shared/api";
+import { T, Screen, Button } from "./src/shared/ui";
+import { C } from "./src/shared/theme";
 import { Welcome } from "./src/screens/Welcome";
-import { SignIn } from "./src/screens/SignIn";
+import { SignIn } from "./src/shared/SignIn";
 import { SeniorHome } from "./src/screens/SeniorHome";
 import { FamilyHome } from "./src/screens/FamilyHome";
-import { CaregiverApp } from "./src/screens/caregiver/CaregiverApp";
 
-export type Role = "senior" | "family" | "caregiver";
-type Me = { user: { id: string; role: Role | "ops"; name: string | null }; caregiver?: any };
+export type Role = "senior" | "family";
+type Me = { user: { id: string; role: Role | "caregiver" | "ops"; name: string | null }; caregiver?: any };
 
 export default function App() {
   const [fonts] = useFonts({ Hind_400Regular, Hind_500Medium, Hind_600SemiBold, Hind_700Bold });
@@ -27,7 +27,7 @@ export default function App() {
   if (fonts && me) {
     const r = me.user.role;
     screen = r === "senior" ? <SeniorHome name={me.user.name} onSignOut={signOut} />
-      : r === "caregiver" ? <CaregiverApp me={me} onSignOut={signOut} />
+      : r === "caregiver" ? <Screen tone="night"><T size={30} weight="bold" color={C.onNight}>Please use the Uday Caregiver app</T><T color={C.onNightSoft}>This app is for families and seniors. Caregivers have their own app with jobs, schedule and pay.</T><Button title="Sign out" onPress={signOut} /></Screen>
       : <FamilyHome me={me} onSignOut={signOut} />;
   }
   const dark = !me || me.user.role === "senior";

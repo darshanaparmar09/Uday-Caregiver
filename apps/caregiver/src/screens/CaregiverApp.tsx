@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { C, F } from "../../theme";
-import { api } from "../../api";
-import { registerForPush, onNotificationTap } from "../../push";
+import { C, F } from "../shared/theme";
+import { api } from "../shared/api";
+import { registerForPush, onNotificationTap } from "../shared/push";
 import { Jobs } from "./Jobs";
 import { Schedule } from "./Schedule";
 import { Earnings } from "./Earnings";

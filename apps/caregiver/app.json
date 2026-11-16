@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Uday Caregiver",
+    "slug": "uday-caregiver",
+    "scheme": "udaycaregiver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#1A1040",
+    "splash": { "backgroundColor": "#1A1040", "resizeMode": "contain" },
+    "ios": { "bundleIdentifier": "in.uday.caregiver", "supportsTablet": false,
+      "infoPlist": { "NSLocationWhenInUseUsageDescription": "Uday checks that you have arrived at the booked home.", "NSCameraUsageDescription": "Photograph certificates for your Uday verification.", "NSPhotoLibraryUsageDescription": "Upload certificates for your Uday verification." } },
+    "android": { "package": "in.uday.caregiver", "permissions": ["ACCESS_FINE_LOCATION", "POST_NOTIFICATIONS"], "adaptiveIcon": { "backgroundColor": "#1A1040" } },
+    "web": { "bundler": "metro", "output": "single" },
+    "plugins": ["expo-secure-store", "expo-font",
+      ["expo-location", { "locationWhenInUsePermission": "Uday checks that you have arrived at the booked home." }],
+      ["expo-notifications", { "color": "#F5A623" }],
+      ["expo-image-picker", { "photosPermission": "Upload certificates for your Uday verification.", "cameraPermission": "Photograph certificates for your Uday verification." }]],
+    "extra": { "eas": { "projectId": "SET_BY_AGENCY" } }
+  }
+}

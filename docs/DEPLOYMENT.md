@@ -25,7 +25,7 @@ See `.env.example`. In production:
 
 ## Mobile app builds
 
-Uses Expo Application Services (EAS).
+Two apps, two store listings: `apps/mobile` (Uday, `in.uday.app`) and `apps/caregiver` (Uday Caregiver, `in.uday.caregiver`). Both use Expo Application Services (EAS); run the commands below in each folder.
 
 ```bash
 cd apps/mobile

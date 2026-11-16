@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Platform, Pressable, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { api } from "../../api";
-import { Button, Card, Chips, ErrorText, Field, Screen, T } from "../../ui";
-import { C, S } from "../../theme";
+import { api } from "../shared/api";
+import { Button, Card, Chips, ErrorText, Field, Screen, T } from "../shared/ui";
+import { C, S } from "../shared/theme";
 
 const LANGS = ["Marathi", "Hindi", "English", "Kannada", "Gujarati"];
 const TYPES: [string, string][] = [["day", "Day shift"], ["night", "Night shift"], ["live", "Live in"]];

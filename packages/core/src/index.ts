@@ -125,3 +125,38 @@ export const LABELS: Record<BookingStatus, string> = {
   arrived: "Arrived", active: "Care in progress", completed: "Completed, rate it", closed: "Completed",
   cancelled: "Cancelled", released: "Cancelled, hold released",
 };
+
+// ───────── daily care checklist (from the Uday Daily Resident Care Checklist) ─────────
+export interface ChecklistItem { id: string; label: string; minTier?: Tier }
+export interface ChecklistSection { id: string; title: string; items: ChecklistItem[] }
+export const CARE_CHECKLIST: ChecklistSection[] = [
+  { id: "morning", title: "Morning routine", items: [
+    { id: "hygiene", label: "Assist with hygiene (face, hands, hair)" }, { id: "medication", label: "Medication support (as prescribed, with time)" },
+    { id: "breakfast", label: "Breakfast and fluid intake" }, { id: "dressing", label: "Help with dressing" }, { id: "skin_brief", label: "Brief skin check" } ] },
+  { id: "health", title: "Health monitoring", items: [
+    { id: "vitals", label: "Vital signs (BP, pulse, temperature)", minTier: 3 }, { id: "pain", label: "Pain level check" },
+    { id: "skin", label: "Check for skin irritation or redness" }, { id: "appetite", label: "Appetite and weight changes" } ] },
+  { id: "mobility", title: "Mobility and support", items: [
+    { id: "walking", label: "Assist with safe walking" }, { id: "turning", label: "Position changes (turning)" },
+    { id: "transfers", label: "Safe transfers" }, { id: "exercise", label: "Supervise exercise or movement" } ] },
+  { id: "environment", title: "Environment and charting", items: [
+    { id: "clean", label: "Clean living area" }, { id: "bed", label: "Prepare a comfortable bed" },
+    { id: "documentation", label: "Full documentation (times, notes)" }, { id: "family", label: "Communicate with family" } ] },
+];
+export function checklistFor(tier: Tier): ChecklistSection[] {
+  return CARE_CHECKLIST.map((s) => ({ ...s, items: s.items.filter((i) => !i.minTier || tier >= i.minTier) }));
+}
+export const CHECKLIST_IDS = new Set(CARE_CHECKLIST.flatMap((s) => s.items.map((i) => i.id)));
+
+/** Readings outside these limits alert the family and Uday at once. Working assumptions for the clinical advisor to confirm. */
+export const VITALS_LIMITS = { bpSys: [90, 160], bpDia: [50, 100], pulse: [50, 110], tempC: [35.5, 37.9], painAlertAt: 7 };
+export interface Vitals { bpSys?: number; bpDia?: number; pulse?: number; tempC?: number; pain?: number }
+export function vitalsFlags(v: Vitals, L = VITALS_LIMITS): string[] {
+  const f: string[] = [];
+  const out = (x: number | undefined, [lo, hi]: number[]) => x != null && (x < lo || x > hi);
+  if (out(v.bpSys, L.bpSys) || out(v.bpDia, L.bpDia)) f.push(`Blood pressure ${v.bpSys ?? "?"}/${v.bpDia ?? "?"}`);
+  if (out(v.pulse, L.pulse)) f.push(`Pulse ${v.pulse}`);
+  if (out(v.tempC, L.tempC)) f.push(`Temperature ${v.tempC}°C`);
+  if (v.pain != null && v.pain >= L.painAlertAt) f.push(`Pain ${v.pain} of 10`);
+  return f;
+}

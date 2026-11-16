@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { View } from "react-native";
-import { api, inr } from "../../api";
-import { Card, ErrorText, Screen, T } from "../../ui";
-import { C } from "../../theme";
+import { api, inr } from "../shared/api";
+import { Card, ErrorText, Screen, T } from "../shared/ui";
+import { C } from "../shared/theme";
 
 export function Earnings() {
   const [d, setD] = useState<any>(null); const [err, setErr] = useState("");

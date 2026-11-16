@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { View } from "react-native";
-import { api } from "../../api";
-import { Button, Card, ErrorText, Screen, T } from "../../ui";
-import { C } from "../../theme";
+import { Image, View } from "react-native";
+import { api } from "../shared/api";
+import { Button, Card, ErrorText, Screen, T } from "../shared/ui";
+import { C } from "../shared/theme";
 
 export function Academy() {
   const [d, setD] = useState<any>(null); const [open, setOpen] = useState<any>(null); const [ans, setAns] = useState<number[]>([]); const [res, setRes] = useState<any>(null); const [err, setErr] = useState("");
@@ -29,7 +29,10 @@ export function Academy() {
   );
   return (
     <Screen tabbed>
-      <T size={30} weight="bold">Academy</T>
+      <View style={{ borderRadius: 24, overflow: "hidden" }}>
+        <Image source={d.tier % 2 ? require("../../assets/academy-women.jpg") : require("../../assets/academy-men.jpg")} style={{ width: "100%", aspectRatio: 2 }} resizeMode="cover" accessibilityLabel="Uday academy classroom" />
+        <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: "rgba(26,16,64,0.82)", padding: 14 }}><T size={30} weight="bold" color="#fff">Uday Academy</T></View>
+      </View>
       <Card tone="amber"><T weight="semi">You are Tier {d.tier}{d.nextTier ? `. Modules toward Tier ${d.nextTier}:` : "."}</T>
         <T size={36} weight="bold">{d.progress.done} of {d.progress.total} done</T>
         <View style={{ height: 14, borderRadius: 7, backgroundColor: "#fff", overflow: "hidden" }}><View style={{ height: 14, width: `${(100 * d.progress.done) / Math.max(1, d.progress.total)}%`, backgroundColor: C.teal }} /></View>

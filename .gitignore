@@ -6,3 +6,5 @@ node_modules
 apps/mobile/.expo
 apps/mobile/dist
 .uploads
+apps/caregiver/.expo
+apps/caregiver/dist

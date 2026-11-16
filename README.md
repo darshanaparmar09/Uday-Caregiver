@@ -5,7 +5,9 @@ Care marketplace for Pune: families hire Uday certified caregivers by day shift,
 | Part | Folder | Technology |
 | --- | --- | --- |
 | Website, family web app, operations board and API | `apps/web` | Next.js 14 (App Router), TypeScript, Tailwind |
-| Mobile app: senior check in, family, caregiver (one app, three roles) | `apps/mobile` | React Native with Expo SDK 52 |
+| Uday app: senior check in and family | `apps/mobile` | React Native with Expo SDK 52 |
+| Uday Caregiver app: jobs, care checklist, schedule, pay, academy, onboarding | `apps/caregiver` | React Native with Expo SDK 52 |
+| Shared mobile code (theme, buttons, sign in, API, push, offline) | `packages/mobile-shared` | Copied into each app by `node scripts/sync-mobile-shared.mjs` |
 | Booking engine (fees, state machine, cancellation, cascade) | `packages/core` | TypeScript, no dependencies |
 | Database schema and migrations | `db` | PostgreSQL 16 |
 
@@ -24,10 +26,10 @@ npm run dev                               # http://localhost:3000
 
 Sign in with any Indian mobile number; in development the code is `OTP_DEV_CODE` (123456). Seeded caregivers sign in on the app with `+919000000001` to `+919000000007`; ops with `+919000000099` at `/ops`.
 
-Mobile app:
+Mobile apps (run either):
 
 ```bash
-cd apps/mobile && npm install
+cd apps/mobile && npm install        # or apps/caregiver
 EXPO_PUBLIC_API_URL=http://<your computer's LAN IP>:3000 npx expo start   # scan with Expo Go
 ```
 

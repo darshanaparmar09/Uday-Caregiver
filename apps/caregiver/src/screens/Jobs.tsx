@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Linking, Platform, Pressable, View } from "react-native";
 import * as Location from "expo-location";
-import { api, countdown, inr, PLAN, TYPE } from "../../api";
-import { Button, Card, ErrorText, Field, Screen, T } from "../../ui";
-import { C } from "../../theme";
-import { cachedGet, sendOrQueue, flush, pending } from "../../offline";
+import { api, countdown, inr, PLAN, TYPE } from "../shared/api";
+import { Button, Card, ErrorText, Field, Screen, T } from "../shared/ui";
+import { C } from "../shared/theme";
+import { CareChecklist } from "./CareChecklist";
+import { cachedGet, sendOrQueue, flush, pending } from "../shared/offline";
 
 const REASONS = ["Not available on these dates", "Too far from me", "Outside my training", "Personal reason"];
-const MOODS = ["Cheerful", "Calm", "Tired", "Unwell, family told", "Upset"];
 
 async function where(): Promise<{ lat?: number; lng?: number }> {
   try { if (Platform.OS === "web") return {}; const p = await Location.requestForegroundPermissionsAsync(); if (p.status !== "granted") return {};
@@ -17,7 +17,7 @@ async function where(): Promise<{ lat?: number; lng?: number }> {
 export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
   const [jobs, setJobs] = useState<any[]>([]); const [online, setOnline] = useState<boolean>(!!me.caregiver?.online);
   const [active, setActive] = useState<any>(null); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
-  const [decline, setDecline] = useState<string | null>(null); const [code, setCode] = useState(""); const [log, setLog] = useState({ meal: false, meds: false, mood: "Calm", note: "" });
+  const [decline, setDecline] = useState<string | null>(null); const [code, setCode] = useState(""); 
   const [sos, setSos] = useState(false); const [, tick] = useState(0); const [offline, setOffline] = useState(false); const [queued, setQueued] = useState(0); const [note, setNote] = useState("");
   const load = useCallback(async () => {
     await flush().catch(() => 0); setQueued(await pending());
@@ -69,13 +69,8 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
             {active.status === "arrived" && <><Field label="Start code from the family" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
               <Button title="Start shift" tone="teal" busy={busy} onPress={() => act(active.id, { action: "start", code })} /></>}
             {active.status === "active" && <>
-              <T weight="bold">Shift log</T>
-              {([["meal", "Meal given"], ["meds", "Medicines given"]] as const).map(([k, t]) => <Button key={k} title={(log[k] ? "✓ " : "") + t} tone={log[k] ? "teal" : "outline"} onPress={() => setLog({ ...log, [k]: !log[k] })} />)}
-              <T weight="semi">Mood</T>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>{MOODS.map((m) => <Button key={m} title={m} tone={log.mood === m ? "amber" : "outline"} onPress={() => setLog({ ...log, mood: m })} style={{ flexGrow: 1 }} />)}</View>
-              <Field label="Note for the family" value={log.note} onChangeText={(note) => setLog({ ...log, note })} multiline style={{ minHeight: 110, fontSize: 22, paddingTop: 14 }} />
-              <Button title="Save log" tone="night" busy={busy} onPress={async () => { setBusy(true); setErr(""); try { const r = await sendOrQueue(`/api/bookings/${active.id}/action`, { action: "log", ...log });
-                setNote(r.queued ? "No signal. Log saved on your phone and will send automatically." : "Log saved. The family can see it."); setQueued(await pending()); if (!r.queued) await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }} />
+              <CareChecklist template={active.checklistTemplate ?? []} tier={active.tier} busy={busy} onSave={async (p) => { setBusy(true); setErr(""); try { const r = await sendOrQueue(`/api/bookings/${active.id}/action`, { action: "log", ...p });
+                setNote(r.queued ? "No signal. Care log saved on your phone and will send automatically." : "Care log saved. The family can see it."); setQueued(await pending()); if (!r.queued) await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }} />
               {note ? <T weight="semi" color={C.teal}>{note}</T> : null}
               <Field label="End code from the family" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={4} style={{ letterSpacing: 14, fontSize: 36 }} />
               <Button title="End shift" tone="teal" busy={busy} onPress={() => act(active.id, { action: "end", code })} /></>}

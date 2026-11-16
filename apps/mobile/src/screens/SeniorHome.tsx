@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Linking, Pressable, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { api } from "../api";
-import { Button, Card, ErrorText, Screen, T } from "../ui";
-import { C } from "../theme";
+import { api } from "../shared/api";
+import { Button, Card, ErrorText, Screen, T } from "../shared/ui";
+import { C } from "../shared/theme";
 import { Sun } from "./Sun";
 
 type Stage = "loading" | "tap" | "ask" | "ok" | "help" | "unlinked";

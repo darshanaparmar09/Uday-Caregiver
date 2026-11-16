@@ -14,14 +14,11 @@
     "ios": {
       "bundleIdentifier": "in.uday.app",
       "supportsTablet": false,
-      "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Uday checks that caregivers have arrived at the booked home."
-      }
+      "infoPlist": {}
     },
     "android": {
       "package": "in.uday.app",
       "permissions": [
-        "ACCESS_FINE_LOCATION",
         "POST_NOTIFICATIONS"
       ],
       "adaptiveIcon": {
@@ -36,22 +33,9 @@
       "expo-secure-store",
       "expo-font",
       [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Uday checks that caregivers have arrived at the booked home."
-        }
-      ],
-      [
         "expo-notifications",
         {
           "color": "#F5A623"
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Uday uses your photos to upload certificates.",
-          "cameraPermission": "Uday uses the camera to photograph certificates."
         }
       ]
     ],

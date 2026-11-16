@@ -1,10 +1,10 @@
 import type { PoolClient } from "pg";
 import {
-  assertTransition, cancelQuote, fees, nextMatch, offerWindowMinutes, POLICY, shiftCode, shiftStart, rupees,
+  assertTransition, cancelQuote, fees, nextMatch, offerWindowMinutes, POLICY, shiftCode, shiftStart, rupees, checklistFor, vitalsFlags, CHECKLIST_IDS,
   type BookingStatus, type CareType, type Actor,
 } from "@uday/core";
 import { one, q, tx } from "./db";
-import { dec, enc, decJson } from "./crypto";
+import { dec, enc, decJson, encJson } from "./crypto";
 import { gateway } from "./payments";
 import { notify } from "./notify";
 import type { SessionUser } from "./auth";
@@ -107,8 +107,8 @@ export async function getBooking(u: SessionUser, id: string) {
   const isCg = b.caregiver_user === u.id;
   if (!fam && !isCg && u.role !== "ops") throw new AppError("Booking not found", 404);
   const events = await q("SELECT actor_role, to_status, message, at FROM booking_events WHERE booking_id=$1 ORDER BY id", [id]);
-  const logs = (await q<any>("SELECT day, meal, meds, mood, note_enc, at FROM shift_logs WHERE booking_id=$1 ORDER BY at", [id]))
-    .map((l) => ({ day: l.day, meal: l.meal, meds: l.meds, mood: l.mood, note: dec(l.note_enc), at: l.at }));
+  const logs = (await q<any>("SELECT day, meal, meds, mood, note_enc, checklist_enc, vitals_enc, flags, at FROM shift_logs WHERE booking_id=$1 ORDER BY at", [id]))
+    .map((l) => ({ day: l.day, meal: l.meal, meds: l.meds, mood: l.mood, note: dec(l.note_enc), checklist: decJson<Record<string, string>>(l.checklist_enc), vitals: decJson(l.vitals_enc), flags: l.flags, at: l.at }));
   const proposal = b.proposed_caregiver_id ? await one("SELECT id, display_name, initials, tier, rating::float, area, experience_years, skills, rate_day_paise, rate_night_paise, rate_live_paise FROM caregivers WHERE id=$1", [b.proposed_caregiver_id]) : null;
   const confirmed = ["accepted", "enroute", "arrived", "active"].includes(b.status);
   const out: any = {
@@ -130,6 +130,7 @@ export async function getBooking(u: SessionUser, id: string) {
     out.address = dec(b.address_enc);
     if (["enroute", "arrived", "active"].includes(b.status)) out.accessNotes = dec(b.access_notes_enc);
     out.careNeeds = b.care_needs;
+    out.checklistTemplate = checklistFor(b.tier);
     out.health = await healthForCaregiver(b.care_recipient_id);
   }
   return out;
@@ -210,7 +211,7 @@ export type Action =
   | { action: "approve" } | { action: "reject" }
   | { action: "cancel" } | { action: "reschedule"; startDate: string }
   | { action: "enroute"; lat?: number; lng?: number } | { action: "arrive"; lat?: number; lng?: number }
-  | { action: "start"; code: string } | { action: "log"; meal: boolean; meds: boolean; mood: string; note?: string }
+  | { action: "start"; code: string } | { action: "log"; meal?: boolean; meds?: boolean; mood: string; note?: string; checklist?: Record<string, string>; vitals?: { bpSys?: number; bpDia?: number; pulse?: number; tempC?: number; pain?: number; skinConcern?: boolean; appetite?: string } }
   | { action: "end"; code: string } | { action: "rate"; stars: number; tags: string[]; note?: string }
   | { action: "ticket"; category: string; text?: string } | { action: "cg_cancel" };
 
@@ -331,9 +332,21 @@ export async function act(u: SessionUser, id: string, a: Action) {
       case "log": {
         if (b.status !== "active") throw new AppError("Logs can only be added during a shift");
         const cgId = b.caregiver_id;
-        await c.query("INSERT INTO shift_logs (booking_id, day, caregiver_id, meal, meds, mood, note_enc) VALUES ($1,$2,$3,$4,$5,$6,$7)",
-          [b.id, b.days_done + 1, cgId, a.meal, a.meds, String(a.mood).slice(0, 40), enc(a.note?.slice(0, 1000), "health")]);
-        await tellFamily(b.care_recipient_id, "shift_log", { bookingId: b.id });
+        const checklist = Object.fromEntries(Object.entries(a.checklist ?? {}).filter(([k, v]) => CHECKLIST_IDS.has(k) && !Number.isNaN(Date.parse(v))));
+        const v = a.vitals ?? {};
+        if (b.tier < 3 && (v.bpSys != null || v.bpDia != null || v.pulse != null || v.tempC != null))
+          throw new AppError("Blood pressure, pulse and temperature are recorded by Tier 3 nurses only. Note any concern for the family instead.");
+        if (b.tier < 3) delete checklist.vitals;
+        const flags = vitalsFlags(v);
+        const meal = a.meal ?? !!checklist.breakfast, meds = a.meds ?? !!checklist.medication;
+        await c.query("INSERT INTO shift_logs (booking_id, day, caregiver_id, meal, meds, mood, note_enc, checklist_enc, vitals_enc, flags) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+          [b.id, b.days_done + 1, cgId, meal, meds, String(a.mood).slice(0, 40), enc(a.note?.slice(0, 1000), "health"),
+           Object.keys(checklist).length ? encJson(checklist) : null, Object.keys(v).length ? encJson(v) : null, flags]);
+        if (flags.length) {
+          await event(c, b, u, "caregiver", null, `Readings outside the usual range: ${flags.join(", ")}. Family and Uday alerted.`);
+          await tellFamily(b.care_recipient_id, "vitals_alert", { bookingId: b.id });
+          await notify(null, "vitals_alert", { bookingId: b.id, flags });
+        } else await tellFamily(b.care_recipient_id, "shift_log", { bookingId: b.id });
         break;
       }
       case "end": {

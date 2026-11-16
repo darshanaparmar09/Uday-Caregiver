@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { View } from "react-native";
-import { api, tokenStore } from "../api";
-import { Button, ErrorText, Field, Screen, T } from "../ui";
-import { C } from "../theme";
-import type { Role } from "../../App";
+import { api, tokenStore } from "./api";
+import { Button, ErrorText, Field, Screen, T } from "./ui";
+import { C } from "./theme";
+export type Role = "senior" | "family" | "caregiver";
 
 const COPY: Record<Role, string> = { senior: "Your family adds your number in Uday. Enter it here once.", family: "Use your mobile number, from India or abroad.", caregiver: "Use the number you registered with the Uday academy." };
 

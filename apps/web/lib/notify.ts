@@ -10,7 +10,7 @@ import { pushToUser, type PushMessage } from "./push";
 export type Template =
   | "booking_requested" | "booking_offer" | "booking_accepted" | "booking_proposal" | "booking_released"
   | "caregiver_enroute" | "caregiver_arrived" | "shift_started" | "shift_log" | "shift_ended"
-  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated";
+  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert";
 
 export async function notify(userId: string | null, template: Template, payload: Record<string, unknown> = {}, channel: "push" | "whatsapp" | "sms" | "email" = "push") {
   await q("INSERT INTO notifications (user_id, channel, template, payload) VALUES ($1,$2,$3,$4)", [userId, channel, template, payload]);
@@ -32,6 +32,7 @@ const PUSH_TEXT: Partial<Record<Template, PushMessage>> = {
   booking_cancelled: { title: "Booking cancelled", body: "A booking was cancelled." },
   checkin_help: { title: "Help requested", body: "Your parent asked for help. Please call them now.", urgent: true },
   checkin_missed: { title: "No check in yet", body: "Your parent has not checked in today.", urgent: true },
+  vitals_alert: { title: "Check on your parent", body: "Today's readings were outside the usual range. Open Uday for details.", urgent: true },
   payout_paid: { title: "Payout sent", body: "This week's earnings are on the way to your bank." },
   leave_decided: { title: "Leave request updated", body: "Open Uday to see the decision." },
 };
