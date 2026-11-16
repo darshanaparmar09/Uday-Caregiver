@@ -9,7 +9,7 @@ import { Welcome } from "./src/screens/Welcome";
 import { SignIn } from "./src/screens/SignIn";
 import { SeniorHome } from "./src/screens/SeniorHome";
 import { FamilyHome } from "./src/screens/FamilyHome";
-import { CaregiverHome } from "./src/screens/CaregiverHome";
+import { CaregiverApp } from "./src/screens/caregiver/CaregiverApp";
 
 export type Role = "senior" | "family" | "caregiver";
 type Me = { user: { id: string; role: Role | "ops"; name: string | null }; caregiver?: any };
@@ -27,7 +27,7 @@ export default function App() {
   if (fonts && me) {
     const r = me.user.role;
     screen = r === "senior" ? <SeniorHome name={me.user.name} onSignOut={signOut} />
-      : r === "caregiver" ? <CaregiverHome me={me} onSignOut={signOut} />
+      : r === "caregiver" ? <CaregiverApp me={me} onSignOut={signOut} />
       : <FamilyHome me={me} onSignOut={signOut} />;
   }
   const dark = !me || me.user.role === "senior";

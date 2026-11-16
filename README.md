@@ -35,7 +35,7 @@ EXPO_PUBLIC_API_URL=http://<your computer's LAN IP>:3000 npx expo start   # scan
 
 ```bash
 npm test -w @uday/core                                        # booking engine: fees, cancellation, cascade, permissions
-BASE_URL=http://localhost:3000 npm test -w @uday/web          # end to end API: full booking lifecycle, access control, OTP limits
+BASE_URL=http://localhost:3000 npm test -w @uday/web          # end to end: booking lifecycle, caregiver onboarding to payout, access control
 ```
 
 ## Design rules

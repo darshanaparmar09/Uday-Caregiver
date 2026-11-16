@@ -9,7 +9,8 @@ What is built, and what must be finished or connected before real families and r
 - Optional health profile, field encrypted, versioned, every view audited; caregiver sees only consented parts, only while booked.
 - Booking engine: fees in paise, hold then capture, offer window, decline or timeout cascade to a same tier caregiver with family approval, release when none, cancel and reschedule with the 4 hour rule, multi day shifts, start and end codes, shift log required before ending, rating with low rating follow up, help requests with service levels, double entry ledger per shift.
 - Daily check in for seniors (app) and for families on their behalf; missed check in alerts by scheduler; SOS for seniors and caregivers.
-- Caregiver app: online status, offers with countdown, accept or decline with reason, cancel with substitute, location at travel and arrival with geofence, codes, log, earnings.
+- Caregiver app, five tabs: Jobs (online status, offers with countdown and urgent push alert, accept or decline, substitute on cancel, travel and arrival with geofence, codes, shift log that works offline, SOS), Days (availability and leave), Pay (balance, weekly payouts, history), Learn (academy modules with quizzes, tier progress), Me (15 step onboarding, identity, documents, contract, bank, ratings and coaching).
+- Ops queues: convert Careers applications, clear onboarding steps (police result only), approve leave, run weekly payouts.
 - Website: ten public pages, hire flow, family dashboard, booking view, onboarding, health form, careers applications, operations board.
 - Security: field encryption with separate keys, hashed lookups, append only events, ledger and audit tables, security headers, no card data, no Aadhaar numbers, no police reports stored.
 
@@ -20,9 +21,11 @@ What is built, and what must be finished or connected before real families and r
 | Payment gateway: finish `RazorpayGateway` (checkout, payment.authorized webhook route, capture, refund, Route split payouts) or the chosen gateway | A, U | `apps/web/lib/payments.ts` |
 | SMS or WhatsApp OTP provider | A | `apps/web/lib/notify.ts` `sendOtp` |
 | Push notifications (Expo push tokens table and sender), WhatsApp templates for alerts | A | `lib/notify.ts`, mobile app |
-| KYC partner for caregiver identity; police verification provider results into `caregiver_verifications` | A, U | ops tooling |
-| Caregiver onboarding stages 1 to 15 as ops screens (currently seeded) | A | Onboarding Specification |
-| Weekly payout job from `ledger_entries` per caregiver | A | finance |
+| KYC partner call in `lib/kyc.ts`; police verification provider results entered in ops (result only) | A, U | `lib/kyc.ts`, `/ops` |
+| Payout provider (RazorpayX or chosen gateway) for real bank transfers; schedule `POST /api/cron?job=payouts` every Monday | A | `lib/payments.ts` payout |
+| S3 driver for encrypted documents in an Indian region bucket | A | `lib/storage.ts` |
+| EAS project id in `apps/mobile/app.json`, `PUSH_PROVIDER=expo` and `EXPO_ACCESS_TOKEN` | A | push |
+| Clinical review of academy module content | U | `db/migrations/004_academy_content.sql` |
 | GST invoices as PDF with GSTIN | A, L | after CA confirms tax treatment |
 | Document upload (prescriptions) to encrypted object storage | A | `health_documents` table exists |
 | Real caregivers replace seed data; real rates replace samples | U | `db/seed.mts` |

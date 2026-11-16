@@ -33,6 +33,11 @@ for (const [name, ini, tier, types, langs, skills, area, lat, lng, exp, gender, 
   for (const kind of ["identity", "police", "references", "training", "bank"])
     await c.query(`INSERT INTO caregiver_verifications (caregiver_id, kind, provider, result, reference, verified_at, expires_at)
       VALUES ($1,$2,'sample provider','clear',$3, now(), now() + interval '1 year') ON CONFLICT (caregiver_id, kind) DO NOTHING`, [r.rows[0].id, kind, "SAMPLE-" + kind.toUpperCase() + "-" + i]);
+  // Sample bank reference (test gateway) and academy history for already certified sample caregivers.
+  await c.query("UPDATE caregivers SET bank_ref=COALESCE(bank_ref, $2), bank_last4=COALESCE(bank_last4, $3), bank_ifsc=COALESCE(bank_ifsc,'SBIN0001234') WHERE id=$1", [r.rows[0].id, "mock_fa_seed_" + i, String(4400 + i)]);
+  await c.query(`INSERT INTO academy_attempts (caregiver_id, module_id, score, total, passed)
+    SELECT $1, m.id, jsonb_array_length(m.quiz), jsonb_array_length(m.quiz), true FROM academy_modules m
+    WHERE m.tier <= $2 AND NOT EXISTS (SELECT 1 FROM academy_attempts a WHERE a.caregiver_id=$1 AND a.module_id=m.id)`, [r.rows[0].id, tier]);
   console.log(`caregiver ${name}: sign in with ${phone}`);
   i++;
 }

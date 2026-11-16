@@ -1,9 +1,10 @@
-import { Pool, types, type PoolClient } from "pg";
+import pg, { type PoolClient } from "pg";
+const { Pool, types } = pg;
 
 // Return DATE columns as plain YYYY-MM-DD strings, never shifted by time zone.
 types.setTypeParser(1082, (v: string) => v);
 
-const g = globalThis as unknown as { __udayPool?: Pool };
+const g = globalThis as unknown as { __udayPool?: pg.Pool };
 export const pool = g.__udayPool ?? new Pool({ connectionString: process.env.DATABASE_URL, max: 10 });
 if (process.env.NODE_ENV !== "production") g.__udayPool = pool;
 

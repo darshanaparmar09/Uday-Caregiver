@@ -31,10 +31,10 @@ export function Field(p: TextInputProps & { label: string }) {
   );
 }
 
-export function Screen({ children, tone = "peach", scroll = true }: { children: React.ReactNode; tone?: "peach" | "night"; scroll?: boolean }) {
+export function Screen({ children, tone = "peach", scroll = true, tabbed = false }: { children: React.ReactNode; tone?: "peach" | "night"; scroll?: boolean; tabbed?: boolean }) {
   const bg = tone === "night" ? C.night : C.peach;
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top", "bottom", "left", "right"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={tabbed ? ["top", "left", "right"] : ["top", "bottom", "left", "right"]}>
       {scroll ? <ScrollView contentContainerStyle={{ padding: 20, gap: S.gap, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">{children}</ScrollView>
         : <View style={{ flex: 1 }}>{children}</View>}
     </SafeAreaView>
@@ -55,3 +55,14 @@ const st = StyleSheet.create({
   input: { minHeight: S.touch, borderRadius: 18, borderWidth: 3, borderColor: C.night, backgroundColor: "#fff", paddingHorizontal: 18, fontFamily: F.semi, fontSize: 26, color: C.ink },
   card: { borderRadius: S.radius, borderWidth: 2, padding: 20, gap: 12 },
 });
+
+export function Chips({ options, value, onChange, multi = true }: { options: string[]; value: string[]; onChange: (v: string[]) => void; multi?: boolean }) {
+  return (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+      {options.map((o) => { const on = value.includes(o); return (
+        <Pressable key={o} accessibilityRole="checkbox" accessibilityState={{ checked: on }} onPress={() => onChange(multi ? (on ? value.filter((x) => x !== o) : [...value, o]) : [o])}
+          style={{ minHeight: S.touch, paddingHorizontal: 18, borderRadius: 36, borderWidth: 3, borderColor: on ? C.amber : C.night, backgroundColor: on ? "#FFF0D6" : "#fff", alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ fontFamily: F.semi, fontSize: S.label, color: C.ink }}>{on ? "✓ " : ""}{o}</Text></Pressable>); })}
+    </View>
+  );
+}

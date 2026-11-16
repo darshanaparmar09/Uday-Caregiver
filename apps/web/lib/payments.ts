@@ -20,6 +20,10 @@ export interface Gateway {
   release(gatewayRef: string): Promise<void>;
   refund(gatewayRef: string, amountPaise: number): Promise<void>;
   verifyWebhook(rawBody: string, signature: string): boolean;
+  /** Bank account check by a small test deposit. Returns the gateway's reference for the account. */
+  verifyBank(accountNumber: string, ifsc: string, holder: string): Promise<{ ref: string; nameMatch: boolean }>;
+  /** Send a payout to a verified bank account reference. */
+  payout(bankRef: string, amountPaise: number, reference: string): Promise<{ ref: string; status: "paid" | "processing" }>;
 }
 
 class MockGateway implements Gateway {
@@ -29,6 +33,8 @@ class MockGateway implements Gateway {
   async release() {}
   async refund() {}
   verifyWebhook() { return true; }
+  async verifyBank(_a: string, _i: string, _h: string) { return { ref: "mock_fa_" + randomUUID().slice(0, 8), nameMatch: true }; }
+  async payout(_ref: string, amountPaise: number) { if (amountPaise <= 0) throw new Error("bad amount"); return { ref: "mock_po_" + randomUUID().slice(0, 8), status: "paid" as const }; }
 }
 
 class RazorpayGateway implements Gateway {
@@ -48,6 +54,16 @@ class RazorpayGateway implements Gateway {
   async capture(paymentId: string, amountPaise: number) { await this.call(`/payments/${paymentId}/capture`, { amount: amountPaise, currency: "INR" }); }
   async release(_paymentId: string) { /* Uncaptured authorisations lapse automatically after the gateway's hold period. */ }
   async refund(paymentId: string, amountPaise: number) { await this.call(`/payments/${paymentId}/refund`, { amount: amountPaise }); }
+  async verifyBank(accountNumber: string, ifsc: string, holder: string) {
+    // RazorpayX fund account validation (penny drop). Agency: create contact + fund account, then validate. Confirm against current docs.
+    const contact = await this.call("/contacts", { name: holder, type: "employee" });
+    const fa = await this.call("/fund_accounts", { contact_id: contact.id, account_type: "bank_account", bank_account: { name: holder, ifsc, account_number: accountNumber } });
+    return { ref: fa.id as string, nameMatch: true };
+  }
+  async payout(bankRef: string, amountPaise: number, reference: string) {
+    const p = await this.call("/payouts", { account_number: process.env.RAZORPAYX_ACCOUNT, fund_account_id: bankRef, amount: amountPaise, currency: "INR", mode: "IMPS", purpose: "payout", reference_id: reference });
+    return { ref: p.id as string, status: "processing" as const };
+  }
   verifyWebhook(rawBody: string, signature: string) {
     const exp = createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET ?? "").update(rawBody).digest("hex");
     return exp.length === signature.length && timingSafeEqual(Buffer.from(exp), Buffer.from(signature));

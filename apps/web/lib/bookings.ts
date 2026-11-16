@@ -44,6 +44,16 @@ async function tellFamily(recipientId: string, t: Parameters<typeof notify>[1], 
   for (const u of await payersOf(recipientId)) await notify(u, t, p);
 }
 
+// ───────── availability ─────────
+/** Caregivers who cannot take care from startDate for `days` days: marked off, on leave, or already booked. */
+export async function busyCaregivers(c: { query: PoolClient["query"] } | null, startDate: string, days: number, excludeBooking?: string): Promise<Set<string>> {
+  const sql = `SELECT caregiver_id FROM caregiver_unavailable WHERE day BETWEEN $1::date AND $1::date + ($2::int - 1)
+    UNION SELECT caregiver_id FROM bookings WHERE status IN ('accepted','enroute','arrived','active') AND ($3::uuid IS NULL OR id <> $3::uuid)
+      AND start_date <= $1::date + ($2::int - 1) AND start_date + days - 1 >= $1::date`;
+  const rows = c ? (await c.query(sql, [startDate, days, excludeBooking ?? null])).rows : await q(sql, [startDate, days, excludeBooking ?? null]);
+  return new Set(rows.map((r: any) => r.caregiver_id));
+}
+
 // ───────── caregivers list ─────────
 export async function listCaregivers(careType: CareType, tier?: number) {
   return q(`SELECT c.id, c.display_name, c.initials, c.tier, c.care_types, c.languages, c.skills, c.area, c.experience_years, c.gender,
@@ -66,6 +76,7 @@ export async function createBooking(u: SessionUser, i: CreateInput) {
   if (!cg || !cg.care_types.includes(i.careType)) throw new AppError("This caregiver does not offer that care");
   const start = shiftStart(i.startDate, i.startTime, 0);
   if (start.getTime() < Date.now() + 2 * 3600e3) throw new AppError("Start must be at least 2 hours from now");
+  if ((await busyCaregivers(null, i.startDate, i.days)).has(cg.id)) throw new AppError(`${cg.display_name} is not available on these dates. Choose another date or caregiver.`);
   const f = fees(cg[RATE_COL[i.careType]], i.days);
   const code = "UDY" + Date.now().toString(36).toUpperCase().slice(-6);
   const hold = await gateway().hold(f.totalPaise, code, i.method);
@@ -153,8 +164,10 @@ export async function listBookings(u: SessionUser) {
 // ───────── lifecycle ─────────
 async function toProposalTx(c: PoolClient, b: any, actor: SessionUser | null, role: Actor, reason: string) {
   const tried: string[] = Array.from(new Set([...(b.tried ?? []), b.caregiver_id]));
+  const remainingStart = new Date(Date.parse(String(b.start_date).slice(0, 10) + "T00:00:00Z") + b.days_done * 86400e3).toISOString().slice(0, 10);
+  const busy = await busyCaregivers(c, remainingStart, b.days - b.days_done, b.id);
   const pool = (await c.query("SELECT id, tier, care_types, rating::float, status FROM caregivers WHERE status='active'")).rows
-    .map((r: any) => ({ id: r.id, tier: r.tier, careTypes: r.care_types, active: true, rating: r.rating }));
+    .map((r: any) => ({ id: r.id, tier: r.tier, careTypes: r.care_types, active: !busy.has(r.id), rating: r.rating }));
   const n = nextMatch(pool, b.tier, b.care_type, tried);
   const unused = Math.floor((b.total_paise * (b.days - b.days_done)) / b.days);
   if (n) {
