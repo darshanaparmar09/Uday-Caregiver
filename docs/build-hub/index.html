@@ -47,6 +47,14 @@ td b{color:var(--ink)}
 .p-Completed{background:var(--okbg);color:var(--ok)}.p-Partial{background:var(--partbg);color:var(--part)}.p-Pending{background:var(--pendbg);color:var(--pend)}
 .sumtbl{min-width:560px;margin-bottom:22px}
 .bar2{height:8px;border-radius:99px;background:var(--line);overflow:hidden;min-width:80px}.bar2 i{display:block;height:100%;background:var(--ok)}
+.journey{list-style:none;padding:0;margin:0;display:grid;gap:18px}
+.jstep{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.jstep .shot{width:min(200px,40vw)}.jstep .shot.wide{width:min(420px,60vw)}
+.jstep h3{font-size:18px;margin:8px 0 4px;color:var(--ink)}.jstep p{margin:0;color:var(--body)}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--indigo2);color:#fff;font-size:14px;margin-right:4px}
+.actor{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:99px;padding:3px 10px}
+.a-Caregiver{background:var(--okbg);color:var(--ok)}.a-Family{background:var(--partbg);color:var(--part)}.a-Udayteam{background:var(--panel);color:var(--indigo2)}
+@media (max-width:640px){.jstep{grid-template-columns:1fr}.jstep .shot,.jstep .shot.wide{width:100%}}
 .log{list-style:none;padding:0;margin:0;display:grid;gap:12px}
 .log li{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
 .log time{font-size:12px;font-weight:700;color:var(--orange);letter-spacing:.06em;text-transform:uppercase}
@@ -61,7 +69,7 @@ dialog::backdrop{background:rgba(10,7,32,.7)}
 <div class="top"><div class="wrap bar">
   <span class="logo"><i></i>uday</span>
   <span class="meta">Build Hub · project folder <b>uday-caregiver</b></span>
-  <nav class="tabs" aria-label="Sections"><a href="#preview">Preview</a><a href="#status">Status</a><a href="#changes">Changes</a></nav>
+  <nav class="tabs" aria-label="Sections"><a href="#preview">Preview</a><a href="#journey">Journey</a><a href="#status">Status</a><a href="#changes">Changes</a></nav>
 </div></div>
 
 <main class="wrap">
@@ -70,6 +78,16 @@ dialog::backdrop{background:rgba(10,7,32,.7)}
     <p class="lead">Screens captured from the real running code on the test server, not mock ups. Tap any screen to enlarge. Every update replaces this page at the same link.</p>
     <div class="callout">Sample caregivers and test payments are used. Nothing here handles real money or real people's data.</div>
     <div id="shots"></div>
+  </section>
+
+  <section id="v-journey" hidden>
+    <h1 style="font-size:28px">One full journey, end to end</h1>
+    <p class="lead">Run on the real code on the test server: a caregiver joins and is approved, a family hires her for 24 hour live in care for one month, all 30 days are completed, and the family rates the care. Every screen below was captured during that one run.</p>
+    <div class="callout">Days 2 to 30 were run automatically by a test script with the same steps as day 1. Names, phone numbers and payments are test data.</div>
+    <ol class="journey" id="journey"></ol>
+    <h2 style="font-size:22px;margin:30px 0 6px">Steps missing or worth improving</h2>
+    <p class="lead">Found while running the journey. Not yet built unless marked otherwise.</p>
+    <div class="tblwrap"><table><thead><tr><th>Gap</th><th>What happens today</th><th>Suggested fix</th><th style="width:100px">Status</th></tr></thead><tbody id="gaps"></tbody></table></div>
   </section>
 
   <section id="v-status" hidden>
@@ -90,6 +108,7 @@ dialog::backdrop{background:rgba(10,7,32,.7)}
     <h1 style="font-size:28px">Changes</h1>
     <p class="lead">Newest first. Each entry matches a saved version in the project folder's history.</p>
     <ul class="log">
+      <li><time>16 Nov 2026</time><h3>Full journey tested end to end</h3><p>A caregiver joined, was approved, and was hired by a family for 24 hour live in care for one month; all 30 days were completed and rated, on the real code. See the Journey tab for every screen and the steps still missing.</p></li>
       <li><time>16 Nov 2026</time><h3>Senior mode restored from the first Uday builds</h3><p>Seniors now get the full experience from the original prototype: four ways to check in (okay, some help, medical help, lonely), a home screen with streak, SOS, family call buttons and thought of the day, medicines with a Taken button, three brain games, interest groups, events and people nearby with a namaste greeting, and safety help for cyber fraud (1930) and crime (112). Families see a seven day view. 27 end to end and 12 engine tests pass.</p></li>
       <li><time>16 Nov 2026</time><h3>Care facilities, wearables, fairer ratings and home commitments</h3><p>Families can now browse care facilities, book visits, use the visit checklist from your guide and rate facilities after a completed visit. Facilities onboard themselves on a monthly plan (prices are assumptions). Readings from caregivers, family and 10 common wearables appear together. Caregiver ratings use five areas, averaged, and a rating is needed before rehiring the same caregiver. Families pick the care need from 18 options in 7 groups and confirm what they will provide at home. 22 end to end and 12 engine tests pass.</p></li>
       <li><time>16 Nov 2026</time><h3>Caregiver app is now a separate app, with a daily care checklist</h3><p>Two apps: <b>Uday</b> for families and seniors, and <b>Uday Caregiver</b> for caregivers, each with its own store listing. The caregiver app adds a welcome screen with your photo, an academy header, and the Uday daily care checklist: time stamped tasks for morning routine, health monitoring, mobility and environment. Tier 3 nurses record BP, pulse and temperature; pain, skin and appetite for everyone. Readings outside the usual range alert the family and Uday at once (limits to be confirmed by the clinical advisor). 18 end to end and 12 engine tests pass.</p></li>
@@ -106,7 +125,7 @@ dialog::backdrop{background:rgba(10,7,32,.7)}
 
 <script>
 const NAMES={"Website":"Website","Family Web App":"Family web app","App Senior":"Uday app · senior","App Family":"Uday app · family","App Caregiver":"Caregiver app","Backend":"Backend","Ops and Finance":"Ops and finance","Integrations":"Integrations"};
-const views=["preview","status","changes"];
+const views=["preview","journey","status","changes"];
 function route(){const h=(location.hash||"#preview").slice(1);const v=views.includes(h)?h:"preview";
   views.forEach(x=>{document.getElementById("v-"+x).hidden=x!==v;document.querySelector(`.tabs a[href="#${x}"]`).setAttribute("aria-current",x===v?"page":"false")});}
 addEventListener("hashchange",route);route();
@@ -118,6 +137,10 @@ fetch("data.json").then(r=>r.json()).then(d=>{
   const z=document.getElementById("zoom"),zi=document.getElementById("zimg");
   document.getElementById("shots").addEventListener("click",e=>{const i=e.target.closest("img");if(!i)return;zi.src=i.src;zi.alt=i.alt;z.showModal()});
   z.querySelector(".close").onclick=()=>z.close();z.addEventListener("click",e=>{if(e.target===z)z.close()});
+  // Journey
+  const J=d.journey;if(J){document.getElementById("journey").innerHTML=J.steps.map(s=>`<li class="jstep"><figure class="shot${s.w>500?" wide":""}"><img src="${s.src}" alt="${esc(s.title)}" width="${s.w}" height="${s.h}" loading="lazy"></figure><div><span class="actor a-${s.actor.replace(/\s/g,"")}">${esc(s.actor)}</span><h3><span class="num">${s.n}</span> ${esc(s.title)}</h3><p>${esc(s.text)}</p></div></li>`).join("");
+    document.getElementById("gaps").innerHTML=J.gaps.map(g=>`<tr><td><b>${esc(g[0])}</b></td><td>${esc(g[1])}</td><td>${esc(g[2])}</td><td><span class="pill ${g[3]==="Decision"?"p-Partial":"p-Pending"}">${g[3]==="Decision"?"Your decision":"Not built"}</span></td></tr>`).join("");
+    document.getElementById("journey").addEventListener("click",e=>{const i=e.target.closest("img");if(!i)return;zi.src=i.src;zi.alt=i.alt;z.showModal()});}
   // Status
   const all=d.status.flatMap(s=>s.rows.map(r=>({...r,platform:NAMES[s.sheet]??s.sheet})));
   const n=st=>all.filter(r=>r.status===st).length;

@@ -55,7 +55,7 @@ export function Hire() {
         {list?.slice().sort((a, b) => score(b) - score(a)).map((c) => { const f = fees(c[RATE[type]], days); return (
           <article key={c.id} className="card flex flex-col gap-3">
             <div className="flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-full font-display font-bold text-white" style={{ background: COLORS[c.tier - 1] }}>{c.initials}</span>
-              <div className="min-w-0"><h3 className="text-lg font-bold">{c.display_name}</h3><p className="text-sm text-muted">★ {c.rating.toFixed(1)} ({c.rating_count}) · {c.experience_years} yrs · {c.area}</p></div></div>
+              <div className="min-w-0"><h3 className="text-lg font-bold">{c.display_name}</h3><p className="text-sm text-muted">{c.rating_count ? `★ ${c.rating.toFixed(1)} (${c.rating_count} ratings)` : "New on Uday, no ratings yet"}{c.experience_years ? ` · ${c.experience_years} yrs` : ""} · {c.area}</p></div></div>
             <div className="flex flex-wrap gap-1.5">{score(c) > 0 && <span className="pill-wait">Good match</span>}<span className="chip">{TIER[c.tier]}</span>{c.police_verified && <span className="pill-ok">✓ Police verified</span>}{c.id_verified && <span className="pill-ok">✓ ID verified</span>}</div>
             <p className="text-sm">{c.skills.join(" · ")} <span className="text-muted">· {c.languages.join(", ")}</span></p>
             <div className="mt-auto flex items-end justify-between border-t border-line pt-3">

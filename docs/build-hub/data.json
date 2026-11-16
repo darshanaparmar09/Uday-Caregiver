@@ -2352,5 +2352,290 @@
     }
    ]
   }
- ]
+ ],
+ "journey": {
+  "steps": [
+   {
+    "n": 1,
+    "actor": "Caregiver",
+    "title": "Applies on the Careers page",
+    "text": "Name, mobile, area and experience. No app needed yet.",
+    "src": "shots/j01.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 2,
+    "actor": "Uday team",
+    "title": "Screens the application and picks a tier",
+    "text": "Ops starts onboarding at Tier 2 (Trained caregiver).",
+    "src": "shots/j02.webp",
+    "w": 780,
+    "h": 548
+   },
+   {
+    "n": 3,
+    "actor": "Caregiver",
+    "title": "Signs in to the Uday Caregiver app",
+    "text": "The app shows the 15 onboarding steps and what to do next.",
+    "src": "shots/j03.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 4,
+    "actor": "Caregiver",
+    "title": "Completes own steps",
+    "text": "Profile, Aadhaar check (last 4 digits kept), certificates, fitness note, contract, bank, and the academy quizzes for Tier 1 and 2.",
+    "src": "shots/j04.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 5,
+    "actor": "Uday team",
+    "title": "Checks and clears each stage",
+    "text": "Screening, references, police verification (result only), certificates, fitness, academy, insurance and kit, shadow shift.",
+    "src": "shots/j05.webp",
+    "w": 780,
+    "h": 548
+   },
+   {
+    "n": 6,
+    "actor": "Caregiver",
+    "title": "Approved and online for jobs",
+    "text": "Status becomes active. She switches Online to receive requests.",
+    "src": "shots/j06.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 7,
+    "actor": "Family",
+    "title": "Signs in and adds her parent",
+    "text": "Own details, then the parent: address, languages, care needs, two emergency contacts, consent. Health details optional.",
+    "src": "shots/j07.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 8,
+    "actor": "Family",
+    "title": "Dashboard",
+    "text": "Parent profile ready. Check in status, health details, readings.",
+    "src": "shots/j08.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 9,
+    "actor": "Family",
+    "title": "Chooses the care needed",
+    "text": "\"Back home from hospital\". Uday suggests Tier 2 or higher.",
+    "src": "shots/j09.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 10,
+    "actor": "Family",
+    "title": "Compares Tier 2 caregivers",
+    "text": "24 hour live in, monthly. Each card shows rating, number of ratings, experience, verification ticks and the price.",
+    "src": "shots/j10.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 11,
+    "actor": "Family",
+    "title": "Request form",
+    "text": "Who needs care, start date, payment method, and the price: care fee, Uday fee and GST.",
+    "src": "shots/j11.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 12,
+    "actor": "Family",
+    "title": "Confirms what the home provides",
+    "text": "Toilet, water, a safe place for belongings, and for live in: meals, bathing facility, a sleeping space, breaks and a weekly day off.",
+    "src": "shots/j12.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 13,
+    "actor": "Family",
+    "title": "Request sent, money held not charged",
+    "text": "A countdown runs while the caregiver decides. No acceptance in time releases the hold.",
+    "src": "shots/j13.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 14,
+    "actor": "Caregiver",
+    "title": "Receives the request",
+    "text": "Urgent push alert. Care needed, dates and pay are shown; address stays hidden until she accepts.",
+    "src": "shots/j14.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 15,
+    "actor": "Caregiver",
+    "title": "Accepts",
+    "text": "Address, getting in notes, allergies and medicines now appear, plus what the family agreed to provide.",
+    "src": "shots/j15.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 16,
+    "actor": "Family",
+    "title": "Sees the confirmation",
+    "text": "Booking confirmed. The amount is now captured and held by Uday until each day is completed.",
+    "src": "shots/j16.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 17,
+    "actor": "Family",
+    "title": "Gives the start code at the door",
+    "text": "A 4 digit code appears when the caregiver arrives. It proves she is there in person.",
+    "src": "shots/j17.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 18,
+    "actor": "Caregiver",
+    "title": "Enters the start code",
+    "text": "Arrival is time and location stamped.",
+    "src": "shots/j18.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 19,
+    "actor": "Caregiver",
+    "title": "Shift running: daily care checklist",
+    "text": "Time stamped tasks: hygiene, meals, medicines, mobility, environment; mood, pain, skin, appetite.",
+    "src": "shots/j19.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 20,
+    "actor": "Family",
+    "title": "Reads the care log and sees the end code",
+    "text": "Same day, from anywhere. The end code is shown for the caregiver to finish the 24 hours.",
+    "src": "shots/j20.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 21,
+    "actor": "Family",
+    "title": "Day 1 of 30 complete",
+    "text": "One day of pay moves from Uday to the caregiver. Next day starts with a new start code.",
+    "src": "shots/j21.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 22,
+    "actor": "Family",
+    "title": "All 30 days done",
+    "text": "Day 30 of 30 complete. Every daily log is kept on the booking.",
+    "src": "shots/j22.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 23,
+    "actor": "Family",
+    "title": "Rates the care",
+    "text": "Five areas, averaged into one score so one hard day does not decide it. Here 4.8. Low scores reach the care manager.",
+    "src": "shots/j23.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 24,
+    "actor": "Family",
+    "title": "Rating saved, booking complete",
+    "text": "Events, all 30 daily logs and the invoice stay on the booking.",
+    "src": "shots/j24.webp",
+    "w": 390,
+    "h": 664
+   },
+   {
+    "n": 25,
+    "actor": "Caregiver",
+    "title": "Sees earnings and the weekly payout",
+    "text": "Paid weekly to her bank. Her new rating appears on her profile.",
+    "src": "shots/j25.webp",
+    "w": 390,
+    "h": 664
+   }
+  ],
+  "gaps": [
+   [
+    "Live in handover is clumsy",
+    "Built as 30 separate 24 hour shifts. Each day the caregiver taps Start travel and I have arrived, then needs a start code and an end code, even though she never left the home.",
+    "Decide: one start code on day 1, a daily care log and a daily family confirmation, one end code on the last day.",
+    "Decision"
+   ],
+   [
+    "Weekly day off with relief caregiver",
+    "The family agrees to a weekly day off, but nothing schedules or pays the relief caregiver.",
+    "Build relief scheduling: pick the day, assign a same tier caregiver, brief her, pay her.",
+    "Pending"
+   ],
+   [
+    "Reading reviews before hiring",
+    "Families see the average and number of ratings only, not what other families wrote.",
+    "Add a caregiver profile page with recent reviews and tags.",
+    "Pending"
+   ],
+   [
+    "Meeting the caregiver first",
+    "No intro call or trial day before a month long booking.",
+    "Add a free 15 minute video intro, or a paid trial day.",
+    "Pending"
+   ],
+   [
+    "Caregiver photo at the door",
+    "The family sees name and initials only. The start code proves presence, not identity.",
+    "Show the verified photo on the booking and in the arrival alert.",
+    "Pending"
+   ],
+   [
+    "No show alert",
+    "If the caregiver has not arrived 30 minutes after start, nobody is alerted.",
+    "Alert family and ops, and offer a same tier replacement.",
+    "Pending"
+   ],
+   [
+    "Replacement mid booking",
+    "If the caregiver falls ill or leaves on day 10, there is no reassign for the remaining days.",
+    "Ops reassign with remaining days and money moved to the new caregiver.",
+    "Pending"
+   ],
+   [
+    "Paying for a month",
+    "The full ₹72,230 is captured when the caregiver accepts. Unused days are refunded on cancellation.",
+    "Decide: keep upfront, or weekly billing. Add an Extend button near the end of the month.",
+    "Decision"
+   ],
+   [
+    "Senior sees who is coming",
+    "The senior app does not show today's caregiver.",
+    "Add \"Lakshmi is with you today\" card with photo in senior mode.",
+    "Pending"
+   ]
+  ]
+ }
 }
