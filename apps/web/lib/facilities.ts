@@ -111,7 +111,7 @@ export async function subscribe(u: SessionUser, plan: FacilityPlan) {
   if (!f) throw new AppError("Create your facility profile first", 400);
   if (!f.licence_no) throw new AppError("Add your licence or registration number before choosing a plan", 400);
   const p = FACILITY_PLANS[plan];
-  const r = await gateway().subscribe(plan, p.pricePaise, `FAC-${f.id.slice(0, 8)}`);
+  const r = await (await gateway()).subscribe(plan, p.pricePaise, `FAC-${f.id.slice(0, 8)}`);
   await tx(async (c) => {
     await c.query("UPDATE facility_subscriptions SET status='cancelled' WHERE facility_id=$1 AND status='active'", [f.id]);
     await c.query("INSERT INTO facility_subscriptions (facility_id, plan, amount_paise, status, gateway_ref, current_period_end) VALUES ($1,$2,$3,$4,$5, current_date + interval '1 month')",
@@ -146,7 +146,7 @@ export async function renewSubscriptions() {
   const due = await q<any>("SELECT id, gateway_ref, amount_paise, facility_id FROM facility_subscriptions WHERE status='active' AND current_period_end <= current_date");
   let renewed = 0;
   for (const s of due) {
-    const r = await gateway().chargeRenewal(s.gateway_ref, s.amount_paise);
+    const r = await (await gateway()).chargeRenewal(s.gateway_ref, s.amount_paise);
     if (r.ok) { await q("UPDATE facility_subscriptions SET current_period_end = current_period_end + interval '1 month' WHERE id=$1", [s.id]);
       await q("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ('facility_payments',$1,0,'listing renewal'),('uday_listing_revenue',0,$1,'listing renewal')", [s.amount_paise]); renewed++; }
     else await q("UPDATE facility_subscriptions SET status='past_due' WHERE id=$1", [s.id]);

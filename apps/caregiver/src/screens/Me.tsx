@@ -15,7 +15,7 @@ export function Me({ me, onSignOut, onStatus }: { me: any; onSignOut: () => void
   const [photo, setPhoto] = useState<string>(me.caregiver?.photo_status ?? "none");
   const load = useCallback(async () => { const o = await api("/api/caregiver/onboarding"); setD(o); onStatus(o.status); if (o.status === "active") setR(await api("/api/caregiver/ratings")); }, [onStatus]);
   useEffect(() => { load().catch((e) => setErr(e.message)); }, [load]);
-  async function run(fn: () => Promise<any>, done: string) { setBusy(true); setErr(""); setMsg(""); try { await fn(); setMsg(done); setOpen(null); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
+  async function run(fn: () => Promise<any>, done: string) { setBusy(true); setErr(""); setMsg(""); try { const r = await fn(); setMsg(done); if (!r?.keepOpen) setOpen(null); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
   if (!d) return <Screen tabbed><T>Loading</T><ErrorText msg={err} /></Screen>;
   const doneCount = d.stages.filter((s: any) => s.status === "clear").length;
   return (
@@ -61,7 +61,7 @@ export function Me({ me, onSignOut, onStatus }: { me: any; onSignOut: () => void
 function StageForm({ n, d, busy, run }: { n: number; d: any; busy: boolean; run: (fn: () => Promise<any>, done: string) => void }) {
   const [langs, setLangs] = useState<string[]>(d.profile.languages ?? []); const [types, setTypes] = useState<string[]>(d.profile.careTypes ?? []);
   const [skills, setSkills] = useState<string[]>(d.profile.skills ?? []); const [areas, setAreas] = useState((d.profile.serviceAreas ?? []).join(", ")); const [hours, setHours] = useState(d.profile.preferredHours ?? "");
-  const [aadhaar, setAadhaar] = useState(""); const [pan, setPan] = useState(""); const [acct, setAcct] = useState(""); const [ifsc, setIfsc] = useState(""); const [holder, setHolder] = useState(""); const [sign, setSign] = useState("");
+  const [aadhaar, setAadhaar] = useState(""); const [pan, setPan] = useState(""); const [otp, setOtp] = useState(""); const [needOtp, setNeedOtp] = useState(false); const [acct, setAcct] = useState(""); const [ifsc, setIfsc] = useState(""); const [holder, setHolder] = useState(""); const [sign, setSign] = useState("");
   async function pick(kind: string) {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], base64: true, quality: 0.6 });
     if (r.canceled || !r.assets[0]?.base64) return;
@@ -80,7 +80,10 @@ function StageForm({ n, d, busy, run }: { n: number; d: any; busy: boolean; run:
     <T color={C.inkSoft}>Your Aadhaar number goes to our licensed verification partner. Uday keeps only the result and the last four digits.</T>
     <Field label="Aadhaar number" value={aadhaar} onChangeText={setAadhaar} keyboardType="number-pad" maxLength={14} />
     <Field label="PAN" value={pan} onChangeText={(v) => setPan(v.toUpperCase())} autoCapitalize="characters" maxLength={10} />
-    <Button title="Verify" busy={busy} onPress={() => run(() => api("/api/caregiver/identity", { aadhaar, pan }), "Identity checked.")} />
+    {needOtp ? <><T>A code was sent to the mobile number linked to your Aadhaar.</T>
+      <Field label="6 digit code" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
+      <Button title="Confirm code" busy={busy} onPress={() => run(() => api("/api/caregiver/identity", { otp }).then(() => setNeedOtp(false)), "Identity checked.")} /></>
+    : <Button title="Verify" busy={busy} onPress={() => run(() => api<any>("/api/caregiver/identity", { aadhaar, pan }).then((r) => { if (r.needsOtp) { setNeedOtp(true); return { keepOpen: true }; } }), "Submitted.")} />}
   </Card>;
   if (n === 8) return <Card style={box}><T>Upload a clear photo of each certificate. Nurses: include your nursing council registration.</T>
     <Button title="Upload certificate" busy={busy} onPress={() => pick("certificate")} /><Button title="Upload nursing registration" tone="outline" busy={busy} onPress={() => pick("nursing_registration")} /></Card>;

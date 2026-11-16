@@ -6,6 +6,8 @@ import { useFonts, Hind_400Regular, Hind_500Medium, Hind_600SemiBold, Hind_700Bo
 import { api, tokenStore } from "./src/shared/api";
 import { T, Screen, Button } from "./src/shared/ui";
 import { C } from "./src/shared/theme";
+import { registerPhoneHealth } from "./src/health/register";
+registerPhoneHealth();
 import { Welcome } from "./src/screens/Welcome";
 import { SignIn } from "./src/shared/SignIn";
 import { SeniorApp } from "./src/senior/SeniorApp";

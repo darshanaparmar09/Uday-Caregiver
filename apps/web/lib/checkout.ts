@@ -1,6 +1,7 @@
 import { offerWindowMinutes, shiftStart } from "@uday/core";
 import { one, q, tx } from "./db";
 import { gateway } from "./payments";
+import { cyclePaid, cycleFailed, mandateAuthorised } from "./care";
 import { notify } from "./notify";
 import { AppError, familyRole } from "./bookings";
 import type { SessionUser } from "./auth";
@@ -25,16 +26,28 @@ export async function authorised(orderId: string, paymentId: string) {
   });
 }
 export async function verifyCheckout(u: SessionUser, orderId: string, paymentId: string, signature: string) {
+  if (!(await gateway()).verifyPayment(orderId, paymentId, signature)) throw new AppError("Payment could not be verified", 400);
+  // Auto pay authorisation, or a week paid by hand.
+  const m = await one<any>("SELECT booking_id FROM mandates WHERE order_ref=$1 AND user_id=$2", [orderId, u.id]);
+  if (m) return mandateAuthorised(orderId, paymentId);
+  const y = await one<any>("SELECT y.id, b.care_recipient_id FROM billing_cycles y JOIN bookings b ON b.id=y.booking_id WHERE y.order_ref=$1", [orderId]);
+  if (y) { if (!(await familyRole(u.id, y.care_recipient_id))) throw new AppError("Not found", 404); await cyclePaid(y.id, paymentId); return { paid: true }; }
   const p = await one<any>("SELECT p.booking_id, b.care_recipient_id FROM payments p JOIN bookings b ON b.id=p.booking_id WHERE p.gateway_ref=$1", [orderId]);
   if (!p || !(await familyRole(u.id, p.care_recipient_id))) throw new AppError("Not found", 404);
-  if (!gateway().verifyPayment(orderId, paymentId, signature)) throw new AppError("Payment could not be verified", 400);
   return authorised(orderId, paymentId);
 }
 /** Gateway webhook: payment authorised or failed. */
 export async function webhook(raw: string, signature: string) {
-  if (!gateway().verifyWebhook(raw, signature)) throw new AppError("Bad signature", 400);
+  if (!(await gateway()).verifyWebhook(raw, signature)) throw new AppError("Bad signature", 400);
   const e = JSON.parse(raw); const pay = e?.payload?.payment?.entity;
-  if (e.event === "payment.authorized" && pay?.order_id) return authorised(pay.order_id, pay.id);
+  if (pay?.order_id && ["payment.authorized", "payment.captured"].includes(e.event)) {
+    if (await one("SELECT 1 FROM mandates WHERE order_ref=$1", [pay.order_id])) return (await mandateAuthorised(pay.order_id, pay.id)) ?? { ok: true };
+    const y = await one<any>("SELECT id FROM billing_cycles WHERE order_ref=$1 OR gateway_ref=$2", [pay.order_id, pay.id]);
+    if (y) { await cyclePaid(y.id, pay.id); return { ok: true }; }
+    if (e.event === "payment.authorized") return authorised(pay.order_id, pay.id);
+    return { ok: true };
+  }
+  if (e.event === "payment.failed" && pay?.id && (await cycleFailed(pay.id))) return { ok: true };
   if (e.event === "payment.failed" && pay?.order_id) {
     const p = await one<any>("SELECT p.booking_id, b.payer_id FROM payments p JOIN bookings b ON b.id=p.booking_id WHERE p.gateway_ref=$1", [pay.order_id]);
     if (p) { await q("INSERT INTO booking_events (booking_id, actor_role, message) VALUES ($1,'system','Payment failed. Please try again.')", [p.booking_id]); await notify(p.payer_id, "payment_failed", { bookingId: p.booking_id }); }

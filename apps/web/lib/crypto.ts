@@ -5,13 +5,16 @@ import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:
  * Two key classes so a leak of one never exposes the other:
  *   pii    : phone numbers, addresses, date of birth, access notes, codes
  *   health : allergies, conditions, medicines, doctors, shift notes, documents
+ *   secret : provider keys entered in the admin module (SMS, payments, calls, AI)
  * Keys are 32 random bytes, base64, supplied by the key vault through env vars.
  * Format: v1.<class>.<iv>.<tag>.<ciphertext>   (all base64url)
  */
-export type KeyClass = "pii" | "health";
+export type KeyClass = "pii" | "health" | "secret";
 
 function key(cls: KeyClass): Buffer {
-  const v = cls === "pii" ? process.env.FIELD_KEY_PII : process.env.FIELD_KEY_HEALTH;
+  // In development the secret class may borrow the pii key; production must set FIELD_KEY_SECRET.
+  const v = cls === "pii" ? process.env.FIELD_KEY_PII : cls === "health" ? process.env.FIELD_KEY_HEALTH
+    : process.env.FIELD_KEY_SECRET ?? (["development", "staging"].includes(process.env.UDAY_ENV ?? "") ? process.env.FIELD_KEY_PII : undefined);
   if (!v) throw new Error(`Missing FIELD_KEY_${cls.toUpperCase()}`);
   const k = Buffer.from(v, "base64");
   if (k.length !== 32) throw new Error(`FIELD_KEY_${cls.toUpperCase()} must be 32 bytes base64`);

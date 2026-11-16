@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fees as coreFees, billingCycles, CARE_NEEDS, CARE_NEED_GROUPS, careNeed, homeCommitments, WEEKDAYS, RATING_AREAS } from "@uday/core";
 import { RateCare } from "./RateCare";
+import { payOnGateway } from "../checkout";
 import { api, inr, TYPE, DUR, TIER } from "../api";
 
 type CG = { id: string; display_name: string; initials: string; tier: number; care_types: string[]; languages: string[]; skills: string[]; area: string; experience_years: number; rating: number; rating_count: number; rate_day_paise: number; rate_night_paise: number; rate_live_paise: number; police_verified: boolean; id_verified: boolean; photo?: boolean };
@@ -190,12 +191,3 @@ function Intro({ c, onClose }: { c: CG; onClose: () => void }) {
 }
 
 /** Live gateway: open Razorpay Checkout, then confirm the signed result with Uday. In test mode no checkout is needed. */
-async function payOnGateway(ck: { orderId: string; keyId: string; amountPaise: number; name: string; description: string }) {
-  if (!(window as any).Razorpay) await new Promise<void>((res, rej) => { const sc = document.createElement("script"); sc.src = "https://checkout.razorpay.com/v1/checkout.js"; sc.onload = () => res(); sc.onerror = () => rej(new Error("Could not open the payment page")); document.body.appendChild(sc); });
-  await new Promise<void>((res, rej) => {
-    const rz = new (window as any).Razorpay({ key: ck.keyId, order_id: ck.orderId, amount: ck.amountPaise, currency: "INR", name: ck.name, description: ck.description,
-      handler: (r: any) => api("/api/payments/verify", { body: { orderId: r.razorpay_order_id, paymentId: r.razorpay_payment_id, signature: r.razorpay_signature } }).then(() => res()).catch(rej),
-      modal: { ondismiss: () => rej(new Error("Payment was not completed. Your request is saved for 30 minutes.")) } });
-    rz.open();
-  });
-}

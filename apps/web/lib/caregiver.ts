@@ -2,7 +2,7 @@ import { z } from "zod";
 import { one, q, tx } from "./db";
 import { enc, lookupHash, normalisePhone } from "./crypto";
 import { gateway } from "./payments";
-import { verifyAadhaar, validPan } from "./kyc";
+import { verifyAadhaar, verifyAadhaarOtp, validPan } from "./kyc";
 import { putEncrypted } from "./storage";
 import { notify } from "./notify";
 import { AppError } from "./bookings";
@@ -82,16 +82,26 @@ export async function identity(u: SessionUser, aadhaar: string, pan: string) {
   await q("UPDATE caregivers SET pan_enc=$2, pan_last4=$3 WHERE id=$1", [c.id, enc(pan.toUpperCase()), pan.toUpperCase().slice(-4)]);
   await q(`INSERT INTO caregiver_verifications (caregiver_id, kind, provider, result, reference, last4, verified_at, expires_at)
     VALUES ($1,'identity',$2,$3,$4,$5, now(), NULL) ON CONFLICT (caregiver_id, kind) DO UPDATE SET result=EXCLUDED.result, reference=EXCLUDED.reference, last4=EXCLUDED.last4, verified_at=now()`,
-    [c.id, process.env.KYC_PROVIDER ?? "mock", r.result, r.reference, r.last4]);
+    [c.id, r.provider, r.result, r.reference, r.last4]);
   await setStage(c.id, 5, r.result === "clear" ? "clear" : r.result === "pending" ? "submitted" : "not_clear", u.id);
-  return { result: r.result, last4: r.last4 };
+  return { result: r.result, last4: r.last4, needsOtp: !!r.needsOtp };
+}
+/** Second step when the identity partner sends an OTP to the Aadhaar linked mobile. */
+export async function identityOtp(u: SessionUser, otp: string) {
+  const c = await cgFor(u);
+  const v = await one<any>("SELECT reference FROM caregiver_verifications WHERE caregiver_id=$1 AND kind='identity' AND result='pending'", [c.id]);
+  if (!v) throw new AppError("Start the Aadhaar check first");
+  let r; try { r = await verifyAadhaarOtp(v.reference, otp, c.display_name); } catch (e: any) { throw new AppError(e.message); }
+  await q("UPDATE caregiver_verifications SET result=$2, last4=COALESCE(NULLIF($3,''), last4), verified_at=now() WHERE caregiver_id=$1 AND kind='identity'", [c.id, r.result, r.last4]);
+  await setStage(c.id, 5, r.result === "clear" ? "clear" : "not_clear", u.id);
+  return { result: r.result };
 }
 
 export async function bank(u: SessionUser, accountNumber: string, ifsc: string, holder: string) {
   const c = await cgFor(u);
   if (!/^\d{9,18}$/.test(accountNumber)) throw new AppError("Enter the account number, 9 to 18 digits");
   if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc.toUpperCase())) throw new AppError("Enter a valid IFSC, for example SBIN0001234");
-  const v = await gateway().verifyBank(accountNumber, ifsc.toUpperCase(), holder);
+  const v = await (await gateway()).verifyBank(accountNumber, ifsc.toUpperCase(), holder);
   const changing = !!c.bank_ref;
   await q("UPDATE caregivers SET bank_ref=$2, bank_last4=$3, bank_ifsc=$4, bank_changed_at=CASE WHEN $5 THEN now() ELSE bank_changed_at END WHERE id=$1",
     [c.id, v.ref, accountNumber.slice(-4), ifsc.toUpperCase(), changing]);
@@ -207,7 +217,7 @@ export async function runPayouts() {
   for (const d of due.filter((x) => x.bal > 0)) {
     await tx(async (cl) => {
       const ref = "PO" + Date.now().toString(36).toUpperCase();
-      const r = await gateway().payout(d.bank_ref, d.bal, ref);
+      const r = await (await gateway()).payout(d.bank_ref, d.bal, ref);
       await cl.query("INSERT INTO payouts (caregiver_id, amount_paise, status, gateway_ref, bank_last4, period_end, paid_at) VALUES ($1,$2,$3,$4,$5, current_date, CASE WHEN $3='paid' THEN now() END)",
         [d.id, d.bal, r.status, r.ref, d.bank_last4]);
       await cl.query("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ($1,$2,0,'weekly payout'),('bank_payouts',0,$2,'weekly payout')", [`caregiver:${d.id}`, d.bal]);

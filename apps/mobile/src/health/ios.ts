@@ -1,11 +1,11 @@
 /**
  * Apple Health reader. UNTESTED ON A DEVICE: needs an Expo development build with react-native-health
  * and the HealthKit entitlement. Usage in the iPhone build:
- *   import { readAppleHealth } from "@uday/native-health/ios"; registerHealthReader(readAppleHealth);
+ *   import { readAppleHealth } from "./health/ios"; registerHealthReader(readAppleHealth);
  */
 // @ts-nocheck  (types come from react-native-health once installed)
 import AppleHealthKit from "react-native-health";
-import type { Sample } from "../src/health";
+import type { Sample } from "../shared/health";
 
 const P = AppleHealthKit.Constants.Permissions;
 const perms = { permissions: { read: [P.HeartRate, P.OxygenSaturation, P.StepCount, P.SleepAnalysis, P.BloodPressureSystolic, P.BloodPressureDiastolic, P.Weight], write: [] } };

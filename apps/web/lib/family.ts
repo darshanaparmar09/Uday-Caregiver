@@ -1,3 +1,5 @@
+import { matchPartner } from "./partners";
+import { policyNow, business } from "./settings";
 import { z } from "zod";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { PLUS, postProblem, fees, WEEKDAYS } from "@uday/core";
@@ -6,7 +8,7 @@ import { dec, enc, lookupHash, normalisePhone } from "./crypto";
 import { notify } from "./notify";
 import { gateway } from "./payments";
 import { putEncrypted, getDecrypted } from "./storage";
-import { verifyAadhaar } from "./kyc";
+import { verifyAadhaar, verifyAadhaarOtp } from "./kyc";
 import { companionReply, checkinCall, maskedCall, sendSmsAuto } from "./providers";
 import { AppError, familyRole } from "./bookings";
 import type { SessionUser } from "./auth";
@@ -95,7 +97,14 @@ export async function customerKyc(u: SessionUser, aadhaar: string, consent: bool
   const me = await one<any>("SELECT name FROM users WHERE id=$1", [u.id]);
   let r; try { r = await verifyAadhaar(aadhaar, me?.name ?? ""); } catch (e: any) { throw new AppError(e.message); }
   await q("UPDATE users SET aadhaar_ref=$2, aadhaar_last4=$3, kyc_status=$4 WHERE id=$1", [u.id, r.reference, r.last4, r.result]);
-  return { result: r.result, last4: r.last4 };
+  return { result: r.result, last4: r.last4, needsOtp: !!r.needsOtp };
+}
+export async function customerKycOtp(u: SessionUser, otp: string) {
+  const me = await one<any>("SELECT name, aadhaar_ref, kyc_status FROM users WHERE id=$1", [u.id]);
+  if (!me?.aadhaar_ref || me.kyc_status !== "pending") throw new AppError("Start the Aadhaar check first");
+  let r; try { r = await verifyAadhaarOtp(me.aadhaar_ref, otp, me.name ?? ""); } catch (e: any) { throw new AppError(e.message); }
+  await q("UPDATE users SET kyc_status=$2, aadhaar_last4=COALESCE(NULLIF($3,''), aadhaar_last4) WHERE id=$1", [u.id, r.result, r.last4]);
+  return { result: r.result };
 }
 
 // ───────── booking chat, calls, live location ─────────
@@ -158,7 +167,7 @@ export async function plusStatus(u: SessionUser) {
 export async function joinPlus(u: SessionUser) {
   if (u.role !== "family") throw new AppError("For family accounts", 403);
   const s = await plusStatus(u); if (s.member && s.membership?.status === "active") throw new AppError("You are already an Uday Plus member");
-  const r = await gateway().subscribe("plus", PLUS.pricePaise, `PLUS-${u.id.slice(0, 8)}`);
+  const r = await (await gateway()).subscribe("plus", PLUS.pricePaise, `PLUS-${u.id.slice(0, 8)}`);
   await q(`INSERT INTO memberships (user_id, status, amount_paise, gateway_ref, current_period_end) VALUES ($1,'active',$2,$3, current_date + 30)
     ON CONFLICT (user_id) DO UPDATE SET status='active', amount_paise=$2, gateway_ref=$3, current_period_end=current_date + 30`, [u.id, PLUS.pricePaise, r.ref]);
   await q("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ('family_payments',$1,0,'Uday Plus'),('uday_membership_revenue',0,$1,'Uday Plus')", [PLUS.pricePaise]);
@@ -179,7 +188,7 @@ export async function feeDiscount(u: SessionUser, code?: string): Promise<{ bps:
   return { bps: plus, coupon: null, reason: plus ? "Uday Plus" : null };
 }
 export async function checkCoupon(u: SessionUser, code: string, ratePaise: number, days: number) {
-  const d = await feeDiscount(u, code); const base = fees(ratePaise, days); const after = fees(ratePaise, days, undefined, d.bps);
+  const d = await feeDiscount(u, code); const pol = await policyNow(); const base = fees(ratePaise, days, pol); const after = fees(ratePaise, days, pol, d.bps);
   return { ...d, savingPaise: base.totalPaise - after.totalPaise };
 }
 export const CouponIn = z.object({ code: z.string().regex(/^[A-Z0-9]{4,20}$/), feeDiscountBps: z.number().int().min(1).max(10000), maxUses: z.number().int().min(1).optional(), validUntil: z.string().optional(), note: z.string().max(200).optional() });
@@ -195,26 +204,33 @@ export async function invoicePdf(u: SessionUser, bookingId: string) {
     JOIN care_recipients r ON r.id=b.care_recipient_id JOIN users u ON u.id=b.payer_id WHERE b.id=$1`, [bookingId]);
   if (!b || !(await familyRole(u.id, b.care_recipient_id))) throw new AppError("Not found", 404);
   if (["offered", "proposal", "released"].includes(b.status)) throw new AppError("The invoice is ready once the booking is confirmed");
-  const gstin = process.env.UDAY_GSTIN; const legal = process.env.UDAY_LEGAL_NAME ?? "Uday (legal entity name to be added)";
+  const biz = await business(); const gstin = biz.gstin || null; const legal = biz.legalName || `${biz.brandName} (legal name to be added in Settings)`;
+  const ratePct = biz.gstRatePct; const intra = biz.stateCode === "27"; // care is delivered in Pune, Maharashtra (state code 27)
   const doc = await PDFDocument.create(); const page = doc.addPage([595, 842]); const font = await doc.embedFont(StandardFonts.Helvetica); const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const ink = rgb(0.1, 0.06, 0.25); let y = 790;
   const text = (t: string, x: number, size = 10, f = font, color = ink) => page.drawText(t, { x, y, size, font: f, color });
   const rupee = (p: number) => "Rs " + (p / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (!gstin) page.drawText("DRAFT - GSTIN NOT YET REGISTERED", { x: 120, y: 420, size: 26, font: bold, color: rgb(0.9, 0.3, 0.3), opacity: 0.25, rotate: { type: "degrees" as any, angle: 30 } as any });
-  text("TAX INVOICE", 50, 20, bold); y -= 24; text(legal, 50, 11, bold); y -= 14; text(`GSTIN: ${gstin ?? "to be registered"}   ·   Pune, Maharashtra`, 50); y -= 30;
-  text(`Invoice: ${b.code.replace("UDY", "INV")}`, 50, 10, bold); text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 400); y -= 14;
-  text(`Booking: ${b.code}`, 50); y -= 26;
+  const draft = !gstin || !biz.caReviewed;
+  if (draft) page.drawText(!gstin ? "DRAFT - GSTIN NOT YET ADDED" : "DRAFT - AWAITING CA REVIEW", { x: 110, y: 420, size: 26, font: bold, color: rgb(0.9, 0.3, 0.3), opacity: 0.25, rotate: { type: "degrees" as any, angle: 30 } as any });
+  text(gstin ? "TAX INVOICE" : "INVOICE (DRAFT)", 50, 20, bold); y -= 24; text(legal, 50, 11, bold); y -= 14;
+  if (biz.address) { text(`${biz.address}, ${biz.city} ${biz.pincode}`.trim(), 50, 9); y -= 12; }
+  text(`GSTIN: ${gstin ?? "not added"}   ·   PAN: ${biz.pan || "-"}   ·   State: ${biz.state} (${biz.stateCode})`, 50, 9); y -= 12;
+  if (biz.supportPhone || biz.supportEmail) { text(`Support: ${[biz.supportPhone, biz.supportEmail].filter(Boolean).join(" · ")}`, 50, 9); y -= 12; }
+  y -= 16;
+  text(`Invoice: ${biz.invoicePrefix}-${b.code.replace("UDY", "")}`, 50, 10, bold); text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 400); y -= 14;
+  text(`Booking: ${b.code}   ·   Place of supply: Maharashtra (27)`, 50); y -= 26;
   text("Billed to", 50, 10, bold); y -= 14; text(`${b.payer ?? "Family member"}${b.email ? " · " + b.email : ""}`, 50); y -= 14; text(`${b.city ?? ""}${b.country ? ", " + b.country : ""}`, 50); y -= 14;
   text(`Care for ${b.senior} by ${b.display_name}, ${b.days} day${b.days > 1 ? "s" : ""} from ${String(b.start_date instanceof Date ? b.start_date.toISOString() : b.start_date).slice(0, 10)}${b.day_off != null ? ` (day off ${WEEKDAYS[b.day_off]})` : ""}`, 50); y -= 30;
-  const lines: [string, number][] = [[`Care fee collected for the caregiver (${rupee(b.rate_paise)} x ${b.days})`, b.care_paise], [`Uday platform fee (SAC 998599)${b.fee_discount_bps ? `, after ${b.fee_discount_bps / 100}% discount` : ""}`, b.platform_paise],
-    ["CGST 9% on platform fee", Math.floor(b.gst_paise / 2)], ["SGST 9% on platform fee", b.gst_paise - Math.floor(b.gst_paise / 2)]];
+  const half = Math.floor(b.gst_paise / 2);
+  const lines: [string, number][] = [[`Care fee collected for the caregiver (${rupee(b.rate_paise)} x ${b.days})`, b.care_paise], [`${biz.brandName} platform fee (SAC ${biz.sacCode || "to be confirmed"})${b.fee_discount_bps ? `, after ${b.fee_discount_bps / 100}% discount` : ""}`, b.platform_paise],
+    ...(intra ? [[`CGST ${ratePct / 2}% on platform fee`, half], [`SGST ${ratePct / 2}% on platform fee`, b.gst_paise - half]] as [string, number][] : [[`IGST ${ratePct}% on platform fee`, b.gst_paise]] as [string, number][])];
   page.drawLine({ start: { x: 50, y: y + 10 }, end: { x: 545, y: y + 10 }, thickness: 0.5, color: ink });
   for (const [t, v] of lines) { text(t, 50); text(rupee(v), 450); y -= 18; }
   page.drawLine({ start: { x: 50, y: y + 8 }, end: { x: 545, y: y + 8 }, thickness: 0.5, color: ink }); y -= 6;
   text("Total", 50, 11, bold); text(rupee(b.total_paise), 450, 11, bold); y -= 18;
   text(`Paid so far: ${rupee(b.paid_paise || 0)}${b.billing === "weekly" ? " (billed weekly)" : ""}`, 50); y -= 34;
-  for (const l of ["The care fee is passed to the caregiver in full and is not Uday's revenue. GST applies to the Uday platform fee only.",
-    "Place of supply, CGST/SGST or IGST and the SAC code are to be confirmed by Uday's chartered accountant."]) { text(l, 50, 8); y -= 12; }
+  for (const l of ["The care fee is passed to the caregiver in full and is not the platform's revenue. GST applies to the platform fee only.",
+    ...(biz.caReviewed ? [] : ["Format, SAC code, place of supply and tax split to be confirmed by a chartered accountant before use."])]) { text(l, 50, 8); y -= 12; }
   return Buffer.from(await doc.save());
 }
 
@@ -267,11 +283,14 @@ export async function companionHistory(u: SessionUser) {
 }
 
 // ───────── partner leads ─────────
-export async function lead(u: SessionUser, kind: "insurance" | "tablet" | "telehealth", note?: string) {
+export async function lead(u: SessionUser, kind: "insurance" | "tablet" | "telehealth", note?: string, consent = false) {
   const r = await one<{ id: string }>(u.role === "senior" ? "SELECT id FROM care_recipients WHERE senior_user_id=$1 ORDER BY created_at LIMIT 1" : "SELECT care_recipient_id AS id FROM family_members WHERE user_id=$1 LIMIT 1", [u.id]);
-  if (await one("SELECT 1 FROM leads WHERE user_id=$1 AND kind=$2 AND status='open'", [u.id, kind])) return { ok: true };
-  await q("INSERT INTO leads (user_id, care_recipient_id, kind, note) VALUES ($1,$2,$3,$4)", [u.id, r?.id ?? null, kind, note?.slice(0, 300) ?? null]);
-  await notify(null, "callback_request", { kind, userId: u.id }); return { ok: true };
+  const open_ = await one<any>("SELECT l.id, p.name FROM leads l LEFT JOIN partners p ON p.id=l.partner_id WHERE l.user_id=$1 AND l.kind=$2 AND l.status='open'", [u.id, kind]);
+  if (open_) return { ok: true, partner: open_.name ?? null };
+  const city = (await one<{ city: string }>("SELECT city FROM users WHERE id=$1", [u.id]))?.city;
+  const p = await matchPartner(kind, city);
+  await q("INSERT INTO leads (user_id, care_recipient_id, kind, note, partner_id, consent_share) VALUES ($1,$2,$3,$4,$5,$6)", [u.id, r?.id ?? null, kind, note?.slice(0, 300) ?? null, p?.id ?? null, consent]);
+  await notify(null, "callback_request", { kind, userId: u.id }); return { ok: true, partner: p?.name ?? null };
 }
 
 // ───────── check in by phone call ─────────
@@ -314,7 +333,8 @@ export async function ivrResult(token: string, callId: string, digit: string) {
 
 // ───────── ops ─────────
 export async function opsFamily() {
-  return { leads: await q(`SELECT l.id, l.kind, l.note, l.created_at, r.name, r.locality FROM leads l LEFT JOIN care_recipients r ON r.id=l.care_recipient_id WHERE l.status='open' ORDER BY l.created_at LIMIT 50`),
+  return { leads: await q(`SELECT l.id, l.kind, l.note, l.created_at, l.consent_share, l.sent_at, l.partner_id, p.name AS partner, r.name, r.locality FROM leads l LEFT JOIN care_recipients r ON r.id=l.care_recipient_id
+      LEFT JOIN partners p ON p.id=l.partner_id WHERE l.status='open' ORDER BY l.created_at LIMIT 50`),
     coupons: await q("SELECT code, fee_discount_bps, max_uses, used, valid_until, active FROM coupons ORDER BY created_at DESC LIMIT 30"),
     members: (await one<{ n: number }>("SELECT count(*)::int AS n FROM memberships WHERE status='active'"))?.n ?? 0 };
 }

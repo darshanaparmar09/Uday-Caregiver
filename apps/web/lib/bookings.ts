@@ -1,3 +1,4 @@
+import { policyNow } from "./settings";
 import type { PoolClient } from "pg";
 import {
   assertTransition, cancelQuote, fees, nextMatch, offerWindowMinutes, POLICY, shiftCode, shiftStart, rupees, checklistFor, vitalsFlags, CHECKLIST_IDS, careNeed, homeCommitments, HOME_COMMITMENTS_VERSION, overallRating, billingCycles, reliefDays, WEEKLY_BILLING_FROM_DAYS, WEEKDAYS, postProblem, type RatingArea,
@@ -95,13 +96,14 @@ export async function createBooking(u: SessionUser, i: CreateInput) {
   const weekly = i.days >= WEEKLY_BILLING_FROM_DAYS;
   // Uday Plus or a coupon lowers the platform fee only.
   const disc = await feeDiscount(u, i.coupon || undefined);
-  const cycles = weekly ? billingCycles(rate, i.days, 1, POLICY, disc.bps) : null;
-  const one_ = fees(rate, i.days, POLICY, disc.bps);
+  const pol = await policyNow();
+  const cycles = weekly ? billingCycles(rate, i.days, 1, pol, disc.bps) : null;
+  const one_ = fees(rate, i.days, pol, disc.bps);
   // Weekly billing: totals are the sum of the weekly cycles, so every rupee charged matches a cycle.
   const f = cycles ? { ...one_, carePaise: cycles.reduce((t, x) => t + x.care, 0), platformPaise: cycles.reduce((t, x) => t + x.platform, 0), gstPaise: cycles.reduce((t, x) => t + x.gst, 0), totalPaise: cycles.reduce((t, x) => t + x.amount, 0) } : one_;
   const holdAmount = cycles ? cycles[0].amount : f.totalPaise;
   const code = "UDY" + Date.now().toString(36).toUpperCase().slice(-6);
-  const hold = await gateway().hold(holdAmount, code, i.method);
+  const hold = await (await gateway()).hold(holdAmount, code, i.method);
   const windowMin = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start);
   // With a live gateway the family completes checkout first; the offer goes to the caregiver once the payment is authorised.
   const awaitingPayment = hold.status === "pending_customer";
@@ -112,10 +114,10 @@ export async function createBooking(u: SessionUser, i: CreateInput) {
         rate_paise, care_paise, platform_paise, gst_paise, total_paise, policy, offer_expires_at, note, care_need, care_need_note, home_commitments, home_commitments_version, billing, day_off, coupon, fee_discount_bps)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'offered',$10,$11,$12,$13,$14,$15, CASE WHEN $26 THEN NULL ELSE now() + ($16 || ' minutes')::interval END, $17, $18, $19, $20, $21, $22, $23, $24, $25) RETURNING *`,
       [code, u.id, i.recipientId, cg.id, cg.tier, i.careType, i.days, i.startDate, i.startTime,
-       f.ratePaise, f.carePaise, f.platformPaise, f.gstPaise, f.totalPaise, POLICY, String(windowMin), i.note ?? null,
+       f.ratePaise, f.carePaise, f.platformPaise, f.gstPaise, f.totalPaise, pol, String(windowMin), i.note ?? null,
        need.id, i.careNeedNote?.slice(0, 200) ?? null, JSON.stringify(required), HOME_COMMITMENTS_VERSION, weekly ? "weekly" : "upfront", dayOff, disc.coupon, disc.bps, awaitingPayment])).rows[0];
     await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, status) VALUES ($1,$2,$3,$4,$5,$6)",
-      [b.id, gateway().name, hold.gatewayRef, i.method, holdAmount, awaitingPayment ? "pending" : "held"]);
+      [b.id, (await gateway()).name, hold.gatewayRef, i.method, holdAmount, awaitingPayment ? "pending" : "held"]);
     if (disc.coupon) { await c.query("INSERT INTO coupon_redemptions (code, booking_id, user_id) VALUES ($1,$2,$3)", [disc.coupon, b.id, u.id]); await c.query("UPDATE coupons SET used=used+1 WHERE code=$1", [disc.coupon]); }
     for (const cy of cycles ?? []) {
       const due = new Date(Math.max(Date.now(), shiftStart(i.startDate, i.startTime, cy.fromDay - 1).getTime() - 48 * 3600e3));
@@ -126,7 +128,7 @@ export async function createBooking(u: SessionUser, i: CreateInput) {
       [b.id, u.id, `Request sent to ${cg.display_name}. ` + (weekly ? `${rupees(holdAmount)} for the first week held via ${i.method}. Each following week is charged two days before it starts.` : `${rupees(f.totalPaise)} held via ${i.method}.`)
         + (dayOff != null ? ` Weekly day off: ${WEEKDAYS[dayOff]}, covered by a relief caregiver.` : "") + (disc.bps ? ` ${disc.reason}: ${disc.bps / 100}% off the Uday fee.` : "")]);
     if (cg.user_id && !awaitingPayment) await notify(cg.user_id, "booking_offer", { bookingId: b.id, expiresAt: b.offer_expires_at });
-    return { ...b, checkoutUrl: hold.checkoutUrl, checkout: awaitingPayment ? { gateway: gateway().name, orderId: hold.gatewayRef, keyId: process.env.RAZORPAY_KEY_ID, amountPaise: holdAmount, name: "Uday", description: `Care booking ${code}` } : null };
+    return { ...b, checkoutUrl: hold.checkoutUrl, checkout: awaitingPayment ? { gateway: (await gateway()).name, orderId: hold.gatewayRef, keyId: (await gateway()).keyId, amountPaise: holdAmount, name: "Uday", description: `Care booking ${code}` } : null };
   });
 }
 
@@ -171,7 +173,7 @@ export async function getBooking(u: SessionUser, id: string) {
     if (b.away && b.return_code_enc) codes.push({ kind: "return", label: `Welcome back code for ${b.caregiver_name.split(" ")[0]}`, code: dec(b.return_code_enc) });
     out.codes = codes;
     out.startCode = codes.find((x) => x.kind === "start")?.code; out.endCode = codes.find((x) => x.kind === "end")?.code;
-    out.cycles = await q("SELECT cycle_no, from_day, to_day, amount_paise, status, due_at, paid_at FROM billing_cycles WHERE booking_id=$1 ORDER BY cycle_no", [id]);
+    out.cycles = await q("SELECT cycle_no, from_day, to_day, amount_paise, status, due_at, paid_at, fail_reason FROM billing_cycles WHERE booking_id=$1 ORDER BY cycle_no", [id]);
     out.dayChecks = await q("SELECT day, ok FROM day_checks WHERE booking_id=$1 ORDER BY day", [id]);
     out.review = await one("SELECT stars, tags FROM reviews WHERE booking_id=$1", [id]);
     out.tickets = await q("SELECT code, category, status, urgent, sla_due_at FROM tickets WHERE booking_id=$1 ORDER BY created_at", [id]);
@@ -257,8 +259,8 @@ async function releaseTx(c: PoolClient, b: any, actor: SessionUser | null, role:
   const pay = (await c.query("SELECT * FROM payments WHERE booking_id=$1 ORDER BY created_at DESC LIMIT 1 FOR UPDATE", [b.id])).rows[0];
   const unused = await escrowBalance(c, b.id);
   await closeFuture(c, b.id);
-  if (pay?.status === "held") { await gateway().release(pay.gateway_ref); await c.query("UPDATE payments SET status='released', updated_at=now() WHERE id=$1", [pay.id]); }
-  else if (pay && unused > 0) { await gateway().refund(pay.gateway_ref, unused); await c.query("UPDATE payments SET refunded_paise=refunded_paise+$2, status='partially_refunded', updated_at=now() WHERE id=$1", [pay.id, unused]);
+  if (pay?.status === "held") { await (await gateway()).release(pay.gateway_ref); await c.query("UPDATE payments SET status='released', updated_at=now() WHERE id=$1", [pay.id]); }
+  else if (pay && unused > 0) { await (await gateway()).refund(pay.gateway_ref, unused); await c.query("UPDATE payments SET refunded_paise=refunded_paise+$2, status='partially_refunded', updated_at=now() WHERE id=$1", [pay.id, unused]);
     await ledger(c, b.id, [["escrow", unused, 0, "refund unused days"], ["family_refunds", 0, unused, "refund unused days"]]); }
   await c.query("UPDATE bookings SET status='released', refund_paise=$2, tried=COALESCE($3, tried), proposed_caregiver_id=NULL, offer_expires_at=NULL, updated_at=now() WHERE id=$1", [b.id, unused, tried ?? null]);
   await event(c, b, actor, role, "released", msg);
@@ -314,7 +316,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
         if (pay.status === "pending") throw new AppError("The family has not completed payment yet");
         if (pay.status === "held") {
           captured = pay.amount_paise;
-          await gateway().capture(pay.payment_id ?? pay.gateway_ref, captured);
+          await (await gateway()).capture(pay.payment_id ?? pay.gateway_ref, captured);
           await c.query("UPDATE payments SET status='captured', captured_paise=$2, updated_at=now() WHERE id=$1", [pay.id, captured]);
           await ledger(c, b.id, [["family_payments", captured, 0, "captured on acceptance"], ["escrow", 0, captured, "captured on acceptance"]]);
           if (b.billing === "weekly") await c.query("UPDATE billing_cycles SET status='paid', paid_at=now(), gateway_ref=$2 WHERE booking_id=$1 AND cycle_no=1", [b.id, pay.gateway_ref]);
@@ -352,13 +354,13 @@ export async function act(u: SessionUser, id: string, a: Action) {
           if (p.user_id) await notify(p.user_id, "booking_offer", { bookingId: b.id });
           break;
         }
-        const f = fees(p[RATE_COL[b.care_type as CareType]], b.days);
+        const f = fees(p[RATE_COL[b.care_type as CareType]], b.days, await policyNow());
         if (f.totalPaise !== b.total_paise) {
           // Price differs: adjust the hold. Gateway adapters treat a new hold for the difference as one payment.
           const pay = (await c.query("SELECT * FROM payments WHERE booking_id=$1 ORDER BY created_at DESC LIMIT 1", [b.id])).rows[0];
-          if (pay.status === "held") { await gateway().release(pay.gateway_ref); await c.query("UPDATE payments SET status='released' WHERE id=$1", [pay.id]); }
-          const h = await gateway().hold(f.totalPaise, b.code, pay.method);
-          await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, status) VALUES ($1,$2,$3,$4,$5,'held')", [b.id, gateway().name, h.gatewayRef, pay.method, f.totalPaise]);
+          if (pay.status === "held") { await (await gateway()).release(pay.gateway_ref); await c.query("UPDATE payments SET status='released' WHERE id=$1", [pay.id]); }
+          const h = await (await gateway()).hold(f.totalPaise, b.code, pay.method);
+          await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, status) VALUES ($1,$2,$3,$4,$5,'held')", [b.id, (await gateway()).name, h.gatewayRef, pay.method, f.totalPaise]);
         }
         const start = shiftStart(String(b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), b.days_done);
         const win = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start);
@@ -378,12 +380,12 @@ export async function act(u: SessionUser, id: string, a: Action) {
         const qte = cancelQuote({ status: b.status, days: b.days, daysDone: b.days_done, totalPaise: b.total_paise, ratePaise: b.rate_paise, nextShiftStart: next });
         if ((await c.query("SELECT 1 FROM memberships WHERE user_id=$1 AND (status='active' OR current_period_end >= current_date)", [b.payer_id])).rowCount) qte.feePaise = 0; // Uday Plus: free cancellation
         const pay = (await c.query("SELECT * FROM payments WHERE booking_id=$1 ORDER BY created_at DESC LIMIT 1 FOR UPDATE", [b.id])).rows[0];
-        if (pay.status === "held" || pay.status === "pending") { await gateway().release(pay.gateway_ref); await c.query("UPDATE payments SET status='released', updated_at=now() WHERE id=$1", [pay.id]); }
+        if (pay.status === "held" || pay.status === "pending") { await (await gateway()).release(pay.gateway_ref); await c.query("UPDATE payments SET status='released', updated_at=now() WHERE id=$1", [pay.id]); }
         else {
           const avail = await escrowBalance(c, b.id);
           qte.feePaise = Math.min(qte.feePaise, avail); qte.refundPaise = Math.max(0, avail - qte.feePaise);
           await closeFuture(c, b.id);
-          if (qte.refundPaise > 0) { await gateway().refund(pay.gateway_ref, qte.refundPaise); await c.query("UPDATE payments SET refunded_paise=refunded_paise+$2, status='partially_refunded', updated_at=now() WHERE id=$1", [pay.id, qte.refundPaise]); }
+          if (qte.refundPaise > 0) { await (await gateway()).refund(pay.gateway_ref, qte.refundPaise); await c.query("UPDATE payments SET refunded_paise=refunded_paise+$2, status='partially_refunded', updated_at=now() WHERE id=$1", [pay.id, qte.refundPaise]); }
           const lines: [string, number, number, string][] = [];
           if (qte.refundPaise) lines.push(["escrow", qte.refundPaise, 0, "cancellation refund"], ["family_refunds", 0, qte.refundPaise, "cancellation refund"]);
           if (qte.feePaise) lines.push(["escrow", qte.feePaise, 0, "late cancellation fee"], [`caregiver:${b.caregiver_id}`, 0, qte.feePaise, "late cancellation fee"]);
@@ -529,19 +531,19 @@ export async function act(u: SessionUser, id: string, a: Action) {
         }
         const from = new Date(Date.parse(String(b.start_date instanceof Date ? b.start_date.toISOString() : b.start_date).slice(0, 10) + "T00:00:00Z") + b.days * 864e5).toISOString().slice(0, 10);
         if ((await busyCaregivers(c, from, r.days, b.id)).has(b.caregiver_id)) throw new AppError("You have leave or other care on those dates");
-        const f = fees(b.rate_paise, r.days);
+        const pol = await policyNow(); const f = fees(b.rate_paise, r.days, pol);
         const pay = (await c.query("SELECT * FROM payments WHERE booking_id=$1 ORDER BY created_at LIMIT 1", [b.id])).rows[0];
         let paidNow = 0;
         if (b.billing === "weekly") {
           const last = (await c.query("SELECT COALESCE(max(cycle_no),0)::int AS n FROM billing_cycles WHERE booking_id=$1", [b.id])).rows[0].n;
-          for (const cy of billingCycles(b.rate_paise, r.days, b.days + 1)) {
+          for (const cy of billingCycles(b.rate_paise, r.days, b.days + 1, pol)) {
             const due = new Date(Math.max(Date.now(), shiftStart(String(b.start_date instanceof Date ? b.start_date.toISOString() : b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), cy.fromDay - 1).getTime() - 48 * 3600e3));
             await c.query(`INSERT INTO billing_cycles (booking_id, cycle_no, from_day, to_day, care_paise, platform_paise, gst_paise, amount_paise, due_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
               [b.id, last + cy.cycleNo, cy.fromDay, cy.toDay, cy.care, cy.platform, cy.gst, cy.amount, due]);
           }
         } else {
-          const h = await gateway().hold(f.totalPaise, b.code + "-X", pay.method); await gateway().capture(h.gatewayRef, f.totalPaise);
-          await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, captured_paise, status) VALUES ($1,$2,$3,$4,$5,$5,'captured')", [b.id, gateway().name, h.gatewayRef, pay.method, f.totalPaise]);
+          const h = await (await gateway()).hold(f.totalPaise, b.code + "-X", pay.method); await (await gateway()).capture(h.gatewayRef, f.totalPaise);
+          await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, captured_paise, status) VALUES ($1,$2,$3,$4,$5,$5,'captured')", [b.id, (await gateway()).name, h.gatewayRef, pay.method, f.totalPaise]);
           await ledger(c, b.id, [["family_payments", f.totalPaise, 0, "extension captured"], ["escrow", 0, f.totalPaise, "extension captured"]]); paidNow = f.totalPaise;
         }
         await c.query("UPDATE bookings SET days=days+$2, care_paise=care_paise+$3, platform_paise=platform_paise+$4, gst_paise=gst_paise+$5, total_paise=total_paise+$6, paid_paise=paid_paise+$7, updated_at=now() WHERE id=$1",

@@ -12,8 +12,8 @@ import { api } from "./api";
  *            SleepAnalysis, BloodPressureSystolic/Diastolic, BodyMass.
  *   Android: add react-native-health-connect and expo-health-connect config plugin, request the
  *            same record types.
- * Adapters are written in packages/mobile-shared/native-health (untested on a device). The device build
- * installs the module, imports the adapter and calls registerHealthReader(). Upload and dedupe are done.
+ * Adapters are in apps/mobile/src/health (untested on a device). The phone build
+ * registers them at start (register.ios.ts, register.android.ts). Upload and dedupe are done.
  */
 export type Sample = { kind: "pulse" | "spo2" | "steps" | "sleep_hours" | "bp_sys" | "bp_dia" | "weight_kg"; value: number; at: string };
 

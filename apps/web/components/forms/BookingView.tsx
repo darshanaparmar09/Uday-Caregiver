@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, inr, TYPE, DUR, TIER, STATUS } from "../api";
 import { RateCare } from "./RateCare";
-import { LiveMap, Chat } from "./BookingExtras";
+import { LiveMap, Chat, WeeklyPayments } from "./BookingExtras";
 
 const STEPS = ["Requested", "Accepted", "On the way", "Arrived", "Care", "Done"];
 const IDX: Record<string, number> = { offered: 0, proposal: 0, accepted: 1, enroute: 2, arrived: 3, active: 4, completed: 5, closed: 5 };
@@ -100,8 +100,7 @@ export function BookingView({ id }: { id: string }) {
         <p className="note">Uday proposes a caregiver of the same tier for the remaining {b.days - b.daysDone} days. You approve first. The price stays the same and nothing is charged again.</p>
         <select className="input" value={reason} onChange={(e) => setReason(e.target.value)}><option value="">Choose a reason (optional)</option>{["Language or communication", "Care quality", "Punctuality", "Personality fit", "Caregiver asked to stop", "Other"].map((r) => <option key={r}>{r}</option>)}</select>
         <button className="btn justify-self-start" disabled={busy} onClick={() => act({ action: "replace", reason: reason || undefined })}>Find a replacement</button></div>}
-      {panel === "billing" && <div className="card text-sm"><h2 className="mb-2 text-lg font-bold">Weekly payments</h2>{b.cycles.map((c: any) => <div key={c.cycle_no} className="flex flex-wrap justify-between gap-2 border-t border-line py-1.5">
-        <span>Week {c.cycle_no} · days {c.from_day} to {c.to_day}</span><span className="text-ink">{inr(c.amount_paise)} · {{ paid: "Paid", held: "Held", due: `Due ${new Date(c.due_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`, failed: "Failed, retrying", cancelled: "Cancelled" }[c.status as string]}</span></div>)}</div>}
+      {panel === "billing" && <WeeklyPayments id={id} cycles={b.cycles} onChange={load} />}
       {panel === "rate" && <div className="card"><RateCare bookingId={id} name={first} onDone={() => { setPanel(null); load(); }} /></div>}
       {panel === "invoice" && <div className="card grid gap-1 text-sm"><h2 className="mb-2 text-lg font-bold">Invoice {b.code.replace("UDY", "INV")}</h2>
         {[[`Care fee · ${inr(b.fees.ratePaise)} × ${b.days}`, b.fees.carePaise], ["Uday platform fee", b.fees.platformPaise], ["GST on platform fee", b.fees.gstPaise]].map(([t, v]) => <div key={t} className="flex justify-between"><span>{t}</span><b className="text-ink">{inr(v)}</b></div>)}

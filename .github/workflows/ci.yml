@@ -15,6 +15,7 @@ jobs:
       LOOKUP_KEY: ci-lookup-key
       FIELD_KEY_PII: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
       FIELD_KEY_HEALTH: YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=
+      FIELD_KEY_SECRET: c2VjcmV0c2VjcmV0c2VjcmV0c2VjcmV0c2VjcmV0MTI=
       UDAY_ENV: staging
       GATEWAY: mock
       SMS_PROVIDER: log

@@ -1,3 +1,4 @@
+import { videoRoom } from "./providers";
 import { z } from "zod";
 import { shiftCode, shiftStart, CHECKLIST_IDS, RATING_AREAS, careNeed, checklistFor } from "@uday/core";
 import { one, q, tx } from "./db";
@@ -111,32 +112,105 @@ export async function coverRelief(id: string) {
 }
 
 // ───────── weekly billing ─────────
-/** Charge weekly cycles that are due. Failures retry every 24 hours and alert the family and Uday. */
+/**
+ * Charge weekly cycles that are due, on the family's auto pay mandate. With Razorpay the charge is confirmed by
+ * webhook, so the cycle waits as "held" (charging) until then. Without auto pay the family is asked to pay the week
+ * by hand. Failures retry every 24 hours and alert the family and Uday. The mock gateway in tests charges at once.
+ */
 export async function sweepBilling(forceBooking?: string) {
-  const due = await q<any>(`SELECT y.*, b.status AS bstatus, b.care_recipient_id FROM billing_cycles y JOIN bookings b ON b.id=y.booking_id
+  const due = await q<any>(`SELECT y.*, b.status AS bstatus, b.care_recipient_id, b.code, u.email, u.phone_enc FROM billing_cycles y JOIN bookings b ON b.id=y.booking_id JOIN users u ON u.id=b.payer_id
     WHERE y.status IN ('due','failed') AND (y.due_at <= now() OR ($1::uuid IS NOT NULL AND y.booking_id=$1::uuid)) ORDER BY y.booking_id, y.cycle_no LIMIT 100`, [forceBooking ?? null]);
-  let paid = 0, failed = 0;
+  let paid = 0, failed = 0, charging = 0;
+  const gw = await gateway();
   for (const y of due) {
     if (!["accepted", "enroute", "arrived", "active", "proposal", "offered"].includes(y.bstatus)) { await q("UPDATE billing_cycles SET status='cancelled' WHERE id=$1", [y.id]); continue; }
     if (["proposal", "offered"].includes(y.bstatus)) continue;
-    const first = await one<any>("SELECT gateway_ref, method FROM payments WHERE booking_id=$1 ORDER BY created_at LIMIT 1", [y.booking_id]);
-    const r = await gateway().chargeRenewal(first.gateway_ref, y.amount_paise).catch(() => ({ ok: false }));
-    if (r.ok) {
-      await tx(async (c) => {
-        await c.query("UPDATE billing_cycles SET status='paid', paid_at=now(), attempts=attempts+1 WHERE id=$1", [y.id]);
-        await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, captured_paise, status) VALUES ($1,$2,$3,$4,$5,$5,'captured')", [y.booking_id, gateway().name, first.gateway_ref + "-w" + y.cycle_no, first.method, y.amount_paise]);
-        await c.query("UPDATE bookings SET paid_paise=paid_paise+$2 WHERE id=$1", [y.booking_id, y.amount_paise]);
-        await ledger(c, y.booking_id, [["family_payments", y.amount_paise, 0, `week ${y.cycle_no} charged`], ["escrow", 0, y.amount_paise, `week ${y.cycle_no} charged`]]);
-        await c.query("INSERT INTO booking_events (booking_id, actor_role, message) VALUES ($1,'system',$2)", [y.booking_id, `Week ${y.cycle_no} (days ${y.from_day} to ${y.to_day}) charged: ₹${Math.round(y.amount_paise / 100).toLocaleString("en-IN")}.`]);
-      });
-      for (const u of await famUsers(y.care_recipient_id)) await notify(u, "payment_taken", { bookingId: y.booking_id }); paid++;
-    } else {
-      await q("UPDATE billing_cycles SET status='failed', attempts=attempts+1, due_at=now() + interval '24 hours' WHERE id=$1", [y.id]);
-      for (const u of await famUsers(y.care_recipient_id)) await notify(u, "payment_failed", { bookingId: y.booking_id }, "sms");
-      await notify(null, "payment_failed", { bookingId: y.booking_id, cycle: y.cycle_no }); failed++;
-    }
+    const m = await one<any>("SELECT token_ref FROM mandates WHERE booking_id=$1 AND status='active' ORDER BY created_at DESC LIMIT 1", [y.booking_id]);
+    const tokenRef = m?.token_ref ?? (gw.name === "mock" ? "mock:mock" : null);
+    const r = tokenRef ? await gw.chargeRenewal(tokenRef, y.amount_paise, { email: y.email, contact: dec(y.phone_enc) ?? "", receipt: `${y.code}-W${y.cycle_no}` }).catch((e: any) => ({ ok: false, reason: String(e?.message ?? e) }))
+      : { ok: false, reason: "no_autopay" } as any;
+    if (r.ok && r.pending) { await q("UPDATE billing_cycles SET status='held', gateway_ref=$2, attempts=attempts+1, fail_reason=NULL WHERE id=$1", [y.id, r.ref]); charging++; continue; }
+    if (r.ok) { await cyclePaid(y.id, r.ref ?? `auto-${y.id.slice(0, 8)}`); paid++; continue; }
+    await q("UPDATE billing_cycles SET status='failed', attempts=attempts+1, fail_reason=$2, due_at=now() + interval '24 hours' WHERE id=$1", [y.id, r.reason === "no_autopay" ? "no_autopay" : "declined"]);
+    const tpl = r.reason === "no_autopay" ? "payment_due" : "payment_failed";
+    for (const u of await famUsers(y.care_recipient_id)) await notify(u, tpl, { bookingId: y.booking_id, cycle: y.cycle_no }, "sms");
+    await notify(null, tpl, { bookingId: y.booking_id, cycle: y.cycle_no }); failed++;
   }
-  return { paid, failed };
+  return { paid, failed, charging };
+}
+/** Records a weekly payment once the money is confirmed. Safe to call twice for the same cycle. */
+export async function cyclePaid(cycleId: string, paymentRef: string) {
+  return tx(async (c) => {
+    const y = (await c.query("SELECT y.*, b.care_recipient_id FROM billing_cycles y JOIN bookings b ON b.id=y.booking_id WHERE y.id=$1 FOR UPDATE", [cycleId])).rows[0];
+    if (!y || y.status === "paid") return false;
+    const gw = await gateway(); const first = (await c.query("SELECT method FROM payments WHERE booking_id=$1 ORDER BY created_at LIMIT 1", [y.booking_id])).rows[0];
+    await c.query("UPDATE billing_cycles SET status='paid', paid_at=now(), gateway_ref=$2, fail_reason=NULL WHERE id=$1", [y.id, paymentRef]);
+    await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, payment_id, method, amount_paise, captured_paise, status) VALUES ($1,$2,$3,$3,$4,$5,$5,'captured')", [y.booking_id, gw.name, `${paymentRef}-w${y.cycle_no}`, first?.method ?? "UPI", y.amount_paise]);
+    await c.query("UPDATE bookings SET paid_paise=paid_paise+$2 WHERE id=$1", [y.booking_id, y.amount_paise]);
+    await ledger(c, y.booking_id, [["family_payments", y.amount_paise, 0, `week ${y.cycle_no} charged`], ["escrow", 0, y.amount_paise, `week ${y.cycle_no} charged`]]);
+    await c.query("INSERT INTO booking_events (booking_id, actor_role, message) VALUES ($1,'system',$2)", [y.booking_id, `Week ${y.cycle_no} (days ${y.from_day} to ${y.to_day}) paid: ₹${Math.round(y.amount_paise / 100).toLocaleString("en-IN")}.`]);
+    for (const u of await famUsers(y.care_recipient_id)) await notify(u, "payment_taken", { bookingId: y.booking_id });
+    return true;
+  });
+}
+export async function cycleFailed(paymentRef: string) {
+  const y = await one<any>("UPDATE billing_cycles SET status='failed', fail_reason='declined', due_at=now() + interval '24 hours' WHERE gateway_ref=$1 AND status='held' RETURNING booking_id, cycle_no, (SELECT care_recipient_id FROM bookings WHERE id=booking_id) AS rid", [paymentRef]);
+  if (y) { for (const u of await famUsers(y.rid)) await notify(u, "payment_failed", { bookingId: y.booking_id, cycle: y.cycle_no }, "sms"); await notify(null, "payment_failed", { bookingId: y.booking_id, cycle: y.cycle_no }); }
+  return !!y;
+}
+
+// ───────── auto pay and paying a week by hand ─────────
+const MAX_DEFAULT = 50_000_00;
+export async function autopayStatus(u: SessionUser, bookingId: string) {
+  const b = await one<any>("SELECT care_recipient_id, billing FROM bookings WHERE id=$1", [bookingId]);
+  if (!b || !(await familyRole(u.id, b.care_recipient_id))) throw new AppError("Not found", 404);
+  const m = await one<any>("SELECT status, method, max_paise, created_at FROM mandates WHERE booking_id=$1 ORDER BY created_at DESC LIMIT 1", [bookingId]);
+  return { mandate: m ?? null, weekly: b.billing === "weekly" };
+}
+export async function startAutopay(u: SessionUser, bookingId: string, method: string) {
+  const b = await one<any>("SELECT b.*, x.name, x.email, x.phone_enc FROM bookings b JOIN users x ON x.id=$2 WHERE b.id=$1", [bookingId, u.id]);
+  if (!b || !(await familyRole(u.id, b.care_recipient_id))) throw new AppError("Not found", 404);
+  if (b.billing !== "weekly") throw new AppError("Auto pay is for weekly billed care");
+  if (await one("SELECT 1 FROM mandates WHERE booking_id=$1 AND status='active'", [bookingId])) throw new AppError("Auto pay is already on");
+  const gw = await gateway(); const conf = (await import("./settings").then((m) => m.cfg("razorpay"))) ?? {};
+  const maxPaise = Math.max(Number(conf.mandateMaxRupees || 0) * 100 || MAX_DEFAULT, (await one<any>("SELECT max(amount_paise) AS m FROM billing_cycles WHERE booking_id=$1", [bookingId]))?.m ?? 0);
+  const allowed = (conf.mandateMethods || "upi,card").split(","); const meth = allowed.includes(method) ? method : allowed[0];
+  const s = await gw.startMandate({ name: b.name ?? "Uday family", email: b.email, contact: dec(b.phone_enc) ?? undefined, maxPaise, method: meth, receipt: `${b.code}-AP` });
+  await q("UPDATE mandates SET status='cancelled', updated_at=now() WHERE booking_id=$1 AND status='pending'", [bookingId]);
+  await q("INSERT INTO mandates (booking_id, user_id, gateway, customer_ref, order_ref, token_ref, method, max_paise, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+    [bookingId, u.id, gw.name, s.customerId, s.orderId, s.tokenRef ?? null, meth, maxPaise, s.active ? "active" : "pending"]);
+  if (s.active) { await q("INSERT INTO booking_events (booking_id, actor_id, actor_role, message) VALUES ($1,$2,'family',$3)", [bookingId, u.id, "Auto pay switched on for weekly payments."]); return { active: true }; }
+  return { active: false, checkout: { orderId: s.orderId, customerId: s.customerId, keyId: s.keyId, amountPaise: s.amountPaise, recurring: true, name: "Uday", description: `Auto pay for ${b.code}. ₹1 now to confirm; each week is charged up to ₹${Math.round(maxPaise / 100).toLocaleString("en-IN")}.` } };
+}
+/** After the family authorises at checkout. Also called from the webhook. */
+export async function mandateAuthorised(orderId: string, paymentId: string) {
+  const m = await one<any>("SELECT * FROM mandates WHERE order_ref=$1", [orderId]); if (!m) return null;
+  if (m.status === "active") return { active: true };
+  const tokenRef = await (await gateway()).confirmMandate(paymentId).catch(() => null);
+  if (!tokenRef) { await q("UPDATE mandates SET status='failed', updated_at=now() WHERE id=$1", [m.id]); return { active: false }; }
+  await q("UPDATE mandates SET status='active', token_ref=$2, updated_at=now() WHERE id=$1", [m.id, tokenRef]);
+  await q("INSERT INTO booking_events (booking_id, actor_id, actor_role, message) VALUES ($1,$2,'family',$3)", [m.booking_id, m.user_id, "Auto pay switched on for weekly payments."]);
+  return { active: true, bookingId: m.booking_id };
+}
+export async function stopAutopay(u: SessionUser, bookingId: string) {
+  const b = await one<any>("SELECT care_recipient_id FROM bookings WHERE id=$1", [bookingId]);
+  if (!b || !(await familyRole(u.id, b.care_recipient_id))) throw new AppError("Not found", 404);
+  const m = await one<any>("SELECT * FROM mandates WHERE booking_id=$1 AND status='active'", [bookingId]); if (!m) return { ok: true };
+  await (await gateway()).cancelMandate(m.token_ref).catch(() => {});
+  await q("UPDATE mandates SET status='cancelled', updated_at=now() WHERE id=$1", [m.id]);
+  await q("INSERT INTO booking_events (booking_id, actor_id, actor_role, message) VALUES ($1,$2,'family',$3)", [bookingId, u.id, "Auto pay switched off. Each week will need to be paid by hand."]);
+  return { ok: true };
+}
+/** Pay one week by hand (no auto pay, or a failed charge). */
+export async function payCycle(u: SessionUser, bookingId: string, cycleNo: number) {
+  const b = await one<any>("SELECT care_recipient_id, code FROM bookings WHERE id=$1", [bookingId]);
+  if (!b || !(await familyRole(u.id, b.care_recipient_id))) throw new AppError("Not found", 404);
+  const y = await one<any>("SELECT * FROM billing_cycles WHERE booking_id=$1 AND cycle_no=$2", [bookingId, cycleNo]);
+  if (!y || !["due", "failed"].includes(y.status)) throw new AppError("This week is not waiting for payment");
+  const o = await (await gateway()).order(y.amount_paise, `${b.code}-W${cycleNo}`);
+  if (o.paid) { await cyclePaid(y.id, o.orderId); return { paid: true }; }
+  await q("UPDATE billing_cycles SET order_ref=$2 WHERE id=$1", [y.id, o.orderId]);
+  return { paid: false, checkout: { orderId: o.orderId, keyId: o.keyId, amountPaise: y.amount_paise, name: "Uday", description: `Week ${cycleNo} of ${b.code}` } };
 }
 
 // ───────── no show ─────────
@@ -215,14 +289,14 @@ export async function intros(u: SessionUser) {
   return q(`SELECT i.id, i.slots, i.chosen, i.status, i.room_url, c.display_name, c.id AS caregiver_id FROM intro_requests i JOIN caregivers c ON c.id=i.caregiver_id
     WHERE i.family_user=$1 ORDER BY i.created_at DESC LIMIT 20`, [u.id]);
 }
-/** The call link comes from VIDEO_ROOM_URL_TEMPLATE (for example a Zoom or Jitsi room). Without it, Uday connects both by phone. */
+/** The call link comes from the video service chosen in Settings (Jitsi by default, or Daily). If it fails, Uday connects both by phone. */
 export async function introAct(u: SessionUser, id: string, a: { action: "choose"; slot: string } | { action: "decline" } | { action: "cancel" } | { action: "done" }) {
   const i = await one<any>("SELECT i.*, c.user_id AS cg_user FROM intro_requests i JOIN caregivers c ON c.id=i.caregiver_id WHERE i.id=$1", [id]);
   if (!i) throw new AppError("Not found", 404);
   const isCg = i.cg_user === u.id, isFam = i.family_user === u.id;
   if (a.action === "choose" && isCg && i.status === "requested") {
     const slot = i.slots.find((s: Date) => new Date(s).toISOString() === new Date(a.slot).toISOString()); if (!slot) throw new AppError("Choose one of the offered times");
-    const tpl = process.env.VIDEO_ROOM_URL_TEMPLATE; const room = tpl ? tpl.replace("{room}", "uday-" + id.slice(0, 8)) : null;
+    const room = await videoRoom(id).catch(() => null);
     await q("UPDATE intro_requests SET status='confirmed', chosen=$2, room_url=$3 WHERE id=$1", [id, slot, room]);
     await notify(i.family_user, "intro_confirmed", { introId: id }); if (!room) await notify(null, "intro_confirmed", { introId: id, bridge: true });
   } else if (a.action === "decline" && isCg && i.status === "requested") { await q("UPDATE intro_requests SET status='declined' WHERE id=$1", [id]); await notify(i.family_user, "intro_declined", { introId: id }); }

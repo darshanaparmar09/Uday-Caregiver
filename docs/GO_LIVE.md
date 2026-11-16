@@ -25,18 +25,23 @@ What is built, and what must be finished or connected before real families and r
 
 ## Must be connected before launch
 
+Most services are now connected from the admin screen, **Operations, Settings** (`/ops/settings`), not from server files. Keys are stored encrypted (set `FIELD_KEY_SECRET` on the server). Each card has a **Test connection** button.
+
 | Item | Owner | Where |
 | --- | --- | --- |
-| Payment gateway: finish `RazorpayGateway` (checkout, payment.authorized webhook route, capture, refund, Route split payouts) or the chosen gateway | A, U | `apps/web/lib/payments.ts` |
-| SMS or WhatsApp OTP provider | A | `apps/web/lib/notify.ts` `sendOtp` |
-| Push notifications (Expo push tokens table and sender), WhatsApp templates for alerts | A | `lib/notify.ts`, mobile app |
-| KYC partner call in `lib/kyc.ts`; police verification provider results entered in ops (result only) | A, U | `lib/kyc.ts`, `/ops` |
-| Payout provider (RazorpayX or chosen gateway) for real bank transfers; schedule `POST /api/cron?job=payouts` every Monday | A | `lib/payments.ts` payout |
+| Business name, legal name, GSTIN, address, SAC code, GST rate, invoice prefix; tick "CA reviewed" after the CA signs off (invoices say DRAFT until then) | U, L | Settings, Business and GST |
+| SMS: MSG91 for Indian numbers (DLT templates), Twilio for numbers abroad; choose the route | U | Settings, SMS and WhatsApp |
+| WhatsApp: Meta Cloud API or Twilio; create the `uday_*` templates and get them approved | U | Settings, SMS and WhatsApp |
+| Exotel: masked calls and the daily check in call flow (press 1 or 2, callback to `/api/ivr/checkin?token=IVR_TOKEN`) | U, A | Settings, Calls |
+| Razorpay: live keys, webhook (`/api/payments/webhook`: payment.authorized, payment.captured, payment.failed), recurring payments enabled on the account for UPI AutoPay and cards, RazorpayX for payouts | U, A | Settings, Payments |
+| Aadhaar checks: manual mode works now; for API mode sign a KYC partner and match its paths | U, A | Settings, Aadhaar check |
+| Video for intro calls: Jitsi works with no account; Daily for a branded room | U | Settings, Video |
+| Claude API key for Talk to Uday; safety review of the companion prompt | U, A | Settings, AI companion |
+| Partners: telehealth, insurance and tablet partners uploaded from the Excel template | U | Settings, Partners |
+| Push notifications: EAS project id in each `app.json`, `PUSH_PROVIDER=expo`, `EXPO_ACCESS_TOKEN` | A | server env |
 | S3 driver for encrypted documents in an Indian region bucket | A | `lib/storage.ts` |
-| EAS project id in `apps/mobile/app.json`, `PUSH_PROVIDER=expo` and `EXPO_ACCESS_TOKEN` | A | push |
 | Clinical review of academy module content | U | `db/migrations/004_academy_content.sql` |
-| GST invoices as PDF with GSTIN | A, L | after CA confirms tax treatment |
-| Document upload (prescriptions) to encrypted object storage | A | `health_documents` table exists |
+| Native speaker review of Hindi and Marathi senior screens | U | `packages/mobile-shared/src/i18n.ts` |
 | Real caregivers replace seed data; real rates replace samples | U | `db/seed.mts` |
 | Privacy policy, terms, caregiver contract | L | `/legal` page placeholder |
 | Penetration test and DPDP review | A, L | before launch |
@@ -44,8 +49,18 @@ What is built, and what must be finished or connected before real families and r
 | Domain, TLS, monitoring and alerting | A | hosting |
 
 - Facility plans: create Listed and Featured monthly plans in Razorpay and set `RAZORPAY_PLAN_LISTED`, `RAZORPAY_PLAN_FEATURED`.
-- Health devices: add `react-native-health` (iPhone) and `react-native-health-connect` (Android) in a development build, then implement `readStore()` in `packages/mobile-shared/src/health.ts`. Confirm sync support for Garmin, Amazfit, Noise, boAt, Omron and Withings.
 - Withings: register an API app and implement the account link in `lib/readings.ts` `connect()`.
+
+## Test build on a real phone (health sync and push)
+
+Health sync and push cannot run in a browser or Expo Go. They need an installed build. The code and config are ready: `react-native-health` (iPhone) and `react-native-health-connect` (Android) are installed, permissions are in `apps/mobile/app.json`, and the readers in `apps/mobile/src/health` register at start. They have not yet run on a device.
+
+1. **Put the server online** (staging). The phone app talks to the server; it cannot reach a laptop. Set the address in `apps/mobile/eas.json` (`EXPO_PUBLIC_API_URL`) for the `preview` profile.
+2. **Create a free Expo account** at expo.dev, then on a computer: `npm i -g eas-cli`, `cd apps/mobile`, `eas login`, `eas init` (this writes the project id into `app.json`, which push needs).
+3. **Android (easiest):** `eas build -p android --profile preview`. When it finishes (about 15 minutes) Expo shows a link and QR code. Open it on the Android phone and install the APK. Install Google's **Health Connect** app if the phone does not have it.
+4. **iPhone:** needs an Apple Developer account (USD 99 a year). `eas device:create` to register the iPhone, then `eas build -p ios --profile preview`, and install from the link. HealthKit is switched on in the build.
+5. **Test:** sign in as a senior, open Me, tap **Sync health readings**, allow access. Readings appear in the family's Readings page. For push, sign in as family on one phone and do a check in from the senior's phone.
+6. Repeat 3 and 4 for `apps/caregiver` (push only).
 
 ## Working assumptions to confirm
 

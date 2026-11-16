@@ -19,5 +19,8 @@
   "devDependencies": {
     "tsx": "4.19.2",
     "pg": "8.13.1"
+  },
+  "overrides": {
+    "generator-function": "2.0.0"
   }
 }

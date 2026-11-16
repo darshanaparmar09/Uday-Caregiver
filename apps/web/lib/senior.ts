@@ -226,6 +226,8 @@ export async function callback(u: SessionUser, reason: "talk" | "doctor" | "lone
   const r = await recipientOf(u);
   const open = await one("SELECT 1 FROM callback_requests WHERE user_id=$1 AND reason=$2 AND status='open' AND created_at > now() - interval '1 day'", [u.id, reason]);
   if (!open) { await q("INSERT INTO callback_requests (user_id, care_recipient_id, reason) VALUES ($1,$2,$3)", [u.id, r.id, reason]); await notify(null, "callback_request", { recipientId: r.id, reason }); }
+  // A doctor call back also becomes a telehealth lead, matched to a partner doctor if one is listed.
+  if (reason === "doctor") { const { lead } = await import("./family"); await lead(u, "telehealth", "Doctor call back from the senior app").catch(() => {}); }
   return { requested: true };
 }
 

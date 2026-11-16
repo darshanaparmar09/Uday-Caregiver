@@ -67,7 +67,7 @@ export function Documents({ id }: { id: string }) {
 
 /** Account: optional ID check and Uday Plus. */
 export function Account() {
-  const [me, setMe] = useState<any>(null); const [plus, setPlus] = useState<any>(null); const [aadhaar, setAadhaar] = useState(""); const [consent, setConsent] = useState(false); const [ok, setOk] = useState(""); const [err, setErr] = useState("");
+  const [me, setMe] = useState<any>(null); const [plus, setPlus] = useState<any>(null); const [aadhaar, setAadhaar] = useState(""); const [consent, setConsent] = useState(false); const [otp, setOtp] = useState(""); const [needOtp, setNeedOtp] = useState(false); const [ok, setOk] = useState(""); const [err, setErr] = useState("");
   const load = () => { api("/api/me").then(setMe).catch(() => {}); api("/api/plus").then(setPlus).catch(() => {}); }; useEffect(load, []);
   async function go(p: Promise<any>, done: string) { setOk(""); setErr(""); try { await p; setOk(done); load(); } catch (e: any) { setErr(e.message); } }
   if (!me) return <p>Loading</p>;
@@ -81,13 +81,18 @@ export function Account() {
           <p className="text-sm">Optional. Caregivers feel safer accepting requests from verified families. Your Aadhaar number goes to our licensed KYC partner; Uday keeps only the result and the last four digits.</p>
           <input className="input" inputMode="numeric" placeholder="12 digit Aadhaar number" value={aadhaar} onChange={(e) => setAadhaar(e.target.value)} maxLength={14} />
           <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1" checked={consent} onChange={(e) => setConsent(e.target.checked)} />I agree to Uday checking my identity through its KYC partner for this purpose only.</label>
-          <button className="btn justify-self-start" disabled={!consent || aadhaar.replace(/\D/g, "").length !== 12} onClick={() => go(api("/api/profile/kyc", { body: { aadhaar, consent } }), "ID check complete.")}>Verify</button></>}</div>
+          {me.user.kyc_status === "pending" && !needOtp ? <p className="text-sm font-semibold text-amber-700">Submitted. The Uday team will confirm your ID within two working days.</p> : null}
+          {needOtp ? <><p className="text-sm">A code was sent to the mobile number linked to your Aadhaar.</p>
+            <input className="input" inputMode="numeric" placeholder="6 digit code" value={otp} onChange={(e) => setOtp(e.target.value)} maxLength={6} />
+            <button className="btn justify-self-start" disabled={otp.length !== 6} onClick={() => go(api("/api/profile/kyc", { body: { otp } }).then(() => setNeedOtp(false)), "ID check complete.")}>Confirm code</button></>
+          : <button className="btn justify-self-start" disabled={!consent || aadhaar.replace(/\D/g, "").length !== 12} onClick={() => go(api("/api/profile/kyc", { body: { aadhaar, consent } }).then((r: any) => setNeedOtp(!!r.needsOtp)), "Started.")}>Verify</button>}</>}</div>
       {plus && <div className={`card grid gap-3 ${plus.member ? "border-teal-500" : ""}`}><div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-lg font-bold">{PLUS.name}</h2><b className="font-display text-2xl text-ink">{inr(PLUS.pricePaise)}<span className="text-sm font-normal text-muted"> a month</span></b></div>
         <ul className="list-disc pl-5 text-sm">{PLUS.benefits.map((b) => <li key={b}>{b}</li>)}</ul>
         {plus.member ? <><p className="font-semibold text-teal-600">✓ You are a member{plus.membership?.current_period_end ? `, renews ${new Date(plus.membership.current_period_end).toLocaleDateString("en-IN")}` : ""}.</p>
           {plus.membership?.status === "active" && <button className="btn-ghost justify-self-start" onClick={() => go(api("/api/plus", { body: { action: "leave" } }), "Cancelled. Benefits continue until the end of the month.")}>Cancel membership</button>}</>
           : <button className="btn justify-self-start" onClick={() => go(api("/api/plus", { body: { action: "join" } }), "Welcome to Uday Plus.")}>Join Uday Plus</button>}
         <p className="note">Price and benefits are pilot assumptions.</p></div>}
+      <PartnerServices />
     </div>);
 }
 
@@ -99,4 +104,23 @@ export function InviteBanner() {
   return <>{list.map((i) => <div key={i.id} className="card flex flex-wrap items-center justify-between gap-3 border-orange-400 bg-orange-50">
     <span>{i.inviter ?? "A family member"} invited you to help care for <b className="text-ink">{i.senior}</b> ({i.locality}) as {ROLE[i.role].toLowerCase()}.</span>
     <span className="flex gap-2"><button className="btn" onClick={() => api(`/api/invites/${i.id}`, { body: { accept: true } }).then(() => location.reload())}>Join</button><button className="btn-ghost" onClick={() => api(`/api/invites/${i.id}`, { body: { accept: false } }).then(load)}>Decline</button></span></div>)}</>;
+}
+
+/** Partner services for families: doctor on call, health insurance, the Uday tablet. */
+export function PartnerServices() {
+  const [list, setList] = useState<any[]>([]); const [consent, setConsent] = useState<Record<string, boolean>>({}); const [done, setDone] = useState<Record<string, string>>({}); const [err, setErr] = useState("");
+  useEffect(() => { api("/api/leads").then(setList).catch(() => {}); }, []);
+  const KIND: [string, string, string][] = [["telehealth", "Doctor on call", "A doctor calls your parent back, usually the same day."], ["insurance", "Health insurance for seniors", "An adviser explains senior health cover and helps you apply."], ["tablet", "Uday tablet at home", "An always on screen for check ins, video calls with family and reminders."]];
+  async function ask(kind: string) { setErr(""); try { const r = await api("/api/leads", { body: { kind, consent: !!consent[kind] } }); setDone({ ...done, [kind]: r.partner ? `Request sent. ${consent[kind] ? r.partner + " will call you." : "The Uday team will call you."}` : "Request sent. The Uday team will call you." }); } catch (e: any) { setErr(e.message); } }
+  return (
+    <div className="card grid gap-4"><h2 className="text-lg font-bold">More help from Uday partners</h2>{err && <p className="text-sm text-red-700">{err}</p>}
+      {KIND.map(([k, t, d]) => { const ps = list.filter((p) => p.kind === k); return (
+        <div key={k} className="grid gap-2 border-t border-line pt-3"><h3 className="font-bold">{t}</h3><p className="text-sm text-muted">{d}</p>
+          {ps.map((p) => <p key={p.id} className="text-sm"><b className="text-ink">{p.name}</b>{p.offer ? ` · ${p.offer}` : ""}{p.price_note ? ` · ${p.price_note}` : ""}{p.website ? <> · <a className="font-semibold text-indigo-600" href={p.website} target="_blank" rel="noreferrer">website</a></> : null}</p>)}
+          {done[k] ? <p className="text-sm font-semibold text-teal-700">{done[k]}</p> : <>
+            {ps.length > 0 && <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1" checked={!!consent[k]} onChange={(e) => setConsent({ ...consent, [k]: e.target.checked })} />Uday may share my name and phone number with this partner so they can call me.</label>}
+            <button className="btn-ghost justify-self-start" onClick={() => ask(k)}>Request a call</button></>}
+        </div>); })}
+      <p className="note">Partners are independent businesses. Uday does not sell insurance or give medical advice.</p>
+    </div>);
 }

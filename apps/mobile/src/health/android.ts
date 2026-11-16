@@ -1,11 +1,11 @@
 /**
  * Health Connect reader for Android. UNTESTED ON A DEVICE: needs an Expo development build with
  * react-native-health-connect and the expo-health-connect config plugin (minSdk 26). Usage:
- *   import { readHealthConnect } from "@uday/native-health/android"; registerHealthReader(readHealthConnect);
+ *   import { readHealthConnect } from "./health/android"; registerHealthReader(readHealthConnect);
  */
 // @ts-nocheck  (types come from react-native-health-connect once installed)
 import { initialize, requestPermission, readRecords } from "react-native-health-connect";
-import type { Sample } from "../src/health";
+import type { Sample } from "../shared/health";
 
 const TYPES = ["HeartRate", "OxygenSaturation", "Steps", "SleepSession", "BloodPressure", "Weight"] as const;
 

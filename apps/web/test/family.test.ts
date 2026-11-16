@@ -48,7 +48,7 @@ test("documents: upload encrypted, list, open, delete; ID check stores last 4 on
   const other = await login("+9190" + rnd()); assert.equal((await fetch(`${BASE}/api/recipients/${rid}/documents/${d.j.id}`, { headers: { Authorization: "Bearer " + other } })).status, 403);
   assert.equal((await call(fam, `/api/recipients/${rid}/documents/${d.j.id}`, undefined, "DELETE")).status, 200);
   assert.equal((await call(fam, "/api/profile/kyc", { aadhaar: "2345 6789 0123", consent: false })).status, 400);
-  assert.deepEqual((await call(fam, "/api/profile/kyc", { aadhaar: "2345 6789 0123", consent: true })).j, { result: "clear", last4: "0123" });
+  assert.deepEqual((await call(fam, "/api/profile/kyc", { aadhaar: "2345 6789 0123", consent: true })).j, { result: "clear", last4: "0123", needsOtp: false });
   const me = (await call(fam, "/api/me")).j.user; assert.equal(me.kyc_status, "clear"); assert.equal(me.aadhaar_last4, "0123"); assert.equal(JSON.stringify(me).includes("234567890123"), false);
 });
 

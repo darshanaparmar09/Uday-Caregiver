@@ -13,13 +13,25 @@
     },
     "ios": {
       "bundleIdentifier": "in.uday.app",
-      "supportsTablet": false,
-      "infoPlist": {}
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "Uday reads heart rate, oxygen, steps, sleep, blood pressure and weight so your family can see how you are.",
+        "NSHealthUpdateUsageDescription": "Uday does not write to Apple Health."
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true
+      }
     },
     "android": {
       "package": "in.uday.app",
       "permissions": [
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_OXYGEN_SATURATION",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_BLOOD_PRESSURE",
+        "android.permission.health.READ_WEIGHT"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#1A1040"
@@ -36,6 +48,24 @@
         "expo-notifications",
         {
           "color": "#F5A623"
+        }
+      ],
+      [
+        "react-native-health",
+        {
+          "isClinicalDataEnabled": false,
+          "healthSharePermission": "Uday reads heart rate, oxygen, steps, sleep, blood pressure and weight so your family can see how you are."
+        }
+      ],
+      "expo-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
         }
       ]
     ],

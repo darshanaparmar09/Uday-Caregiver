@@ -109,7 +109,7 @@ export function OpsFamily() {
     <div className="grid gap-6"><h2 className="text-2xl font-extrabold">Families: leads, coupons, Uday Plus</h2>{msg && <p role="status" className="rounded-lg bg-indigo-50 px-3 py-2 text-sm">{msg}</p>}
       <div className="card"><h3 className="mb-3 font-bold">Partner leads ({d.leads.length})</h3>{d.leads.map((l: any) => <div key={l.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-2 text-sm">
         <span><b className="text-ink">{l.kind}</b> · {l.name ?? "Family"}, {l.locality ?? ""}{l.note ? ` · "${l.note}"` : ""}</span><button className="btn-ghost min-h-[40px] px-3 text-sm" onClick={() => go({ action: "lead_done", id: l.id }, "Lead closed")}>Done</button></div>)}
-        <p className="note mt-1">Pass to the insurance or tablet partner once agreements are signed.</p></div>
+        <p className="note mt-1">Assign and send leads to partners in <a className="font-semibold text-indigo-600" href="/ops/settings#partners">Settings, Partners</a>.</p></div>
       <div className="card grid gap-3"><h3 className="font-bold">Coupons · Uday Plus members: {d.members}</h3>
         {d.coupons.map((c: any) => <div key={c.code} className="text-sm">{c.code} · {c.fee_discount_bps / 100}% off the Uday fee · used {c.used}{c.max_uses ? ` of ${c.max_uses}` : ""}{c.valid_until ? ` · until ${String(c.valid_until).slice(0, 10)}` : ""}</div>)}
         <div className="grid gap-2 sm:grid-cols-4"><input className="input" placeholder="CODE" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} /><input className="input" type="number" aria-label="Percent off the fee" value={pct} onChange={(e) => setPct(e.target.value)} />
