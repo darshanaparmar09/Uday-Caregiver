@@ -41,7 +41,8 @@ for (const [name, ini, tier, types, langs, skills, area, lat, lng, exp, gender, 
   console.log(`caregiver ${name}: sign in with ${phone}`);
   i++;
 }
-await user("+919000000099", "Uday Ops", "ops");
+const opsId = await user("+919000000099", "Uday Ops", "ops");
+await c.query("INSERT INTO ops_members (user_id, role) VALUES ($1,'admin') ON CONFLICT (user_id) DO UPDATE SET role='admin', active=true", [opsId]);
 
 // SAMPLE facilities so the directory has content in testing. Invented names, clearly marked sample; remove before launch.
 const FAC = [

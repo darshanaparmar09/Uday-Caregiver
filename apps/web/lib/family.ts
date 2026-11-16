@@ -1,8 +1,7 @@
 import { matchPartner } from "./partners";
-import { policyNow, business } from "./settings";
+import { policyNow } from "./settings";
 import { z } from "zod";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { PLUS, postProblem, fees, WEEKDAYS } from "@uday/core";
+import { PLUS, postProblem, fees } from "@uday/core";
 import { one, q, tx } from "./db";
 import { dec, enc, lookupHash, normalisePhone } from "./crypto";
 import { notify } from "./notify";
@@ -199,41 +198,6 @@ export async function createCoupon(i: z.infer<typeof CouponIn>) {
 
 // ───────── GST invoice PDF ─────────
 /** Tax invoice for the Uday platform fee, with the caregiver's care fee shown as collected on her behalf. CA to confirm the format and tax treatment. */
-export async function invoicePdf(u: SessionUser, bookingId: string) {
-  const b = await one<any>(`SELECT b.*, c.display_name, r.name AS senior, u.name AS payer, u.email, u.city, u.country FROM bookings b JOIN caregivers c ON c.id=b.caregiver_id
-    JOIN care_recipients r ON r.id=b.care_recipient_id JOIN users u ON u.id=b.payer_id WHERE b.id=$1`, [bookingId]);
-  if (!b || !(await familyRole(u.id, b.care_recipient_id))) throw new AppError("Not found", 404);
-  if (["offered", "proposal", "released"].includes(b.status)) throw new AppError("The invoice is ready once the booking is confirmed");
-  const biz = await business(); const gstin = biz.gstin || null; const legal = biz.legalName || `${biz.brandName} (legal name to be added in Settings)`;
-  const ratePct = biz.gstRatePct; const intra = biz.stateCode === "27"; // care is delivered in Pune, Maharashtra (state code 27)
-  const doc = await PDFDocument.create(); const page = doc.addPage([595, 842]); const font = await doc.embedFont(StandardFonts.Helvetica); const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const ink = rgb(0.1, 0.06, 0.25); let y = 790;
-  const text = (t: string, x: number, size = 10, f = font, color = ink) => page.drawText(t, { x, y, size, font: f, color });
-  const rupee = (p: number) => "Rs " + (p / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const draft = !gstin || !biz.caReviewed;
-  if (draft) page.drawText(!gstin ? "DRAFT - GSTIN NOT YET ADDED" : "DRAFT - AWAITING CA REVIEW", { x: 110, y: 420, size: 26, font: bold, color: rgb(0.9, 0.3, 0.3), opacity: 0.25, rotate: { type: "degrees" as any, angle: 30 } as any });
-  text(gstin ? "TAX INVOICE" : "INVOICE (DRAFT)", 50, 20, bold); y -= 24; text(legal, 50, 11, bold); y -= 14;
-  if (biz.address) { text(`${biz.address}, ${biz.city} ${biz.pincode}`.trim(), 50, 9); y -= 12; }
-  text(`GSTIN: ${gstin ?? "not added"}   ·   PAN: ${biz.pan || "-"}   ·   State: ${biz.state} (${biz.stateCode})`, 50, 9); y -= 12;
-  if (biz.supportPhone || biz.supportEmail) { text(`Support: ${[biz.supportPhone, biz.supportEmail].filter(Boolean).join(" · ")}`, 50, 9); y -= 12; }
-  y -= 16;
-  text(`Invoice: ${biz.invoicePrefix}-${b.code.replace("UDY", "")}`, 50, 10, bold); text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 400); y -= 14;
-  text(`Booking: ${b.code}   ·   Place of supply: Maharashtra (27)`, 50); y -= 26;
-  text("Billed to", 50, 10, bold); y -= 14; text(`${b.payer ?? "Family member"}${b.email ? " · " + b.email : ""}`, 50); y -= 14; text(`${b.city ?? ""}${b.country ? ", " + b.country : ""}`, 50); y -= 14;
-  text(`Care for ${b.senior} by ${b.display_name}, ${b.days} day${b.days > 1 ? "s" : ""} from ${String(b.start_date instanceof Date ? b.start_date.toISOString() : b.start_date).slice(0, 10)}${b.day_off != null ? ` (day off ${WEEKDAYS[b.day_off]})` : ""}`, 50); y -= 30;
-  const half = Math.floor(b.gst_paise / 2);
-  const lines: [string, number][] = [[`Care fee collected for the caregiver (${rupee(b.rate_paise)} x ${b.days})`, b.care_paise], [`${biz.brandName} platform fee (SAC ${biz.sacCode || "to be confirmed"})${b.fee_discount_bps ? `, after ${b.fee_discount_bps / 100}% discount` : ""}`, b.platform_paise],
-    ...(intra ? [[`CGST ${ratePct / 2}% on platform fee`, half], [`SGST ${ratePct / 2}% on platform fee`, b.gst_paise - half]] as [string, number][] : [[`IGST ${ratePct}% on platform fee`, b.gst_paise]] as [string, number][])];
-  page.drawLine({ start: { x: 50, y: y + 10 }, end: { x: 545, y: y + 10 }, thickness: 0.5, color: ink });
-  for (const [t, v] of lines) { text(t, 50); text(rupee(v), 450); y -= 18; }
-  page.drawLine({ start: { x: 50, y: y + 8 }, end: { x: 545, y: y + 8 }, thickness: 0.5, color: ink }); y -= 6;
-  text("Total", 50, 11, bold); text(rupee(b.total_paise), 450, 11, bold); y -= 18;
-  text(`Paid so far: ${rupee(b.paid_paise || 0)}${b.billing === "weekly" ? " (billed weekly)" : ""}`, 50); y -= 34;
-  for (const l of ["The care fee is passed to the caregiver in full and is not the platform's revenue. GST applies to the platform fee only.",
-    ...(biz.caReviewed ? [] : ["Format, SAC code, place of supply and tax split to be confirmed by a chartered accountant before use."])]) { text(l, 50, 8); y -= 12; }
-  return Buffer.from(await doc.save());
-}
-
 // ───────── AI companion ─────────
 const CRISIS = /(सीने में दर्द|छाती में दर्द|साँस नहीं|सांस नहीं|गिर गया|गिर गई|मरना चाहत|जान देन|छातीत दुख|श्वास घेता येत नाही|पडलो|पडले|मरायचं|chest pain|can'?t breathe|cannot breathe|fell|fallen|fall down|bleeding|stroke|suicid|kill myself|end my life|want to die|heart attack|unconscious|dizzy and|help me now)/i;
 const SYSTEM = `You are Uday, a warm daily companion for an elderly person in India. Reply in the same language the person writes in (English, Hindi or Marathi).

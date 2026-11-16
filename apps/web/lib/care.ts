@@ -140,6 +140,11 @@ export async function sweepBilling(forceBooking?: string) {
 }
 /** Records a weekly payment once the money is confirmed. Safe to call twice for the same cycle. */
 export async function cyclePaid(cycleId: string, paymentRef: string) {
+  const done = await cyclePaidTx(cycleId, paymentRef);
+  if (done) { const y = await one<{ booking_id: string }>("SELECT booking_id FROM billing_cycles WHERE id=$1", [cycleId]); const { ensureInvoices } = await import("./finance"); if (y) await ensureInvoices(y.booking_id).catch((e) => console.error("invoice", e)); }
+  return done;
+}
+async function cyclePaidTx(cycleId: string, paymentRef: string) {
   return tx(async (c) => {
     const y = (await c.query("SELECT y.*, b.care_recipient_id FROM billing_cycles y JOIN bookings b ON b.id=y.booking_id WHERE y.id=$1 FOR UPDATE", [cycleId])).rows[0];
     if (!y || y.status === "paid") return false;

@@ -121,7 +121,7 @@ export async function checkIn(u: SessionUser, status: "ok" | "help" | "medical" 
 /** Missed check ins: family and local contact are alerted. Run by the cron endpoint. */
 export async function sweepMissedCheckins() {
   const rows = await q<{ id: string }>(`SELECT r.id FROM care_recipients r WHERE r.has_phone
-      AND (now() AT TIME ZONE 'Asia/Kolkata')::time > r.checkin_by + interval '1 hour'
+      AND (now() AT TIME ZONE 'Asia/Kolkata')::time > r.checkin_by + ((SELECT missed_checkin_grace_min FROM policy_settings WHERE id=1) || ' minutes')::interval
       AND NOT EXISTS (SELECT 1 FROM checkins k WHERE k.care_recipient_id=r.id AND (k.at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date)
       AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.template='checkin_missed' AND n.payload->>'recipientId' = r.id::text AND n.at > now() - interval '20 hours')`);
   // Gentle reminder to the senior at their own check in time, once a day.
@@ -138,7 +138,9 @@ export async function sweepMissedCheckins() {
 }
 
 export async function sos(u: SessionUser, bookingId?: string, lat?: number, lng?: number) {
-  await q("INSERT INTO sos_events (user_id, booking_id, role, lat, lng) VALUES ($1,$2,$3,$4,$5)", [u.id, bookingId ?? null, u.role, lat ?? null, lng ?? null]);
+  const ev = await one<{ id: number }>("INSERT INTO sos_events (user_id, booking_id, role, lat, lng) VALUES ($1,$2,$3,$4,$5) RETURNING id", [u.id, bookingId ?? null, u.role, lat ?? null, lng ?? null]);
+  // Every SOS opens a critical incident for the safety team.
+  const { incidentFromSos } = await import("./ops"); await incidentFromSos(Number(ev!.id), u.id, u.role, bookingId).catch((e) => console.error("incident from SOS failed", e));
   await notify(null, "sos", { userId: u.id, role: u.role, bookingId, lat, lng }, "sms");
   if (bookingId) await q("INSERT INTO booking_events (booking_id, actor_id, actor_role, message) VALUES ($1,$2,$3,'SOS raised. Safety team alerted.')", [bookingId, u.id, u.role]);
   return { ok: true };

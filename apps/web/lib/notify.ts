@@ -12,7 +12,7 @@ import { dec } from "./crypto";
 export type Template =
   | "booking_requested" | "booking_offer" | "booking_accepted" | "booking_proposal" | "booking_released"
   | "caregiver_enroute" | "caregiver_arrived" | "shift_started" | "shift_log" | "shift_ended"
-  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event" | "day_closed" | "caregiver_back" | "extension_request" | "extension_accepted" | "extension_declined" | "shift_reminder" | "caregiver_late" | "relief_offer" | "relief_assigned" | "relief_unfilled" | "payment_failed" | "payment_due" | "payment_taken" | "intro_request" | "intro_confirmed" | "intro_declined" | "new_message";
+  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event" | "day_closed" | "caregiver_back" | "extension_request" | "extension_accepted" | "extension_declined" | "shift_reminder" | "caregiver_late" | "relief_offer" | "relief_assigned" | "relief_unfilled" | "payment_failed" | "payment_due" | "payment_taken" | "intro_request" | "intro_confirmed" | "intro_declined" | "new_message" | "ticket_reply" | "ticket_resolved" | "incident_opened";
 
 export async function notify(userId: string | null, template: Template, payload: Record<string, unknown> = {}, channel: "push" | "whatsapp" | "sms" | "email" = "push") {
   await q("INSERT INTO notifications (user_id, channel, template, payload) VALUES ($1,$2,$3,$4)", [userId, channel, template, payload]);
@@ -57,6 +57,9 @@ const PUSH_TEXT: Partial<Record<Template, PushMessage>> = {
   relief_unfilled: { title: "Day off not covered", body: "We could not find a relief caregiver. Your regular caregiver stays, and Uday will call you." },
   payment_failed: { title: "Payment did not go through", body: "Next week's care payment failed. Please update your payment in Uday.", urgent: true },
   payment_due: { title: "This week's care is waiting for payment", body: "Switch on auto pay or pay this week in Uday, so care continues.", urgent: true },
+  ticket_reply: { title: "Uday replied to your help request", body: "Open Uday to read the reply." },
+  ticket_resolved: { title: "Your help request is resolved", body: "Open Uday to see what was done. Reply if anything is still wrong." },
+  incident_opened: { title: "Incident opened", body: "A serious incident needs the team now.", urgent: true },
   payment_taken: { title: "Weekly payment received", body: "Thank you. Next week's care is paid." },
   intro_request: { title: "A family wants to meet you", body: "Choose a time for a short video call." },
   intro_confirmed: { title: "Intro call confirmed", body: "Open Uday for the time and link." },

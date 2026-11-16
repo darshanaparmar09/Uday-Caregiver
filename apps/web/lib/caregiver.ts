@@ -1,3 +1,4 @@
+import { tierRates } from "./settings";
 import { z } from "zod";
 import { one, q, tx } from "./db";
 import { enc, lookupHash, normalisePhone } from "./crypto";
@@ -264,7 +265,7 @@ export async function convertApplication(ops: SessionUser, appId: string, tier: 
     const user = (await cl.query(`INSERT INTO users (phone_hash, phone_enc, phone_last4, name, role) VALUES ($1,$2,$3,$4,'caregiver')
       ON CONFLICT (phone_hash) DO UPDATE SET role='caregiver', name=EXCLUDED.name RETURNING id`, [lookupHash(phone), enc(phone), phone.slice(-4), a.name])).rows[0];
     const initials = a.name.split(/\s+/).map((s: string) => s[0]).join("").slice(0, 2).toUpperCase();
-    const rates = { 1: [85000, 105000, 150000], 2: [140000, 160000, 220000], 3: [210000, 240000, 310000] }[tier as 1 | 2 | 3] ?? [85000, 105000, 150000];
+    const rates = await tierRates(tier);
     const cg = (await cl.query(`INSERT INTO caregivers (user_id, display_name, initials, tier, care_types, area, rate_day_paise, rate_night_paise, rate_live_paise, status)
       VALUES ($1,$2,$3,$4,'{day}',$5,$6,$7,$8,'verifying') RETURNING id`, [user.id, a.name, initials, tier, a.area, ...rates])).rows[0];
     await cl.query("UPDATE caregiver_applications SET caregiver_id=$2, status='converted' WHERE id=$1", [appId, cg.id]);

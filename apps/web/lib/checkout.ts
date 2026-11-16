@@ -1,6 +1,7 @@
 import { offerWindowMinutes, shiftStart } from "@uday/core";
 import { one, q, tx } from "./db";
 import { gateway } from "./payments";
+import { policyNow } from "./settings";
 import { cyclePaid, cycleFailed, mandateAuthorised } from "./care";
 import { notify } from "./notify";
 import { AppError, familyRole } from "./bookings";
@@ -18,7 +19,7 @@ export async function authorised(orderId: string, paymentId: string) {
     const b = (await c.query("SELECT b.*, cg.user_id AS cg_user FROM bookings b JOIN caregivers cg ON cg.id=b.caregiver_id WHERE b.id=$1 FOR UPDATE", [p.booking_id])).rows[0];
     await c.query("UPDATE payments SET status='held', payment_id=$2, updated_at=now() WHERE id=$1", [p.id, paymentId]);
     const start = shiftStart(String(b.start_date instanceof Date ? b.start_date.toISOString() : b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), 0);
-    const win = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start);
+    const win = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start, new Date(), await policyNow());
     await c.query("UPDATE bookings SET offer_expires_at=now() + ($2 || ' minutes')::interval WHERE id=$1", [b.id, String(win)]);
     await c.query("INSERT INTO booking_events (booking_id, actor_role, message) VALUES ($1,'system','Payment authorised. Request sent to the caregiver.')", [b.id]);
     if (b.cg_user) await notify(b.cg_user, "booking_offer", { bookingId: b.id });

@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
-import { z } from "zod";
-import { requireUser } from "@/lib/auth";
 import { handle, body } from "@/lib/http";
-import * as cg from "@/lib/caregiver";
-export const POST = handle(async () => { await requireUser("ops"); return cg.runPayouts(); });
+import { requireOps } from "@/lib/ops";
+import * as fin from "@/lib/finance";
+export const GET = handle(async () => { await requireOps("money"); return fin.payouts(); });
+export const POST = handle(async () => fin.runPayoutsNow(await requireOps("money")));

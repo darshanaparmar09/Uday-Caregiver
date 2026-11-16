@@ -104,7 +104,7 @@ export async function createBooking(u: SessionUser, i: CreateInput) {
   const holdAmount = cycles ? cycles[0].amount : f.totalPaise;
   const code = "UDY" + Date.now().toString(36).toUpperCase().slice(-6);
   const hold = await (await gateway()).hold(holdAmount, code, i.method);
-  const windowMin = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start);
+  const windowMin = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start, new Date(), await policyNow());
   // With a live gateway the family completes checkout first; the offer goes to the caregiver once the payment is authorised.
   const awaitingPayment = hold.status === "pending_customer";
 
@@ -220,7 +220,7 @@ export async function listBookings(u: SessionUser) {
 export async function escrowBalance(c: PoolClient, bookingId: string) {
   return Number((await c.query("SELECT COALESCE(SUM(credit_paise - debit_paise),0)::int AS n FROM ledger_entries WHERE booking_id=$1 AND account='escrow'", [bookingId])).rows[0].n);
 }
-async function closeFuture(c: PoolClient, bookingId: string) {
+export async function closeFuture(c: PoolClient, bookingId: string) {
   await c.query("UPDATE billing_cycles SET status='cancelled' WHERE booking_id=$1 AND status IN ('due','failed','held')", [bookingId]);
   await c.query("UPDATE relief_shifts SET status='cancelled' WHERE booking_id=$1 AND status IN ('open','offered','accepted')", [bookingId]);
 }
@@ -237,7 +237,7 @@ async function createReliefRows(c: PoolClient, b: any, fromDay: number) {
     await c.query("INSERT INTO relief_shifts (booking_id, day_no, day) VALUES ($1,$2,$3) ON CONFLICT (booking_id, day_no) DO NOTHING", [b.id, r.dayNo, r.date]);
 }
 const TIME_CHECKS = !["development", "staging", "test"].includes(process.env.UDAY_ENV ?? "production");
-async function toProposalTx(c: PoolClient, b: any, actor: SessionUser | null, role: Actor, reason: string) {
+export async function toProposalTx(c: PoolClient, b: any, actor: SessionUser | null, role: Actor, reason: string) {
   const tried: string[] = Array.from(new Set([...(b.tried ?? []), b.caregiver_id]));
   const remainingStart = new Date(Date.parse(String(b.start_date).slice(0, 10) + "T00:00:00Z") + b.days_done * 86400e3).toISOString().slice(0, 10);
   const busy = await busyCaregivers(c, remainingStart, b.days - b.days_done, b.id);
@@ -255,7 +255,7 @@ async function toProposalTx(c: PoolClient, b: any, actor: SessionUser | null, ro
   }
 }
 
-async function releaseTx(c: PoolClient, b: any, actor: SessionUser | null, role: Actor, msg: string, tried?: string[]) {
+export async function releaseTx(c: PoolClient, b: any, actor: SessionUser | null, role: Actor, msg: string, tried?: string[]) {
   const pay = (await c.query("SELECT * FROM payments WHERE booking_id=$1 ORDER BY created_at DESC LIMIT 1 FOR UPDATE", [b.id])).rows[0];
   const unused = await escrowBalance(c, b.id);
   await closeFuture(c, b.id);
@@ -303,7 +303,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
   if (famActs.includes(a.action) && !(fam && ["owner", "care_manager", "payer"].includes(fam))) throw new AppError("Not allowed", 403);
   if (cgActs.includes(a.action) && !isCg) throw new AppError("Not allowed", 403);
 
-  return tx(async (c) => {
+  const out = await tx(async (c) => {
     const b = await lockBooking(c, id);
     const cgName = (await c.query("SELECT display_name FROM caregivers WHERE id=$1", [b.caregiver_id])).rows[0].display_name;
     const first = cgName.split(" ")[0];
@@ -348,7 +348,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
         if (b.paid_paise > 0) {
           // Care already paid for: the family's price stays the same and the new caregiver takes the remaining days.
           const start = shiftStart(String(b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), b.days_done);
-          const win = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start);
+          const win = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start, new Date(), await policyNow());
           await c.query("UPDATE bookings SET status='offered', caregiver_id=$2, proposed_caregiver_id=NULL, offer_expires_at=now() + ($3 || ' minutes')::interval, updated_at=now() WHERE id=$1", [b.id, p.id, String(win)]);
           await event(c, b, u, "family", "offered", `You approved ${p.display_name} for the remaining ${b.days - b.days_done} days. Same price.`);
           if (p.user_id) await notify(p.user_id, "booking_offer", { bookingId: b.id });
@@ -363,7 +363,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
           await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, status) VALUES ($1,$2,$3,$4,$5,'held')", [b.id, (await gateway()).name, h.gatewayRef, pay.method, f.totalPaise]);
         }
         const start = shiftStart(String(b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), b.days_done);
-        const win = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start);
+        const win = Number(process.env.OFFER_WINDOW_MINUTES) || offerWindowMinutes(start, new Date(), await policyNow());
         await c.query(`UPDATE bookings SET status='offered', caregiver_id=$2, proposed_caregiver_id=NULL, rate_paise=$3, care_paise=$4, platform_paise=$5, gst_paise=$6, total_paise=$7,
           offer_expires_at=now() + ($8 || ' minutes')::interval, updated_at=now() WHERE id=$1`, [b.id, p.id, f.ratePaise, f.carePaise, f.platformPaise, f.gstPaise, f.totalPaise, String(win)]);
         await event(c, b, u, "family", "offered", `You approved ${p.display_name}. Request sent.` + (f.totalPaise !== b.total_paise ? ` New total ${rupees(f.totalPaise)}.` : ""));
@@ -377,7 +377,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
       case "cancel": {
         assertTransition(b.status, "cancelled", "family");
         const next = shiftStart(String(b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), b.days_done);
-        const qte = cancelQuote({ status: b.status, days: b.days, daysDone: b.days_done, totalPaise: b.total_paise, ratePaise: b.rate_paise, nextShiftStart: next });
+        const qte = cancelQuote({ status: b.status, days: b.days, daysDone: b.days_done, totalPaise: b.total_paise, ratePaise: b.rate_paise, nextShiftStart: next }, new Date(), await policyNow());
         if ((await c.query("SELECT 1 FROM memberships WHERE user_id=$1 AND (status='active' OR current_period_end >= current_date)", [b.payer_id])).rowCount) qte.feePaise = 0; // Uday Plus: free cancellation
         const pay = (await c.query("SELECT * FROM payments WHERE booking_id=$1 ORDER BY created_at DESC LIMIT 1 FOR UPDATE", [b.id])).rows[0];
         if (pay.status === "held" || pay.status === "pending") { await (await gateway()).release(pay.gateway_ref); await c.query("UPDATE payments SET status='released', updated_at=now() WHERE id=$1", [pay.id]); }
@@ -401,7 +401,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
         if (b.status !== "accepted" || b.days_done > 0) throw new AppError("Only a booking that has not started can be rescheduled");
         if (!/^\d{4}-\d{2}-\d{2}$/.test(a.startDate)) throw new AppError("Invalid date");
         const next = shiftStart(String(b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), 0);
-        const qte = cancelQuote({ status: b.status, days: b.days, daysDone: 0, totalPaise: b.total_paise, ratePaise: b.rate_paise, nextShiftStart: next });
+        const qte = cancelQuote({ status: b.status, days: b.days, daysDone: 0, totalPaise: b.total_paise, ratePaise: b.rate_paise, nextShiftStart: next }, new Date(), await policyNow());
         if (shiftStart(a.startDate, String(b.start_time).slice(0, 5), 0).getTime() < Date.now() + 2 * 3600e3) throw new AppError("New start must be at least 2 hours away");
         await c.query("UPDATE bookings SET start_date=$2, cancel_fee_paise=cancel_fee_paise+$3, updated_at=now() WHERE id=$1", [b.id, a.startDate, qte.feePaise]);
         await event(c, b, u, "family", null, `Rescheduled to start ${a.startDate}. ${qte.feePaise ? "Fee " + rupees(qte.feePaise) + "." : "No fee."}`);
@@ -576,13 +576,17 @@ export async function act(u: SessionUser, id: string, a: Action) {
     }
     return { ok: true };
   });
+  // Money was taken: issue the GST invoice for it. Refunds get a credit note.
+  if (["accept", "extension"].includes(a.action)) { const { ensureInvoices } = await import("./finance"); await ensureInvoices(id).catch((e) => console.error("invoice", e)); }
+  if (["cancel", "reject", "cg_cancel", "replace"].includes(a.action)) { const { creditNoteFor } = await import("./finance"); await creditNoteFor(id).catch((e) => console.error("credit note", e)); }
+  return out;
 }
 
 async function openTicket(c: PoolClient, u: SessionUser, bookingId: string, category: string, text?: string) {
   const urgent = /safety|late|did not arrive/i.test(category);
   const code = "TKT" + Date.now().toString(36).toUpperCase().slice(-6);
   await c.query("INSERT INTO tickets (code, booking_id, user_id, category, text_enc, urgent, sla_due_at) VALUES ($1,$2,$3,$4,$5,$6, now() + ($7 || ' minutes')::interval)",
-    [code, bookingId, u.id, category.slice(0, 80), enc(text?.slice(0, 2000)), urgent, urgent ? "15" : "120"]);
+    [code, bookingId, u.id, category.slice(0, 80), enc(text?.slice(0, 2000)), urgent, String(urgent ? (await policyNow()).urgentTicketSlaMin : (await policyNow()).ticketSlaMin)]);
   await notify(null, "ticket_opened", { code, urgent, bookingId });
 }
 
@@ -590,7 +594,7 @@ export async function quote(u: SessionUser, id: string) {
   const b = await getBooking(u, id);
   if (b.viewer !== "family") throw new AppError("Not allowed", 403);
   return cancelQuote({ status: b.status, days: b.days, daysDone: b.daysDone, totalPaise: b.fees.totalPaise, ratePaise: b.fees.ratePaise,
-    nextShiftStart: shiftStart(String(b.startDate instanceof Date ? b.startDate.toISOString() : b.startDate).slice(0, 10), String(b.startTime).slice(0, 5), b.daysDone) });
+    nextShiftStart: shiftStart(String(b.startDate instanceof Date ? b.startDate.toISOString() : b.startDate).slice(0, 10), String(b.startTime).slice(0, 5), b.daysDone) }, new Date(), await policyNow());
 }
 
 function distanceM(a: number, b: number, c: number, d: number) {

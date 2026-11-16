@@ -164,8 +164,17 @@ export async function saveBusiness(u: SessionUser, i: z.infer<typeof BusinessIn>
   return business();
 }
 
-/** The fee policy with the GST rate from the business settings. */
+/** The fee and booking policy: Operations, Pricing and policy, with the GST rate from the business settings. Falls back to the defaults in code. */
 export async function policyNow() {
-  const b = await one<{ gst_rate_bps: number }>("SELECT gst_rate_bps FROM business_settings WHERE id=1").catch(() => null);
-  return { ...POLICY, gstOnPlatformFeeBps: b?.gst_rate_bps ?? POLICY.gstOnPlatformFeeBps };
+  const r = await one<any>(`SELECT p.*, b.gst_rate_bps FROM policy_settings p, business_settings b WHERE p.id=1 AND b.id=1`).catch(() => null);
+  if (!r) return { ...POLICY, ticketSlaMin: 240, urgentTicketSlaMin: 30, missedCheckinGraceMin: 60 };
+  return { ...POLICY, platformFeeBps: r.platform_fee_bps, gstOnPlatformFeeBps: r.gst_rate_bps, freeCancelHours: r.free_cancel_hours, lateCancelBps: r.late_cancel_bps,
+    offerWindowSameDayMin: r.offer_same_day_min, offerWindowFutureMin: r.offer_future_min, ticketSlaMin: r.ticket_sla_min, urgentTicketSlaMin: r.urgent_ticket_sla_min, missedCheckinGraceMin: r.missed_checkin_grace_min };
+}
+/** Standard caregiver rates by tier, in paise: [day, night, live in]. */
+export async function tierRates(tier: number): Promise<[number, number, number]> {
+  const rows = await q<{ care_type: string; rate_paise: number }>("SELECT care_type, rate_paise FROM tier_rates WHERE tier=$1", [tier]).catch(() => []);
+  const m = Object.fromEntries(rows.map((r) => [r.care_type, r.rate_paise]));
+  const d = ({ 1: [85000, 105000, 150000], 2: [140000, 160000, 220000], 3: [210000, 240000, 310000] } as Record<number, [number, number, number]>)[tier] ?? [85000, 105000, 150000];
+  return [m.day ?? d[0], m.night ?? d[1], m.live ?? d[2]];
 }

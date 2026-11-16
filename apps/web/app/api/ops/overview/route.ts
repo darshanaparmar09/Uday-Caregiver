@@ -1,9 +1,10 @@
 export const dynamic = "force-dynamic";
+import { requireOps } from "@/lib/ops";
 import { requireUser } from "@/lib/auth";
 import { q } from "@/lib/db";
 import { handle } from "@/lib/http";
 export const GET = handle(async () => {
-  await requireUser("ops");
+  await requireOps("view");
   const [byStatus, tickets, sos, caregivers] = await Promise.all([
     q("SELECT status, count(*)::int AS n FROM bookings GROUP BY status"),
     q("SELECT code, category, urgent, status, sla_due_at FROM tickets WHERE status='open' ORDER BY urgent DESC, sla_due_at LIMIT 50"),
