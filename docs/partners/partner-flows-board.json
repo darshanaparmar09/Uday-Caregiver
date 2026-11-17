@@ -1,0 +1,823 @@
+{
+ "source": "https://claude.ai/artifact/SpqoRb9ZBSzrNRYB4avPHJ",
+ "exported": "2026-11-17",
+ "elements": {
+  "e23": {
+   "from": "e11",
+   "fromSide": "right",
+   "to": "e12",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e77": {
+   "from": "e66",
+   "fromSide": "right",
+   "to": "e67",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e10": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**2. Pilot agreement**\nOne tower, 90 days: data terms, pricing, revenue share",
+   "type": "shape",
+   "w": 200,
+   "x": 264,
+   "y": 280
+  },
+  "e41": {
+   "color": "green",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**9. Care booked**\nUday caregivers where live; vetted partner agencies elsewhere",
+   "type": "shape",
+   "w": 200,
+   "x": 528,
+   "y": 1632
+  },
+  "e65": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "stroke": "terracotta",
+   "text": "**12. Safety notice**\nAdmin flags a person not to be let in; residents, families and the gate are told",
+   "type": "shape",
+   "w": 200,
+   "x": 1320,
+   "y": 496
+  },
+  "e43": {
+   "color": "blue",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**11. Monthly invoice**\nPer employee fee billed to the company",
+   "type": "shape",
+   "w": 200,
+   "x": 1056,
+   "y": 1632
+  },
+  "e58": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Senior living: Uday brand, cobranded, or white label?",
+   "type": "shape",
+   "w": 240,
+   "x": 264,
+   "y": 1906
+  },
+  "e46": {
+   "from": "e34",
+   "fromSide": "right",
+   "to": "e35",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e27": {
+   "from": "e15",
+   "fromSide": "right",
+   "to": "e16",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e62": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Hospitals next: same flow, with a discharge referral as step 1?",
+   "type": "shape",
+   "w": 240,
+   "x": 1320,
+   "y": 1906
+  },
+  "e5": {
+   "color": "green",
+   "h": 40,
+   "kind": "pill",
+   "size": "small",
+   "text": "Family or employee",
+   "type": "shape",
+   "w": 168,
+   "x": 368,
+   "y": 140
+  },
+  "e57": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Who answers a community alert first: staff, family or Uday?",
+   "type": "shape",
+   "w": 240,
+   "x": 0,
+   "y": 1906
+  },
+  "e48": {
+   "from": "e36",
+   "fromSide": "right",
+   "to": "e37",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e60": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Who pays the community fee: developer, residents' association or residents?",
+   "type": "shape",
+   "w": 240,
+   "x": 792,
+   "y": 1906
+  },
+  "e70": {
+   "cols": {
+    "c1": {
+     "at": 1,
+     "w": 190
+    },
+    "c2": {
+     "at": 2,
+     "w": 260
+    },
+    "c3": {
+     "at": 3,
+     "w": 230
+    },
+    "c4": {
+     "at": 4,
+     "w": 270
+    },
+    "c5": {
+     "at": 5,
+     "w": 220
+    }
+   },
+   "rows": {
+    "r1": {
+     "at": 1,
+     "c1": "Booking source",
+     "c2": "Caregiver is paid",
+     "c3": "Uday earns",
+     "c4": "Community earns",
+     "c5": "Shown in"
+    },
+    "r2": {
+     "at": 2,
+     "c1": "Uday caregiver",
+     "c2": "Uday rate, weekly by Uday",
+     "c3": "8% platform fee",
+     "c4": "Share of Uday's fee, e.g. 15%",
+     "c5": "Ledger and statement"
+    },
+    "r3": {
+     "at": 3,
+     "c1": "Community staff",
+     "c2": "Community rate, paid to the community",
+     "c3": "Booking fee, e.g. 3 to 5%",
+     "c4": "Care fee less Uday's fee",
+     "c5": "Ledger and statement"
+    },
+    "r4": {
+     "at": 4,
+     "c1": "Daily check in",
+     "c2": "Not applicable",
+     "c3": "Per resident fee",
+     "c4": "Optional discount",
+     "c5": "Monthly invoice"
+    }
+   },
+   "type": "table",
+   "x": 0,
+   "y": 1032
+  },
+  "e25": {
+   "from": "e13",
+   "fromSide": "right",
+   "to": "e14",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e12": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**4. Residents added**\nStaff upload the resident list by Excel",
+   "type": "shape",
+   "w": 200,
+   "x": 792,
+   "y": 280
+  },
+  "e80": {
+   "from": "e68",
+   "fromSide": "right",
+   "to": "e69",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e52": {
+   "from": "e40",
+   "fromSide": "right",
+   "to": "e41",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e6": {
+   "color": "yellow",
+   "h": 40,
+   "kind": "pill",
+   "size": "small",
+   "text": "Senior",
+   "type": "shape",
+   "w": 168,
+   "x": 552,
+   "y": 140
+  },
+  "e64": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**6. Nearby hospitals added**\nAddress, emergency number and distance; shown on every alert",
+   "type": "shape",
+   "w": 200,
+   "x": 1320,
+   "y": 280
+  },
+  "e75": {
+   "bends": [
+    "v",
+    108
+   ],
+   "from": "e64",
+   "to": "e13",
+   "type": "arrow"
+  },
+  "e22": {
+   "from": "e10",
+   "fromSide": "right",
+   "to": "e11",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e82": {
+   "color": "terracotta",
+   "size": "small",
+   "text": "Percentages are assumptions to agree with each community in the pilot.",
+   "type": "text",
+   "wrap": 300,
+   "x": 1200,
+   "y": 1050
+  },
+  "e17": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**11. Alert**\nOnsite staff respond first, nearest hospital shown; then family and Uday",
+   "type": "shape",
+   "w": 200,
+   "x": 1056,
+   "y": 496
+  },
+  "e50": {
+   "bends": [
+    "v",
+    108
+   ],
+   "from": "e38",
+   "to": "e39",
+   "type": "arrow"
+  },
+  "e32": {
+   "h": 394,
+   "text": "Corporates: a benefit for employees' parents",
+   "type": "container",
+   "w": 1576,
+   "x": -28,
+   "y": 1386
+  },
+  "e54": {
+   "from": "e42",
+   "fromSide": "right",
+   "to": "e43",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e67": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**Community staff**\nBadge says Community staff. Community sets the rate and is paid",
+   "type": "shape",
+   "w": 200,
+   "x": 528,
+   "y": 712
+  },
+  "e68": {
+   "color": "blue",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**Uday caregiver**\nBadge says Uday verified. Uday rate; community earns a share",
+   "type": "shape",
+   "w": 200,
+   "x": 528,
+   "y": 856
+  },
+  "e38": {
+   "color": "yellow",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**6. Parent agrees**\nOn their own phone; nothing starts without consent",
+   "type": "shape",
+   "w": 200,
+   "x": 1320,
+   "y": 1416
+  },
+  "e63": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**5. Onsite staff added**\nNurses and caregivers living onsite, by Excel; tagged Community staff",
+   "type": "shape",
+   "w": 200,
+   "x": 1056,
+   "y": 280
+  },
+  "e76": {
+   "bends": [
+    "v",
+    108
+   ],
+   "from": "e65",
+   "to": "e18",
+   "type": "arrow"
+  },
+  "e14": {
+   "color": "yellow",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**8. Senior agrees**\nConsents and picks a check in time; app or phone call",
+   "type": "shape",
+   "w": 200,
+   "x": 264,
+   "y": 496
+  },
+  "e24": {
+   "from": "e12",
+   "fromSide": "right",
+   "to": "e63",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e40": {
+   "color": "green",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**8. Alerts**\nTo the employee and family; Uday team escalates",
+   "type": "shape",
+   "w": 200,
+   "x": 264,
+   "y": 1632
+  },
+  "e39": {
+   "color": "yellow",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**7. Daily check in**\nWorks in every city, in their language",
+   "type": "shape",
+   "w": 200,
+   "x": 0,
+   "y": 1632
+  },
+  "e11": {
+   "color": "blue",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**3. Admin page set up**\nUday creates the community admin page and invites its staff",
+   "type": "shape",
+   "w": 200,
+   "x": 528,
+   "y": 280
+  },
+  "e16": {
+   "color": "yellow",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**10. Daily check in**\nOne tap or a phone call each morning",
+   "type": "shape",
+   "w": 200,
+   "x": 792,
+   "y": 496
+  },
+  "e56": {
+   "h": 342,
+   "text": "Decide before we build",
+   "type": "container",
+   "w": 1576,
+   "x": -28,
+   "y": 1876
+  },
+  "e47": {
+   "from": "e35",
+   "fromSide": "right",
+   "to": "e36",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e2": {
+   "size": "large",
+   "text": "Partner signs, people consent, Uday runs care across India.",
+   "type": "text",
+   "x": 0,
+   "y": 66
+  },
+  "e1": {
+   "size": "title",
+   "text": "Uday partner flows",
+   "type": "text",
+   "x": 0,
+   "y": 0
+  },
+  "e4": {
+   "color": "peach",
+   "h": 40,
+   "kind": "pill",
+   "size": "small",
+   "text": "Partner staff",
+   "type": "shape",
+   "w": 168,
+   "x": 184,
+   "y": 140
+  },
+  "e9": {
+   "color": "blue",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**1. First meeting**\nUday meets the developer or community manager",
+   "type": "shape",
+   "w": 200,
+   "x": 0,
+   "y": 280
+  },
+  "e26": {
+   "from": "e14",
+   "fromSide": "right",
+   "to": "e15",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e81": {
+   "from": "e69",
+   "fromSide": "right",
+   "to": "e19",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e79": {
+   "from": "e67",
+   "fromSide": "right",
+   "to": "e69",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e59": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Outside live cities: vetted partner agencies, or check in only until a city opens?",
+   "type": "shape",
+   "w": 240,
+   "x": 528,
+   "y": 1906
+  },
+  "e53": {
+   "from": "e41",
+   "fromSide": "right",
+   "to": "e42",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e37": {
+   "color": "green",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**5. Employee enrols**\nWork email, then adds a parent anywhere in India",
+   "type": "shape",
+   "w": 200,
+   "x": 1056,
+   "y": 1416
+  },
+  "e15": {
+   "color": "green",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**9. Family joins**\nAdds emergency contacts, wherever they live",
+   "type": "shape",
+   "w": 200,
+   "x": 528,
+   "y": 496
+  },
+  "e55": {
+   "from": "e43",
+   "fromSide": "right",
+   "to": "e44",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e31": {
+   "from": "e19",
+   "fromSide": "right",
+   "to": "e20",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e28": {
+   "from": "e16",
+   "fromSide": "right",
+   "to": "e17",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e61": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Corporate: may HR see who enrolled, or only counts?",
+   "type": "shape",
+   "w": 240,
+   "x": 1056,
+   "y": 1906
+  },
+  "e29": {
+   "from": "e17",
+   "fromSide": "right",
+   "to": "e65",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e78": {
+   "from": "e66",
+   "fromSide": "right",
+   "to": "e68",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e8": {
+   "h": 1040,
+   "text": "Senior living communities",
+   "type": "container",
+   "w": 1576,
+   "x": -28,
+   "y": 250
+  },
+  "e7": {
+   "color": "terracotta",
+   "size": "body",
+   "text": "India wide from day one. Pune is the first city, never the only one.",
+   "type": "text",
+   "x": 760,
+   "y": 148
+  },
+  "e51": {
+   "from": "e39",
+   "fromSide": "right",
+   "to": "e40",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e33": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**1. HR signs up**\nMaster agreement; pilot with 100 to 500 employees",
+   "type": "shape",
+   "w": 200,
+   "x": 0,
+   "y": 1416
+  },
+  "e71": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Safety notice: who may flag a person, what evidence is needed, and how do they respond?",
+   "type": "shape",
+   "w": 240,
+   "x": 0,
+   "y": 2060
+  },
+  "e72": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Community staff on Uday: who verifies them, and who is liable for their care?",
+   "type": "shape",
+   "w": 240,
+   "x": 264,
+   "y": 2060
+  },
+  "e36": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**4. Launch**\nIntranet page, webinar and FAQ for employees",
+   "type": "shape",
+   "w": 200,
+   "x": 792,
+   "y": 1416
+  },
+  "e21": {
+   "from": "e9",
+   "fromSide": "right",
+   "to": "e10",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e42": {
+   "color": "green",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**10. Employee pays less**\nUday Plus free; care discounted, paid by the employee",
+   "type": "shape",
+   "w": 200,
+   "x": 792,
+   "y": 1632
+  },
+  "e19": {
+   "color": "blue",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**15. Monthly statement**\nHours, fees and share per booking; invoices and payout",
+   "type": "shape",
+   "w": 200,
+   "x": 1056,
+   "y": 784
+  },
+  "e35": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**3. Eligibility**\nHR uploads the employee list or approves the email domain",
+   "type": "shape",
+   "w": 200,
+   "x": 528,
+   "y": 1416
+  },
+  "e49": {
+   "from": "e37",
+   "fromSide": "right",
+   "to": "e38",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e45": {
+   "from": "e33",
+   "fromSide": "right",
+   "to": "e34",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e34": {
+   "color": "blue",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**2. Data review**\nHR never sees a parent's health or alerts",
+   "type": "shape",
+   "w": 200,
+   "x": 264,
+   "y": 1416
+  },
+  "e74": {
+   "from": "e63",
+   "fromSide": "right",
+   "to": "e64",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e13": {
+   "color": "blue",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**7. Invitations**\nEach resident and family gets an SMS in their language",
+   "type": "shape",
+   "w": 200,
+   "x": 0,
+   "y": 496
+  },
+  "e66": {
+   "color": "white",
+   "h": 140,
+   "kind": "diamond",
+   "size": "body",
+   "text": "**14. Who gives care?**",
+   "type": "shape",
+   "w": 200,
+   "x": 264,
+   "y": 774
+  },
+  "e73": {
+   "color": "white",
+   "h": 130,
+   "kind": "rounded",
+   "size": "body",
+   "text": "Revenue share: a percent of Uday's fee or of the booking value? Paid monthly?",
+   "type": "shape",
+   "w": 240,
+   "x": 528,
+   "y": 2060
+  },
+  "e69": {
+   "color": "blue",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**Revenue ledger**\nEvery booking tagged by source, live on the admin page",
+   "type": "shape",
+   "w": 200,
+   "x": 792,
+   "y": 784
+  },
+  "e18": {
+   "color": "green",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**13. Care request**\nBy the family, or by community staff for the resident",
+   "type": "shape",
+   "w": 200,
+   "x": 0,
+   "y": 784
+  },
+  "e30": {
+   "from": "e18",
+   "fromSide": "right",
+   "to": "e66",
+   "toSide": "left",
+   "type": "arrow"
+  },
+  "e44": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**12. Quarterly review**\nAnonymised usage report; renew or expand",
+   "type": "shape",
+   "w": 200,
+   "x": 1320,
+   "y": 1632
+  },
+  "e3": {
+   "color": "blue",
+   "h": 40,
+   "kind": "pill",
+   "size": "small",
+   "text": "Uday team",
+   "type": "shape",
+   "w": 168,
+   "x": 0,
+   "y": 140
+  },
+  "e20": {
+   "color": "peach",
+   "h": 120,
+   "kind": "rounded",
+   "size": "body",
+   "text": "**16. Pilot review**\nExpand to every tower, change, or stop",
+   "type": "shape",
+   "w": 200,
+   "x": 1320,
+   "y": 784
+  }
+ }
+}
