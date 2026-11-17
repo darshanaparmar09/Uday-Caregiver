@@ -1,3 +1,4 @@
+import { tfetch } from "./net";
 import { z } from "zod";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { WEEKDAYS } from "@uday/core";
@@ -20,16 +21,18 @@ export async function pricing() {
   const rates = await q<any>("SELECT tier, care_type, rate_paise, updated_at FROM tier_rates ORDER BY tier, care_type");
   const counts = await q<any>("SELECT tier, count(*)::int AS n FROM caregivers WHERE status IN ('active','verifying','paused') GROUP BY tier");
   return { policy: { platformFeePct: p.platform_fee_bps / 100, freeCancelHours: p.free_cancel_hours, lateCancelPct: p.late_cancel_bps / 100, offerSameDayMin: p.offer_same_day_min, offerFutureMin: p.offer_future_min,
-    missedCheckinGraceMin: p.missed_checkin_grace_min, ticketSlaMin: p.ticket_sla_min, urgentTicketSlaMin: p.urgent_ticket_sla_min, updatedAt: p.updated_at }, rates, caregiversByTier: counts, gstRatePct: (await business()).gstRatePct };
+    missedCheckinGraceMin: p.missed_checkin_grace_min, ticketSlaMin: p.ticket_sla_min, urgentTicketSlaMin: p.urgent_ticket_sla_min, urgentEscalateMin: p.urgent_escalate_min, missedEscalateMin: p.missed_escalate_min, oncallPhones: p.oncall_phones ?? "", updatedAt: p.updated_at }, rates, caregiversByTier: counts, gstRatePct: (await business()).gstRatePct };
 }
 export const PolicyIn = z.object({
   platformFeePct: z.number().min(0).max(30), freeCancelHours: z.number().int().min(0).max(72), lateCancelPct: z.number().min(0).max(100),
   offerSameDayMin: z.number().int().min(10).max(240), offerFutureMin: z.number().int().min(30).max(1440),
   missedCheckinGraceMin: z.number().int().min(15).max(240), ticketSlaMin: z.number().int().min(30).max(2880), urgentTicketSlaMin: z.number().int().min(5).max(240),
+  urgentEscalateMin: z.number().int().min(2).max(30).default(5), missedEscalateMin: z.number().int().min(10).max(120).default(30),
+  oncallPhones: z.string().max(200).regex(/^(\s*\+\d{8,15}\s*(,\s*\+\d{8,15}\s*)*)?$/, "Use full numbers with country code, separated by commas").default(""),
 });
 export async function savePolicy(u: SessionUser, i: z.infer<typeof PolicyIn>) {
-  await q(`UPDATE policy_settings SET platform_fee_bps=$1, free_cancel_hours=$2, late_cancel_bps=$3, offer_same_day_min=$4, offer_future_min=$5, missed_checkin_grace_min=$6, ticket_sla_min=$7, urgent_ticket_sla_min=$8, updated_by=$9, updated_at=now() WHERE id=1`,
-    [Math.round(i.platformFeePct * 100), i.freeCancelHours, Math.round(i.lateCancelPct * 100), i.offerSameDayMin, i.offerFutureMin, i.missedCheckinGraceMin, i.ticketSlaMin, i.urgentTicketSlaMin, u.id]);
+  await q(`UPDATE policy_settings SET platform_fee_bps=$1, free_cancel_hours=$2, late_cancel_bps=$3, offer_same_day_min=$4, offer_future_min=$5, missed_checkin_grace_min=$6, ticket_sla_min=$7, urgent_ticket_sla_min=$8, updated_by=$9, urgent_escalate_min=$10, missed_escalate_min=$11, oncall_phones=$12, updated_at=now() WHERE id=1`,
+    [Math.round(i.platformFeePct * 100), i.freeCancelHours, Math.round(i.lateCancelPct * 100), i.offerSameDayMin, i.offerFutureMin, i.missedCheckinGraceMin, i.ticketSlaMin, i.urgentTicketSlaMin, u.id, i.urgentEscalateMin, i.missedEscalateMin, i.oncallPhones.replace(/\s/g, "") || null]);
   await audit(u.id, "update", "policy", "1", `fee ${i.platformFeePct}%, free cancel ${i.freeCancelHours}h, late ${i.lateCancelPct}%`);
   clearSettingsCache(); return pricing();
 }
@@ -140,7 +143,7 @@ export async function registerCsv(month: string) {
   return csv([head, ...lines, [], ["Net for the month (invoices less credit notes)", "", "", "", "", "", "", "", rs(r.summary.care_paise), rs(r.summary.taxable_paise), rs(r.summary.cgst_paise), rs(r.summary.sgst_paise), rs(r.summary.igst_paise)]]);
 }
 export function csv(rows: (string | number)[][]) {
-  return "﻿" + rows.map((r) => r.map((v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }).join(",")).join("\r\n");
+  return "﻿" + rows.map((r) => r.map((v) => { let s = String(v ?? ""); /* a text cell starting with = + - @ would run as a formula in Excel */ if (typeof v === "string" && /^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }).join(",")).join("\r\n");
 }
 
 /** The invoice document for a booking: one page per invoice and credit note in the register. Family members and the Uday team can open it. */
@@ -226,7 +229,7 @@ export async function reconcile(u: SessionUser, from: string, to: string) {
       const fromTs = Math.floor(Date.parse(from + "T00:00:00+05:30") / 1000), toTs = Math.floor(Date.parse(to + "T23:59:59+05:30") / 1000);
       let skip = 0, seen = 0;
       for (;;) {
-        const r = await fetch(`https://api.razorpay.com/v1/payments?from=${fromTs}&to=${toTs}&count=100&skip=${skip}`, { headers: { Authorization: auth } });
+        const r = await tfetch(`https://api.razorpay.com/v1/payments?from=${fromTs}&to=${toTs}&count=100&skip=${skip}`, { headers: { Authorization: auth } });
         if (!r.ok) throw new Error(`Razorpay answered ${r.status}`);
         const items = ((await r.json()) as any).items ?? [];
         for (const p of items) {

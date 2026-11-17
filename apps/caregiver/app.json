@@ -7,15 +7,100 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#1A1040",
-    "splash": { "backgroundColor": "#1A1040", "resizeMode": "contain" },
-    "ios": { "bundleIdentifier": "in.uday.caregiver", "supportsTablet": false,
-      "infoPlist": { "NSLocationWhenInUseUsageDescription": "Uday checks that you have arrived at the booked home.", "NSCameraUsageDescription": "Photograph certificates for your Uday verification.", "NSPhotoLibraryUsageDescription": "Upload certificates for your Uday verification." } },
-    "android": { "package": "in.uday.caregiver", "permissions": ["ACCESS_FINE_LOCATION", "POST_NOTIFICATIONS"], "adaptiveIcon": { "backgroundColor": "#1A1040" } },
-    "web": { "bundler": "metro", "output": "single" },
-    "plugins": ["expo-secure-store", "expo-font",
-      ["expo-location", { "locationWhenInUsePermission": "Uday checks that you have arrived at the booked home." }],
-      ["expo-notifications", { "color": "#F5A623" }],
-      ["expo-image-picker", { "photosPermission": "Upload certificates for your Uday verification.", "cameraPermission": "Photograph certificates for your Uday verification." }]],
-    "extra": { "eas": { "projectId": "SET_BY_AGENCY" } }
+    "splash": {
+      "image": "./assets/splash.png",
+      "backgroundColor": "#1A1040",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "bundleIdentifier": "in.uday.caregiver",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Uday checks that you have arrived at the booked home.",
+        "NSPhotoLibraryUsageDescription": "Upload certificates for your Uday verification.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "1",
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "35F9.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "E174.1"
+            ]
+          }
+        ]
+      }
+    },
+    "android": {
+      "package": "in.uday.caregiver",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "POST_NOTIFICATIONS"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1A1040"
+      },
+      "versionCode": 1,
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Uday checks that you have arrived at the booked home."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#F5A623"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Upload certificates for your Uday verification.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "SET_BY_AGENCY"
+      }
+    },
+    "icon": "./assets/icon.png"
   }
 }

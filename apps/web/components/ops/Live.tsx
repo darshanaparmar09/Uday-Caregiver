@@ -14,17 +14,27 @@ export function Today() {
   const st = Object.fromEntries(d.byStatus.map((s: any) => [s.status, s.n]));
   return (<>
     <Head title="Today" sub={`Updated ${when(new Date(), { hour: "numeric", minute: "2-digit" })}. Refreshes every 15 seconds.`} />
-    {!!d.sos.length && <div className="mb-5 rounded-xl border-2 border-red-500 bg-red-50 p-4" role="alert">
-      <h2 className="font-bold text-red-800">Open SOS ({d.sos.length}): act now</h2>
-      <div className="mt-2 grid gap-2">{d.sos.map((s: any) => <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white p-3 text-sm">
-        <span><b>{s.name ?? "Someone"}</b> ({s.role}) · {ago(s.at)}{s.code ? <> · <Link className="font-semibold text-indigo-600" href={`/ops/bookings/${s.booking_id}`}>{s.code}</Link></> : null}{s.lat ? <> · <a className="font-semibold text-indigo-600" target="_blank" rel="noreferrer" href={`https://maps.google.com/?q=${s.lat},${s.lng}`}>location</a></> : null}</span>
-        {can("incidents") && <ReasonAction label="Mark handled" reasonLabel="What was done" run={(v) => api(`/api/ops/sos/${s.id}`, { body: { resolution: v.reason } }).then(load)} />}</div>)}</div>
+    {d.cronStale && <div className="mb-5 rounded-xl border-2 border-red-500 bg-red-50 p-4" role="alert"><h2 className="font-bold text-red-800">The scheduler is not running</h2>
+      <p className="text-sm text-red-900">Missed check ins, unanswered alerts, no shows and offers are NOT being followed up automatically. Tell the technical team now, and watch this page by hand until it is fixed.</p></div>}
+    {!!d.alerts?.length && <div className={`mb-5 rounded-xl border-2 p-4 ${d.alerts.some((a: any) => a.status === "open") ? "border-red-500 bg-red-50" : "border-teal-500 bg-teal-50"}`} role="alert">
+      <h2 className="font-bold text-red-800">Alerts ({d.alerts.filter((a: any) => a.status === "open").length} waiting for a response)</h2>
+      <div className="mt-2 grid gap-2">{d.alerts.map((a: any) => <div key={a.id} className="grid gap-2 rounded-lg bg-white p-3 text-sm sm:grid-cols-[1fr_auto] sm:items-center">
+        <div className="min-w-0"><b className="text-ink">{a.who}</b> {a.what} <span className="text-muted">({a.role}{a.locality ? `, ${a.locality}` : ""}) · {ago(a.at)}{a.repeats ? ` · pressed ${a.repeats + 1} times` : ""}</span>
+          <div className="mt-0.5 text-xs">{a.status === "open" ? <b className="text-red-700">Nobody has responded. Round {a.level + 1}.</b> : <b className="text-teal-700">{a.acknowledgedBy ?? "Someone"} is responding.</b>}{" "}
+            Messages: {a.sent} sent{a.failed ? <b className="text-red-700">, {a.failed} failed</b> : ""}{a.simulated ? `, ${a.simulated} test mode only (not really sent)` : ""}.
+            {a.bookingId ? <> <Link className="font-semibold text-indigo-600" href={`/ops/bookings/${a.bookingId}`}>{a.booking}</Link></> : null}
+            {a.lat ? <> · <a className="font-semibold text-indigo-600" target="_blank" rel="noreferrer" href={`https://maps.google.com/?q=${a.lat},${a.lng}`}>location</a></> : null}
+            {a.raisedBy ? <> · <Link className="font-semibold text-indigo-600" href={`/ops/people/${a.raisedBy}`}>person</Link></> : null}</div></div>
+        {can("incidents") && <div className="flex flex-wrap gap-2">
+          {a.status === "open" && <button className="btn-sm" onClick={() => api(`/api/alerts/${a.id}`, { body: { action: "ack" } }).then(load)}>We are responding</button>}
+          <ReasonAction label="Close" reasonLabel="What was done" run={(v) => api(`/api/alerts/${a.id}`, { body: { action: "resolve", note: v.reason } }).then(load)} /></div>}</div>)}</div>
     </div>}
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
       <Kpi label="Care in progress" value={(st.active ?? 0) + (st.arrived ?? 0) + (st.enroute ?? 0)} sub={`${st.accepted ?? 0} confirmed, not started`} />
       <Kpi label="Waiting for caregiver" value={c.waiting_offers ?? 0} sub={`${c.proposals ?? 0} need family approval`} tone={(c.waiting_offers ?? 0) > 5 ? "alert" : undefined} />
       <Kpi label="Help requests open" value={c.open_tickets ?? 0} sub={`${c.late_tickets ?? 0} past their time`} tone={c.late_tickets ? "alert" : undefined} />
       <Kpi label="Incidents open" value={c.open_incidents ?? 0} tone={d.incidents.some((i: any) => i.severity === "critical") ? "alert" : undefined} />
+      {(c.failed_messages ?? 0) > 0 && <Kpi label="Messages failed (24 h)" value={c.failed_messages} sub="see Audit and messages" tone="alert" />}
       <Kpi label="Check ins today" value={`${t.checkins ?? 0} / ${t.seniors ?? 0}`} sub="seniors who checked in" />
       <Kpi label="Collected today" value={rs(t.collected)} sub={`${t.shifts_started ?? 0} shifts started`} />
     </div>

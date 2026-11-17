@@ -1,3 +1,4 @@
+import { checkShiftCode } from "./ratelimit";
 import { videoRoom } from "./providers";
 import { z } from "zod";
 import { shiftCode, shiftStart, CHECKLIST_IDS, RATING_AREAS, careNeed, checklistFor } from "@uday/core";
@@ -83,7 +84,7 @@ export async function reliefAct(u: SessionUser, id: string, a: z.infer<typeof Re
         await event(cl, b, u, "caregiver", null, `Relief caregiver ${first} arrived for day ${r.day_no}.`);
         await tellFamily(b.care_recipient_id, "caregiver_arrived", { bookingId: b.id }); break;
       case "start": need("arrived");
-        if (dec(r.start_code_enc) !== a.code) throw new AppError("Code does not match. Ask the family to read it again.");
+        await checkShiftCode("relief:" + id, dec(r.start_code_enc), a.code, () => notify(null, "caregiver_late", { reliefId: id, reason: "five wrong shift codes" }));
         await cl.query("UPDATE relief_shifts SET status='active', end_code_enc=$2 WHERE id=$1", [id, enc(shiftCode())]);
         await event(cl, b, u, "caregiver", null, `Relief day ${r.day_no} started, code verified.`); break;
       case "log": need("active");
@@ -93,7 +94,7 @@ export async function reliefAct(u: SessionUser, id: string, a: z.infer<typeof Re
         await tellFamily(b.care_recipient_id, "shift_log", { bookingId: b.id }); break;
       case "end": need("active");
         if (!(await cl.query("SELECT 1 FROM shift_logs WHERE booking_id=$1 AND day=$2 AND caregiver_id=$3", [b.id, r.day_no, c.id])).rowCount) throw new AppError("Save the care log first");
-        if (dec(r.end_code_enc) !== a.code) throw new AppError("Code does not match.");
+        await checkShiftCode("relief:" + id, dec(r.end_code_enc), a.code, () => notify(null, "caregiver_late", { reliefId: id, reason: "five wrong shift codes" }));
         await releaseDay(cl, b, r.day_no, c.id, "relief day");
         await cl.query("UPDATE relief_shifts SET status='done' WHERE id=$1", [id]);
         await cl.query("UPDATE bookings SET days_done=$2, return_code_enc=$3, updated_at=now() WHERE id=$1", [b.id, r.day_no, enc(shiftCode())]);
@@ -212,6 +213,8 @@ export async function payCycle(u: SessionUser, bookingId: string, cycleNo: numbe
   if (!b || !(await familyRole(u.id, b.care_recipient_id))) throw new AppError("Not found", 404);
   const y = await one<any>("SELECT * FROM billing_cycles WHERE booking_id=$1 AND cycle_no=$2", [bookingId, cycleNo]);
   if (!y || !["due", "failed"].includes(y.status)) throw new AppError("This week is not waiting for payment");
+  // Two family members may tap Pay at the same time: both get the same order, so no payment is orphaned.
+  if (y.order_ref) return { paid: false, checkout: { orderId: y.order_ref, keyId: (await gateway()).keyId, amountPaise: y.amount_paise, name: "Uday", description: `Week ${cycleNo} of ${b.code}` } };
   const o = await (await gateway()).order(y.amount_paise, `${b.code}-W${cycleNo}`);
   if (o.paid) { await cyclePaid(y.id, o.orderId); return { paid: true }; }
   await q("UPDATE billing_cycles SET order_ref=$2 WHERE id=$1", [y.id, o.orderId]);

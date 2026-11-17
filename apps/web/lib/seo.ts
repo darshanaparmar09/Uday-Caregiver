@@ -23,6 +23,7 @@ export const PAGES = {
   "/about": { title: "About us", description: "Uday means sunrise. Why we started a Pune elder care service that families abroad and at home can trust, and how we treat caregivers.", priority: 0.5, freq: "yearly" },
   "/faq": { title: "Elder care questions and answers", description: "Prices, payment holds, cancellations, caregiver checks, live in care, day offs and the daily check in: answers to what families ask most.", priority: 0.6, freq: "monthly" },
   "/contact": { title: "Contact us", description: "Talk to the Uday team in Pune about home care for your parents, caregiver jobs or partnerships. In an emergency, call 112.", priority: 0.5, freq: "yearly" },
+  "/delete-account": { title: "Delete your Uday account", description: "How to delete your Uday account and data, what is erased and what the law requires us to keep.", priority: 0.2, freq: "yearly" },
   "/legal": { title: "Privacy and terms", description: "How Uday handles personal and health information, and the terms for families, caregivers and care facilities.", priority: 0.2, freq: "yearly" },
 } as const;
 export type PagePath = keyof typeof PAGES;

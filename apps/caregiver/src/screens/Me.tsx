@@ -1,3 +1,4 @@
+import { AccountData } from "../shared/AccountData";
 import { useCallback, useEffect, useState } from "react";
 import { Platform, Pressable, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -53,6 +54,7 @@ export function Me({ me, onSignOut, onStatus }: { me: any; onSignOut: () => void
             </Pressable>
             {open === s.n && <StageForm n={s.n} d={d} busy={busy} run={run} />}
           </View>); })}
+      <AccountData onDeleted={onSignOut} />
       <Button title="Sign out" tone="outline" onPress={onSignOut} />
     </Screen>
   );

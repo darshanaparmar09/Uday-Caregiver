@@ -63,7 +63,8 @@ test("live in month: one start code, daily close, relief day off, welcome back, 
   v = await view(fam, id); assert.equal(v.paidPaise, v.cycles[0].amount_paise); assert.equal(v.cycles[0].status, "paid");
   assert.ok(v.relief.some((r: any) => r.dayNo === 3), "relief day created for the day off");
   // senior sees who is coming
-  const s = await login(seniorPhone, { role: "senior" }); assert.equal((await call(s, "/api/senior")).j.caregiver.name, main.name);
+  const s = await login(seniorPhone, { role: "senior" }); // the parent agrees to the family link before anything is shared
+  for (const r of (await call(s, "/api/senior/links")).j) await call(s, "/api/senior/links", { id: r.id, accept: true }); assert.equal((await call(s, "/api/senior")).j.caregiver.name, main.name);
   // day 1: travel, arrive, start code
   await act(main.t, id, { action: "enroute" }); await act(main.t, id, { action: "arrive" });
   assert.equal((await act(main.t, id, { action: "start", code: await code(fam, id, "start") })).status, 200);

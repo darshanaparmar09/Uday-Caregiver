@@ -1,3 +1,4 @@
+import { UrgentCard, useUrgent } from "../shared/alerts";
 import { useCallback, useEffect, useState } from "react";
 import { Linking, Platform, Pressable, View } from "react-native";
 import * as Location from "expo-location";
@@ -5,7 +6,7 @@ import { api, countdown, inr, PLAN, TYPE } from "../shared/api";
 import { Button, Card, ErrorText, Field, Screen, T } from "../shared/ui";
 import { C } from "../shared/theme";
 import { CareChecklist } from "./CareChecklist";
-import { cachedGet, sendOrQueue, flush, pending } from "../shared/offline";
+import { cachedGet, sendOrQueue, flush, pending, refused, clearRefused } from "../shared/offline";
 
 const REASONS = ["Not available on these dates", "Too far from me", "Outside my training", "Personal reason"];
 
@@ -19,9 +20,9 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
   const [active, setActive] = useState<any>(null); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const [decline, setDecline] = useState<string | null>(null); const [code, setCode] = useState(""); 
   const [sos, setSos] = useState(false); const [, tick] = useState(0); const [offline, setOffline] = useState(false); const [queued, setQueued] = useState(0); const [note, setNote] = useState("");
-  const [relief, setRelief] = useState<any[]>([]); const [intros, setIntros] = useState<any[]>([]); const [stop, setStop] = useState(false);
+  const [notAccepted, setNotAccepted] = useState<{ at: number; error: string }[]>([]); const [relief, setRelief] = useState<any[]>([]); const [intros, setIntros] = useState<any[]>([]); const [stop, setStop] = useState(false);
   const load = useCallback(async () => {
-    await flush().catch(() => 0); setQueued(await pending());
+    await flush().catch(() => 0); setQueued(await pending()); setNotAccepted(await refused());
     const r = await cachedGet<any[]>("/api/bookings"); setOffline(r.offline); const j = r.data ?? []; setJobs(j);
     const a = j.find((x) => ["accepted", "enroute", "arrived", "active"].includes(x.status));
     setActive(a ? (await cachedGet(`/api/bookings/${a.id}`)).data : null);
@@ -32,14 +33,17 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
   // Share location with the family every minute while travelling.
   useEffect(() => { if (active?.status !== "enroute") return; const send = async () => { const p = await where(); if (p.lat != null) api(`/api/bookings/${active.id}/location`, p).catch(() => {}); };
     send(); const t = setInterval(send, 60000); return () => clearInterval(t); }, [active?.id, active?.status]);
-  const [chat, setChat] = useState(false);
+  const [chat, setChat] = useState(false); const urgent = useUrgent();
   async function rAct(id: string, body: any) { setBusy(true); setErr(""); try { await api(`/api/relief/${id}`, body); setCode(""); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
-  async function raiseSos() { setSos(true); const p = await where(); api("/api/sos", { bookingId: active?.id, ...p }).catch(() => {}); }
+  async function raiseSos() { setSos(true); const p = await where(); urgent.send("/api/sos", { bookingId: active?.id, ...p }); }
   const offers = online ? jobs.filter((j) => j.status === "offered") : [];
 
   return (
     <View style={{ flex: 1 }}>
       <Screen tabbed>
+        {notAccepted.length > 0 && <Card tone="coral"><T weight="bold">{`${notAccepted.length} care log${notAccepted.length > 1 ? "s were" : " was"} NOT accepted`}</T>
+          <T>{notAccepted[notAccepted.length - 1].error}</T><T>The family has not seen {notAccepted.length > 1 ? "them" : "it"}. Write the log again, or tell Uday.</T>
+          <Button title="I have noted this" tone="outline" onPress={() => clearRefused().then(() => setNotAccepted([]))} /></Card>}
         {offline && <Card tone="amber"><T weight="semi">No signal. Showing your saved jobs.{queued ? ` ${queued} log${queued > 1 ? "s" : ""} waiting to send.` : ""}</T></Card>}
         {!isActive && <Card tone="amber"><T weight="bold">Finish onboarding to receive requests</T><T>Open the Me tab to see your next step.</T></Card>}
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -48,8 +52,8 @@ export function Jobs({ me, active: isActive }: { me: any; active: boolean }) {
             style={{ minHeight: 72, minWidth: 140, borderRadius: 36, paddingHorizontal: 18, alignItems: "center", justifyContent: "center", backgroundColor: online ? C.teal : C.night }}>
             <T weight="bold" color="#fff">{online ? "● Online" : "○ Offline"}</T></Pressable>
         </View>
-        {sos && <Card tone="coral"><T size={28} weight="bold">SOS sent</T><T>The Uday safety team has your location and will call you within 2 minutes.</T>
-          <Button title="Call 112" tone="coral" onPress={() => Linking.openURL("tel:112")} /><Button title="I am safe now" tone="outline" onPress={() => setSos(false)} /></Card>}
+        {sos && <><UrgentCard state={urgent.state} alert={urgent.alert} tries={urgent.tries} onClear={() => { setSos(false); urgent.reset(); }} />
+          <T color={C.inkSoft}>Your alert goes to the Uday safety team, not to the family. Uday is not an emergency service: in danger, call 112.</T></>}
 
         {offers.map((o) => (
           <Card key={o.id} tone="amber">

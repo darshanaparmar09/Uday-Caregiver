@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PLUS } from "@uday/core";
+import { YourData } from "./YourData";
 import { api, inr } from "../api";
 
 const ROLE: Record<string, string> = { owner: "Owner", care_manager: "Care manager", payer: "Payer", viewer: "Can view", local_contact: "Local contact" };
@@ -93,6 +94,7 @@ export function Account() {
           : <button className="btn justify-self-start" onClick={() => go(api("/api/plus", { body: { action: "join" } }), "Welcome to Uday Plus.")}>Join Uday Plus</button>}
         <p className="note">Price and benefits are pilot assumptions.</p></div>}
       <PartnerServices />
+      <YourData />
     </div>);
 }
 

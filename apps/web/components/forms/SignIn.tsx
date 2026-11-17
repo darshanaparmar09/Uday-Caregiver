@@ -4,7 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "../api";
 
 export function SignIn() {
-  const router = useRouter(); const next = useSearchParams().get("next") || "/app";
+  const router = useRouter(); const raw = useSearchParams().get("next") || "/app";
+  // Only our own paths: a link like ?next=https://evil.example must not send people away after sign in.
+  const next = /^\/(?!\/)[^\\]*$/.test(raw) ? raw : "/app";
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState(""); const [code, setCode] = useState(""); const [name, setName] = useState("");
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [dev, setDev] = useState<string | undefined>();

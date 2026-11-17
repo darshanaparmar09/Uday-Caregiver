@@ -16,7 +16,8 @@ async function pair(name = "Kusum Joshi") {
     consent: { onBehalf: true, shareWithCaregiver: { allergies: true, medicines: true, conditions: false } } });
   assert.equal(r.status, 200, JSON.stringify(r.j));
   await call(fam, `/api/recipients/${r.j.id}/health`, { noKnownAllergies: true, medicines: [{ name: "Metformin", dose: "500 mg", times: "8 AM and 8 PM" }, { name: "Amlodipine", dose: "5 mg", times: "night" }] }, "PUT");
-  const s = await login(seniorPhone, { role: "senior" });
+  const s = await login(seniorPhone, { role: "senior" }); // the parent agrees to the family link before anything is shared
+  for (const r of (await call(s, "/api/senior/links")).j) await call(s, "/api/senior/links", { id: r.id, accept: true });
   return { fam, s, rid: r.j.id as string };
 }
 
@@ -61,6 +62,7 @@ test("community: join, post, safety filter, reports hide, events, people and nam
   const a = await pair(A + " Joshi"); const b = await pair(B + " Patil"); const c = await pair(Cn + " Rao");
   const groups = (await call(a.s, "/api/community/groups")).j; const bhajan = groups.find((x: any) => x.slug === "bhajan");
   assert.ok(groups.length >= 7);
+  for (const u of [a, b, c]) assert.equal((await call(u.s, "/api/community/rules", {})).status, 200);
   assert.equal((await call(a.s, `/api/community/groups/${bhajan.id}`, { body: "Hello all" })).status, 403, "join first");
   for (const u of [a, b, c]) assert.equal((await call(u.s, `/api/community/groups/${bhajan.id}`, { join: true })).status, 200);
   assert.equal((await call(a.s, `/api/community/groups/${bhajan.id}`, { body: "Call me on 98220 12345 for bhajans" })).status, 400, "phone numbers blocked");
@@ -75,7 +77,7 @@ test("community: join, post, safety filter, reports hide, events, people and nam
   const ops = await login("+919000000099");
   assert.ok((await call(ops, "/api/ops/community")).j.reported.some((x: any) => x.id === p.j.id));
   assert.equal((await call(ops, "/api/ops/community", { action: "post", id: p.j.id, status: "live" })).status, 200);
-  assert.ok((await call(c.s, `/api/community/groups/${bhajan.id}`)).j.posts.some((x: any) => x.id === p.j.id), "ops restored");
+  assert.ok((await call(a.s, `/api/community/groups/${bhajan.id}`)).j.posts.some((x: any) => x.id === p.j.id), "ops restored");
 
   const ev = await call(ops, "/api/ops/community", { action: "event", title: "Test walk " + Date.now(), place: "Kamala Nehru Park", startsAt: new Date(Date.now() + 3 * 864e5).toISOString(), capacity: 1, groupId: bhajan.id });
   assert.equal(ev.status, 200, JSON.stringify(ev.j));

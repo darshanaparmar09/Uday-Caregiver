@@ -91,10 +91,12 @@ test("booking: Plus and coupon discount the fee only; chat blocks numbers; maske
 
 test("senior: companion replies, crisis words alert the family; leads; phone call check in through the voice callback", async () => {
   const seniorPhone = "+9173" + rnd(); const { fam, rid } = await family(seniorPhone);
-  const s = await login(seniorPhone, { role: "senior" });
+  const s = await login(seniorPhone, { role: "senior" }); // the parent agrees to the family link before anything is shared
+  for (const r of (await call(s, "/api/senior/links")).j) await call(s, "/api/senior/links", { id: r.id, accept: true });
+  await call(s, "/api/senior/companion", { consent: true });
   const r1 = (await call(s, "/api/senior/companion", { message: "Good morning, I made poha today" })).j; assert.equal(r1.crisis, false); assert.ok(r1.reply.length > 5);
   const r2 = (await call(s, "/api/senior/companion", { message: "I have chest pain" })).j; assert.equal(r2.crisis, true); assert.match(r2.reply, /SOS|112/);
-  assert.equal((await call(s, "/api/senior/companion")).j.length, 4);
+  assert.equal((await call(s, "/api/senior/companion")).j.messages.length, 4);
   assert.equal((await call(fam, "/api/senior/companion")).status, 403, "family cannot read the conversation");
   assert.equal((await call(s, "/api/leads", { kind: "insurance", note: "Health cover over 70" })).status, 200);
   const ops = await login("+919000000099"); assert.ok((await call(ops, "/api/ops/family")).j.leads.some((l: any) => l.kind === "insurance"));
@@ -105,8 +107,12 @@ test("senior: companion replies, crisis words alert the family; leads; phone cal
   await db.query("UPDATE care_recipients SET checkin_by='00:00' WHERE id=$1", [rid]);
   await call(null, "/api/cron", {}, "POST", { "x-cron-secret": process.env.CRON_SECRET ?? "" });
   const ivr = (await db.query("SELECT id FROM ivr_calls WHERE care_recipient_id=$1", [rid])).rows; assert.equal(ivr.length, 1, "one call placed");
-  assert.equal((await call(null, `/api/ivr/checkin?token=wrong&call=${ivr[0].id}&digits=1`)).status, 403);
-  assert.equal((await call(null, `/api/ivr/checkin?token=${process.env.IVR_TOKEN}&CustomField=${ivr[0].id}&digits=2`)).j.status, "help");
+  const { createHmac } = await import("node:crypto"); const ref = ivr[0].id + "." + createHmac("sha256", process.env.IVR_TOKEN ?? "").update(ivr[0].id).digest("hex").slice(0, 20);
+  assert.equal((await db.query("SELECT status FROM ivr_calls WHERE id=$1", [ivr[0].id])).rows[0].status, "simulated", "a logged test call is never recorded as placed");
+  assert.equal((await call(null, `/api/ivr/checkin?token=wrong&call=${ref}&digits=1`)).status, 403);
+  assert.equal((await call(null, `/api/ivr/checkin?token=${process.env.IVR_TOKEN}&CustomField=${ivr[0].id}&digits=1`)).status, 403, "a bare call id without its signature is refused");
+  assert.equal((await call(null, `/api/ivr/checkin?token=${process.env.IVR_TOKEN}&CustomField=${ref}&digits=2`)).j.status, "help");
+  assert.equal((await call(null, `/api/ivr/checkin?token=${process.env.IVR_TOKEN}&CustomField=${ref}&digits=1`)).status, 409, "the same call cannot be replayed");
   assert.equal((await call(fam, "/api/recipients")).j.find((x: any) => x.id === rid).last_checkin.status, "help");
   await db.end();
 });

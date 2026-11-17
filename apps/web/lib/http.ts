@@ -22,3 +22,16 @@ export function handle<A extends unknown[]>(fn: (...a: A) => Promise<unknown>) {
   };
 }
 export async function body(req: Request) { try { return await req.json(); } catch { return {}; } }
+
+/**
+ * Runs a write once per client operation id. The caregiver app sends X-Client-Op with every queued care log; if the
+ * phone retries after a timeout, the stored answer is returned instead of writing the log (and alerting the family) twice.
+ */
+export async function once<T>(req: Request, userId: string, fn: () => Promise<T>): Promise<T> {
+  const op = req.headers.get("x-client-op"); if (!op || op.length > 80) return fn();
+  const { one, q } = await import("./db");
+  const claim = await one<{ response: T | null }>("INSERT INTO client_ops (user_id, op_id) VALUES ($1,$2) ON CONFLICT (user_id, op_id) DO NOTHING RETURNING response", [userId, op]);
+  if (!claim) { const prev = await one<{ response: T | null }>("SELECT response FROM client_ops WHERE user_id=$1 AND op_id=$2", [userId, op]); return (prev?.response ?? ({ ok: true, duplicate: true } as unknown as T)); }
+  try { const out = await fn(); await q("UPDATE client_ops SET response=$3 WHERE user_id=$1 AND op_id=$2", [userId, op, JSON.stringify(out ?? { ok: true })]); return out; }
+  catch (e) { await q("DELETE FROM client_ops WHERE user_id=$1 AND op_id=$2", [userId, op]).catch(() => {}); throw e; } // a refused write may be retried
+}

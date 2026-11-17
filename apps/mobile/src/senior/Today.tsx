@@ -6,6 +6,7 @@ import { Medicines } from "./Medicines";
 import { useState } from "react";
 import { Companion } from "./Companion";
 import { tr } from "../shared/i18n";
+import { UrgentCard, useUrgent } from "../shared/alerts";
 import type { Tab } from "./SeniorApp";
 
 const MOOD: Record<string, string> = { ok: "I am okay", help: "I need some help", medical: "I need medical help", lonely: "I feel lonely" };
@@ -13,11 +14,11 @@ const SLOT: Record<string, string> = { morning: "Morning", afternoon: "Afternoon
 
 /** Home: check in status and streak, SOS, your people, medicines, thought of the day, today's game. */
 export function Today({ h, reload, go, onCheckIn }: { h: any; reload: () => Promise<any>; go: (t: Tab) => void; onCheckIn: () => void }) {
-  const [meds, setMeds] = useState(false); const [sos, setSos] = useState(false); const [asked, setAsked] = useState(false); const [talk, setTalk] = useState(false);
+  const [meds, setMeds] = useState(false); const sos = useUrgent(); const [asked, setAsked] = useState(false); const [talk, setTalk] = useState(false);
   if (meds) return <Medicines onBack={() => { setMeds(false); reload(); }} />;
   const first = (h.name || "").split(" ")[0]; const hour = new Date().getHours(); const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   if (talk) return <Companion onBack={() => setTalk(false)} onSos={() => { setTalk(false); raiseSos(); }} />;
-  async function raiseSos() { setSos(true); api("/api/sos", {}).catch(() => {}); Linking.openURL("tel:112").catch(() => {}); }
+  function raiseSos() { sos.send("/api/sos", {}); Linking.openURL("tel:112").catch(() => {}); }
   const n = h.meds?.next;
   return (
     <Screen tabbed>
@@ -40,9 +41,8 @@ export function Today({ h, reload, go, onCheckIn }: { h: any; reload: () => Prom
           <View style={{ flex: 1 }}><T size={28} weight="bold">{h.caregiver.first} is {h.caregiver.status}</T>
             <T>{h.caregiver.relief ? "Covering your regular caregiver's day off." : `Uday caregiver${h.caregiver.days > 1 ? `, day ${h.caregiver.day} of ${h.caregiver.days}` : ""}.`}</T></View></View>
         <T color={C.inkSoft}>Open the door only to the person in this photo.</T></Card>}
-      {sos ? <Card tone="coral"><T size={30} weight="bold">Emergency alert sent</T><T>Calling 112. Your family and the Uday team have been alerted.</T>
-          <T>Stay where you are. Speak clearly when connected. If you can, unlock your front door.</T><Button title="I am safe now" tone="outline" onPress={() => setSos(false)} /></Card>
-        : <Button title="SOS: I need help now" sub="Calls 112 and alerts your family" tone="coral" onPress={raiseSos} style={{ minHeight: 100 }} />}
+      {sos.state !== "idle" ? <UrgentCard state={sos.state} alert={sos.alert} tries={sos.tries} contacts={h.contacts ?? []} onClear={sos.reset} />
+        : <Button title="SOS: I need help now" sub="Alerts your family and opens the phone to call 112" tone="coral" onPress={raiseSos} style={{ minHeight: 100 }} />}
 
       {!!h.contacts?.length && <><T size={28} weight="bold">Your people</T>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>{h.contacts.slice(0, 4).map((c: any) => (

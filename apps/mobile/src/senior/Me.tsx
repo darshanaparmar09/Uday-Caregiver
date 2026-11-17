@@ -1,3 +1,4 @@
+import { AccountData } from "../shared/AccountData";
 import { useEffect, useState } from "react";
 import { Linking, View } from "react-native";
 import { api } from "../shared/api";
@@ -39,6 +40,7 @@ export function Me({ h, reload, onSignOut, onLang }: { h: any; reload: () => voi
           {leads.includes(k) ? <T weight="semi" color={C.teal}>Thank you. Uday will call you.</T>
             : <Button title="I am interested" tone="outline" onPress={() => api("/api/leads", { kind: k }).then(() => setLeads((l) => [...l, k])).catch((e: any) => setMsg(e.message))} />}</Card>))}
       <View style={{ height: 12 }} />
+      <AccountData onDeleted={onSignOut} />
       <Button title="Sign out" tone="outline" onPress={onSignOut} />
     </Screen>
   );

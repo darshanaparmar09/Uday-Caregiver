@@ -1,14 +1,16 @@
 import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { enc, dec, type KeyClass } from "./crypto";
 import { TEST_MODE } from "./env";
+import { s3 } from "./s3";
 
 /**
  * Encrypted document storage. Each file gets its own random key (AES-256-GCM); that key is itself
  * encrypted with the class key and stored in the database. The storage bucket only ever holds ciphertext.
- * STORAGE=local writes to ./.uploads (development only). STORAGE=s3 is for the agency to implement
- * against an S3 compatible bucket in an Indian region.
+ * STORAGE=local writes to ./.uploads (development and tests only).
+ * STORAGE=s3 writes to a private S3 or S3 compatible bucket (lib/s3.ts): set S3_BUCKET, S3_REGION (ap-south-1),
+ * S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and S3_ENDPOINT for a non AWS store.
  */
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
@@ -32,7 +34,10 @@ export async function getDecrypted(storageKey: string, fileKeyEnc: string): Prom
   return Buffer.concat([d.update(ct), d.final()]);
 }
 
-interface Driver { put(key: string, body: Buffer): Promise<void>; get(key: string): Promise<Buffer> }
+/** Removes a stored file for good (document deleted by the family, or account deletion). Missing files are ignored. */
+export async function removeStored(storageKey: string) { await driver().del(storageKey).catch((e) => console.error("[storage] delete failed", storageKey, e?.message)); }
+
+interface Driver { put(key: string, body: Buffer): Promise<void>; get(key: string): Promise<Buffer>; del(key: string): Promise<void> }
 function driver(): Driver {
   const s = process.env.STORAGE ?? "local";
   if (s === "local") {
@@ -41,8 +46,9 @@ function driver(): Driver {
     return {
       async put(key, body) { const p = join(root, key); await mkdir(join(p, ".."), { recursive: true }); await writeFile(p, body); },
       async get(key) { return readFile(join(root, key)); },
+      async del(key) { await rm(join(root, key), { force: true }); },
     };
   }
-  // Agency: implement with @aws-sdk/client-s3 (PutObject, GetObject) on a private bucket, server side encryption on.
-  throw new Error(`Storage driver ${s} not implemented`);
+  if (s === "s3") return s3;
+  throw new Error(`Storage driver ${s} is not supported. Use local or s3.`);
 }

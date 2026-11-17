@@ -3,6 +3,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
+import pg from "pg";
+const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
+test.before(() => db.connect());
+test.after(() => db.end().catch(() => {}));
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const OTP = process.env.OTP_DEV_CODE ?? "123456";
 const rnd = () => String(Math.floor(1e9 + Math.random() * 8e9)).slice(0, 9);
@@ -51,6 +55,10 @@ test("full lifecycle: book, accept, travel, codes, log, end, rate", async () => 
   const before = await call(cg, `/api/bookings/${id}`); assert.equal(before.j.address, undefined, "address hidden before acceptance");
   assert.equal((await call(fam, `/api/bookings/${id}/action`, { action: "accept" })).status, 403, "family cannot accept");
   assert.equal((await call(cg, `/api/bookings/${id}/action`, { action: "accept" })).status, 200);
+  // Care window: the address and health details open 24 hours before the first shift, not on acceptance.
+  await db.query("UPDATE bookings SET start_date = current_date + 5 WHERE id=$1", [id]);
+  const early = await call(cg, `/api/bookings/${id}`); assert.equal(early.j.address, undefined, "address hidden until the care window"); assert.equal(early.j.health, undefined); assert.ok(early.j.addressFrom);
+  await db.query("UPDATE bookings SET start_date = (now() AT TIME ZONE 'Asia/Kolkata')::date WHERE id=$1", [id]);
   const after = await call(cg, `/api/bookings/${id}`);
   assert.ok(after.j.address.includes("Sunshine")); assert.equal(after.j.health.allergies[0].name, "Penicillin"); assert.equal(after.j.health.conditions, null, "conditions not shared");
   assert.equal(after.j.accessNotes, undefined);
@@ -72,7 +80,7 @@ test("decline cascades to a same tier caregiver, family approves", async () => {
   const list = (await call(null, "/api/caregivers?type=day&tier=2")).j;
   const sunita = list.find((c: any) => c.display_name === "Sunita Pawar");
   const b = await call(fam, "/api/bookings", { recipientId: rid, caregiverId: sunita.id, careType: "day", days: 7, startDate: tomorrow(), startTime: "09:00", method: "Card", careNeed: "companionship", homeCommitments: ["toilet", "water", "belongings", "household", "infection", "cameras", "scope"] });
-  const id = b.j.id; const cg = await login("+919000000001");
+  assert.equal(b.status, 200, JSON.stringify(b.j)); const id = b.j.id; const cg = await login("+919000000001");
   assert.equal((await call(cg, `/api/bookings/${id}/action`, { action: "decline", reason: "Not available" })).status, 200);
   const p = await call(fam, `/api/bookings/${id}`); assert.equal(p.j.status, "proposal"); assert.equal(p.j.proposal.tier, 2);
   assert.equal((await call(fam, `/api/bookings/${id}/action`, { action: "approve" })).status, 200);
@@ -91,7 +99,8 @@ test("another family cannot see the booking", async () => {
 });
 
 test("senior signs in and checks in; family sees it", async () => {
-  const s = await login(seniorPhone, { role: "senior" });
+  const s = await login(seniorPhone, { role: "senior" }); // the parent agrees to the family link before anything is shared
+  for (const r of (await call(s, "/api/senior/links")).j) await call(s, "/api/senior/links", { id: r.id, accept: true });
   const home = await call(s, "/api/senior"); assert.equal(home.j.linked, true); assert.equal(home.j.checkedInToday, false);
   assert.equal((await call(s, "/api/checkins", { status: "ok" })).status, 200);
   assert.equal((await call(s, "/api/senior")).j.checkedInToday, true);

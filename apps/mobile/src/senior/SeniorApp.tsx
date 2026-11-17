@@ -3,7 +3,7 @@ import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../shared/api";
 import { registerForPush, onNotificationTap } from "../shared/push";
-import { Button, Screen, T } from "../shared/ui";
+import { Button, Card, Screen, T } from "../shared/ui";
 import { C, F } from "../shared/theme";
 import { setLang, tr } from "../shared/i18n";
 import { CheckIn } from "./CheckIn";
@@ -30,6 +30,15 @@ export function SeniorApp({ onSignOut }: { onSignOut: () => void }) {
     registerForPush(); return onNotificationTap((d) => { if (d?.template === "checkin_reminder") setChecking(true); if (d?.template === "namaste") setTab("groups"); }); }, [load]);
 
   if (!h) return <View style={{ flex: 1, backgroundColor: C.night }} />;
+  // A family has entered this phone number. The parent decides, in plain words, before anything is shared.
+  if (!h.linked && h.requests?.length) { const r = h.requests[0]; const answer = (accept: boolean) => api("/api/senior/links", { id: r.id, accept }).then(() => load()).catch(() => {}); return (
+    <Screen tone="night"><T size={32} weight="bold" color={C.onNight}>Is this your family?</T>
+      <Card><T size={28} weight="bold">{r.family_name ?? "Someone"}</T><T>{`Phone number ending ${r.phone_last4}${r.city ? ", " + r.city : ""}`}</T>
+        <T>wants to connect with you on Uday as your family.</T></Card>
+      <Card><T weight="semi">If you say yes, they will see:</T><T>• your daily check in, and if you miss it</T><T>• your medicines and when you take them</T><T>• an alert if you press SOS or ask for help</T><T>You can ask Uday to remove them at any time.</T></Card>
+      <Button title="Yes, this is my family" tone="teal" onPress={() => answer(true)} style={{ minHeight: 96 }} />
+      <Button title="No, I do not know them" tone="coral" onPress={() => answer(false)} style={{ minHeight: 96 }} />
+      <T color={C.onNightSoft}>If you are not sure, say no and call your family first.</T></Screen>); }
   if (!h.linked) return (
     <Screen tone="night"><T size={32} weight="bold" color={C.onNight}>Almost ready</T>
       <T color={C.onNightSoft}>{h.offline ? "Uday cannot reach the internet. Please check your connection and open the app again." : "Your family has not added this phone number to Uday yet. Ask them to add your number in their Uday account, then open this app again."}</T>

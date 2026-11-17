@@ -15,7 +15,7 @@ const display = (name: string | null) => { const p = (name ?? "Member").trim().s
 
 async function recipientOf(u: SessionUser) {
   if (u.role !== "senior") throw new AppError("For seniors only", 403);
-  const r = await one<any>("SELECT id, name, locality, checkin_by FROM care_recipients WHERE senior_user_id=$1 ORDER BY created_at LIMIT 1", [u.id]);
+  const r = await one<any>("SELECT id, name, locality, checkin_by FROM care_recipients WHERE senior_user_id=$1 AND senior_link='confirmed' ORDER BY created_at LIMIT 1", [u.id]);
   if (!r) throw new AppError("Your family has not linked your profile yet. Ask them to add your number in Uday.", 404);
   return r as { id: string; name: string; locality: string; checkin_by: string };
 }
@@ -31,9 +31,27 @@ export async function streak(rid: string) {
 }
 
 // ───────── home ─────────
+/** Families who entered this person's number and are waiting for them to agree. Shown before anything else in senior mode. */
+export async function linkRequests(u: SessionUser) {
+  const me = await one<{ phone_hash: string }>("SELECT phone_hash FROM users WHERE id=$1", [u.id]);
+  return q<any>(`SELECT r.id, r.name AS your_name, o.name AS family_name, o.phone_last4, o.city FROM care_recipients r JOIN users o ON o.id=r.owner_id
+    WHERE r.senior_phone_hash=$1 AND r.senior_link='pending' AND r.senior_user_id IS NULL AND o.deleted_at IS NULL ORDER BY r.created_at`, [me?.phone_hash ?? ""]);
+}
+/** The parent says yes or no. Only yes lets that family see check ins, medicines and alerts, and adds them to "your people". */
+export async function answerLink(u: SessionUser, recipientId: string, accept: boolean) {
+  if (u.role !== "senior") throw new AppError("For seniors only", 403);
+  const me = await one<{ phone_hash: string }>("SELECT phone_hash FROM users WHERE id=$1", [u.id]);
+  const r = await one<{ owner_id: string }>(`UPDATE care_recipients SET senior_link=$3, senior_user_id=CASE WHEN $3='confirmed' THEN $2::uuid ELSE NULL END
+    WHERE id=$1 AND senior_phone_hash=$4 AND senior_link='pending' RETURNING owner_id`, [recipientId, u.id, accept ? "confirmed" : "declined", me?.phone_hash ?? ""]);
+  if (!r) throw new AppError("This request is no longer open", 404);
+  await q("INSERT INTO consents (care_recipient_id, purpose, scope, granted_by, on_behalf) VALUES ($1,'family_link',$2,$3,false)", [recipientId, JSON.stringify({ accepted: accept }), u.id]).catch(() => {});
+  await q("INSERT INTO audit_log (actor_id, action, entity, entity_id, reason) VALUES ($1,$2,'senior_link',$3,$4)", [u.id, accept ? "accept" : "decline", recipientId, "parent's own decision"]);
+  await notify(r.owner_id, "senior_link", { recipientId, accepted: accept });
+  return { ok: true, accepted: accept };
+}
 export async function home(u: SessionUser) {
-  const r = await one<any>("SELECT id, name, locality, checkin_by FROM care_recipients WHERE senior_user_id=$1 ORDER BY created_at LIMIT 1", [u.id]);
-  if (!r) return { linked: false };
+  const r = await one<any>("SELECT id, name, locality, checkin_by FROM care_recipients WHERE senior_user_id=$1 AND senior_link='confirmed' ORDER BY created_at LIMIT 1", [u.id]);
+  if (!r) return { linked: false, requests: await linkRequests(u) };
   const today = istDay();
   const last = await one<any>("SELECT status, at FROM checkins WHERE care_recipient_id=$1 ORDER BY at DESC LIMIT 1", [r.id]);
   const checkedInToday = !!last && istDay(new Date(last.at)) === today;
@@ -119,48 +137,60 @@ export async function savePlay(u: SessionUser, game: "memory" | "trivia" | "word
 
 // ───────── community ─────────
 export async function groups(u: SessionUser) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
   return q(`SELECT g.id, g.slug, g.name, g.icon, g.about, (SELECT count(*)::int FROM group_members m WHERE m.group_id=g.id) AS members,
       EXISTS(SELECT 1 FROM group_members m WHERE m.group_id=g.id AND m.user_id=$1) AS joined,
       (SELECT count(*)::int FROM group_posts p WHERE p.group_id=g.id AND p.status='live' AND p.created_at > now() - interval '1 day') AS new_posts
     FROM community_groups g ORDER BY joined DESC, g.name`, [u.id]);
 }
 export async function setMember(u: SessionUser, groupId: string, join: boolean) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
   if (u.role !== "senior") throw new AppError("Groups are for seniors", 403);
+  if (join && !(await termsAccepted(u))) throw new AppError("Please read and accept the community rules first", 428);
   if (join) await q("INSERT INTO group_members (group_id, user_id) VALUES ($1,$2) ON CONFLICT DO NOTHING", [groupId, u.id]);
   else await q("DELETE FROM group_members WHERE group_id=$1 AND user_id=$2", [groupId, u.id]);
   return { joined: join };
 }
 async function seniorName(userId: string) { return one<any>("SELECT r.name, r.locality FROM care_recipients r WHERE r.senior_user_id=$1 ORDER BY created_at LIMIT 1", [userId]); }
 export async function posts(u: SessionUser, groupId: string) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
   const g = await one<any>("SELECT id, name, icon, about FROM community_groups WHERE id=$1", [groupId]);
   if (!g) throw new AppError("Group not found", 404);
   const rows = await q<any>(`SELECT p.id, p.body, p.created_at, p.user_id, r.name, r.locality FROM group_posts p
       LEFT JOIN LATERAL (SELECT name, locality FROM care_recipients WHERE senior_user_id=p.user_id ORDER BY created_at LIMIT 1) r ON true
-    WHERE p.group_id=$1 AND p.status='live' ORDER BY p.created_at DESC LIMIT 50`, [groupId]);
+    WHERE p.group_id=$1 AND p.status='live'
+      AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker=$2 AND b.blocked=p.user_id) OR (b.blocker=p.user_id AND b.blocked=$2))
+      AND NOT EXISTS (SELECT 1 FROM post_reports x WHERE x.post_id=p.id AND x.user_id=$2) ORDER BY p.created_at DESC LIMIT 50`, [groupId, u.id]);
   const joined = !!(await one("SELECT 1 FROM group_members WHERE group_id=$1 AND user_id=$2", [groupId, u.id]));
-  return { group: g, joined, posts: rows.map((p) => ({ id: p.id, body: p.body, at: p.created_at, author: display(p.name), locality: p.locality, mine: p.user_id === u.id })) };
+  return { group: g, joined, termsAccepted: await termsAccepted(u), posts: rows.map((p) => ({ id: p.id, body: p.body, at: p.created_at, author: display(p.name), authorId: p.user_id === u.id ? undefined : p.user_id, locality: p.locality, mine: p.user_id === u.id })) };
 }
 export async function addPost(u: SessionUser, groupId: string, body: string) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
+  if (!(await termsAccepted(u))) throw new AppError("Please read and accept the community rules first", 428);
   if (!(await one("SELECT 1 FROM group_members WHERE group_id=$1 AND user_id=$2", [groupId, u.id]))) throw new AppError("Join the group to post", 403);
   const problem = postProblem(body); if (problem) throw new AppError(problem);
   const recent = await one<{ n: number }>("SELECT count(*)::int AS n FROM group_posts WHERE user_id=$1 AND created_at > now() - interval '1 hour'", [u.id]);
   if ((recent?.n ?? 0) >= 10) throw new AppError("You have posted a lot this hour. Please try later.", 429);
   return one("INSERT INTO group_posts (group_id, user_id, body) VALUES ($1,$2,$3) RETURNING id", [groupId, u.id, body.trim()]);
 }
-/** Two reports hide a post until Uday reviews it. */
+/** A report hides the post from the person who reported it at once; two reports hide it for everyone until Uday reviews it. Every report shows in the Operations community queue. */
 export async function reportPost(u: SessionUser, postId: string, reason?: string) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
   const ins = await q("INSERT INTO post_reports (post_id, user_id, reason) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING RETURNING post_id", [postId, u.id, reason ?? null]);
+  if (!(await one("SELECT 1 FROM group_posts WHERE id=$1", [postId]))) throw new AppError("Not found", 404);
   if (ins.length) await q("UPDATE group_posts SET reports=reports+1, status=CASE WHEN reports+1 >= 2 THEN 'hidden' ELSE status END WHERE id=$1", [postId]);
   return { reported: true };
 }
 export async function deletePost(u: SessionUser, postId: string) { await q("UPDATE group_posts SET status='hidden' WHERE id=$1 AND user_id=$2", [postId, u.id]); return { ok: true }; }
 
 export async function events(u: SessionUser) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
   return q(`SELECT e.id, e.title, e.about, e.place, e.starts_at, e.capacity, e.sample, g.name AS group_name, g.icon,
       (SELECT count(*)::int FROM event_rsvps v WHERE v.event_id=e.id) AS going, EXISTS(SELECT 1 FROM event_rsvps v WHERE v.event_id=e.id AND v.user_id=$1) AS mine
     FROM community_events e LEFT JOIN community_groups g ON g.id=e.group_id WHERE e.status='live' AND e.starts_at > now() ORDER BY e.starts_at LIMIT 30`, [u.id]);
 }
 export async function rsvp(u: SessionUser, eventId: string, going: boolean) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
   if (u.role !== "senior") throw new AppError("Events are for seniors", 403);
   if (!going) { await q("DELETE FROM event_rsvps WHERE event_id=$1 AND user_id=$2", [eventId, u.id]); return { going: false }; }
   const e = await one<any>("SELECT capacity, (SELECT count(*)::int FROM event_rsvps v WHERE v.event_id=e.id) AS n FROM community_events e WHERE id=$1 AND status='live' AND starts_at > now()", [eventId]);
@@ -173,6 +203,7 @@ export async function rsvp(u: SessionUser, eventId: string, going: boolean) {
 
 /** People nearby: only seniors who chose to be found, and only if you chose to be found too. No phone numbers are ever shown. */
 export async function people(u: SessionUser) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
   const me = await settings(u);
   if (!me.discoverable) return { discoverable: false, people: [], received: [] };
   const rows = await q<any>(`SELECT s.user_id, r.name, r.locality,
@@ -180,17 +211,67 @@ export async function people(u: SessionUser) {
       EXISTS(SELECT 1 FROM namastes n WHERE n.from_user=$1 AND n.to_user=s.user_id) AS sent,
       EXISTS(SELECT 1 FROM namastes n WHERE n.from_user=s.user_id AND n.to_user=$1) AS received
     FROM senior_settings s JOIN LATERAL (SELECT name, locality FROM care_recipients WHERE senior_user_id=s.user_id ORDER BY created_at LIMIT 1) r ON true
-    WHERE s.discoverable AND s.user_id<>$1 ORDER BY shared_groups DESC, r.locality LIMIT 50`, [u.id]);
+    WHERE s.discoverable AND s.user_id<>$1
+      AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker=$1 AND b.blocked=s.user_id) OR (b.blocker=s.user_id AND b.blocked=$1)) ORDER BY shared_groups DESC, r.locality LIMIT 50`, [u.id]);
   await q("UPDATE namastes SET seen_at=now() WHERE to_user=$1 AND seen_at IS NULL", [u.id]);
   return { discoverable: true, people: rows.map((p) => ({ id: p.user_id, name: display(p.name), locality: p.locality, sharedGroups: p.shared_groups, sent: p.sent, received: p.received, friends: p.sent && p.received })) };
 }
 export async function namaste(u: SessionUser, to: string) {
+  await recipientOf(u); // only a senior whose family link is confirmed may use the community
   const me = await settings(u); if (!me.discoverable) throw new AppError("Turn on 'Let people near me find me' first");
   const t = await one("SELECT 1 FROM senior_settings WHERE user_id=$1 AND discoverable", [to]);
-  if (!t || to === u.id) throw new AppError("Not found", 404);
+  if (!t || to === u.id || (await isBlocked(u.id, to))) throw new AppError("Not found", 404);
   const ins = await q("INSERT INTO namastes (from_user, to_user) VALUES ($1,$2) ON CONFLICT DO NOTHING RETURNING to_user", [u.id, to]);
   if (ins.length) await notify(to, "namaste", { from: u.id });
   return { sent: true };
+}
+
+// ───────── community safety: rules, block, report ─────────
+export const COMMUNITY_RULES = [
+  "Be kind. No insults, threats, hate or bullying.",
+  "No selling, money requests, loans or investment offers.",
+  "Never share bank details, OTPs, Aadhaar or addresses.",
+  "No medical advice. Talk to your doctor.",
+  "Posts that break these rules are removed. People who break them can be removed from the community.",
+];
+async function termsAccepted(u: SessionUser) { return !!(await one("SELECT 1 FROM senior_settings WHERE user_id=$1 AND community_terms_at IS NOT NULL", [u.id])); }
+export async function communityRules(u: SessionUser) { await recipientOf(u); return { rules: COMMUNITY_RULES, accepted: await termsAccepted(u) }; }
+export async function acceptRules(u: SessionUser) {
+  await recipientOf(u);
+  await q("INSERT INTO senior_settings (user_id, community_terms_at) VALUES ($1, now()) ON CONFLICT (user_id) DO UPDATE SET community_terms_at=COALESCE(senior_settings.community_terms_at, now())", [u.id]);
+  return { accepted: true };
+}
+async function isBlocked(a: string, b: string) { return !!(await one("SELECT 1 FROM user_blocks WHERE (blocker=$1 AND blocked=$2) OR (blocker=$2 AND blocked=$1)", [a, b])); }
+async function knownMember(id: string) { return one("SELECT 1 FROM users WHERE id=$1 AND role='senior' AND deleted_at IS NULL", [id]); }
+/** Block: neither person sees the other's posts or profile, and greetings stop. Takes effect at once. */
+export async function blockUser(u: SessionUser, other: string, block: boolean) {
+  await recipientOf(u); if (other === u.id || !(await knownMember(other))) throw new AppError("Not found", 404);
+  if (block) await q("INSERT INTO user_blocks (blocker, blocked) VALUES ($1,$2) ON CONFLICT DO NOTHING", [u.id, other]);
+  else await q("DELETE FROM user_blocks WHERE blocker=$1 AND blocked=$2", [u.id, other]);
+  return { blocked: block };
+}
+/** Report a person to the Uday team. Also blocks them for the reporter, so the reporter is safe while we review. */
+export async function reportUser(u: SessionUser, other: string, reason?: string) {
+  await recipientOf(u); if (other === u.id || !(await knownMember(other))) throw new AppError("Not found", 404);
+  await q("INSERT INTO user_reports (reporter, reported, reason) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING", [u.id, other, reason?.slice(0, 300) ?? null]);
+  await q("INSERT INTO user_blocks (blocker, blocked) VALUES ($1,$2) ON CONFLICT DO NOTHING", [u.id, other]);
+  return { reported: true, blocked: true };
+}
+export async function opsCloseAiReport(id: number, by: string) {
+  const r = await one("UPDATE companion_messages SET report_closed_at=now() WHERE id=$1 AND reported_at IS NOT NULL RETURNING id", [id]); if (!r) throw new AppError("Not found", 404);
+  await q("INSERT INTO audit_log (actor_id, action, entity, entity_id, reason) VALUES ($1,'ai_report','companion_message',$2,'reviewed')", [by, String(id)]);
+  return { ok: true };
+}
+export async function opsCloseUserReport(id: number, removeFromCommunity: boolean, by: string) {
+  const r = await one<any>("UPDATE user_reports SET status='closed', closed_at=now() WHERE id=$1 AND status='open' RETURNING reported", [id]);
+  if (!r) throw new AppError("Not found", 404);
+  if (removeFromCommunity) {
+    await q("DELETE FROM group_members WHERE user_id=$1", [r.reported]);
+    await q("UPDATE group_posts SET status='hidden' WHERE user_id=$1", [r.reported]);
+    await q("UPDATE senior_settings SET discoverable=false, community_terms_at=NULL WHERE user_id=$1", [r.reported]);
+  }
+  await q("INSERT INTO audit_log (actor_id, action, entity, entity_id, reason) VALUES ($1,'user_report','user',$2,$3)", [by, r.reported, removeFromCommunity ? "removed from community" : "no action"]);
+  return { ok: true };
 }
 
 // ───────── settings ─────────
@@ -218,9 +299,9 @@ export async function safetyReport(u: SessionUser, i: z.infer<typeof SafetyIn>) 
   const code = (i.kind === "cyber" ? "CY-" : "CR-") + Math.random().toString(36).slice(2, 8).toUpperCase();
   await q("INSERT INTO safety_reports (code, user_id, care_recipient_id, kind, category, happened, amount_paise, details_enc) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
     [code, u.id, r.id, i.kind, i.category, i.happened ?? null, i.amount != null ? i.amount * 100 : null, enc(i.details)]);
-  for (const f of await familyOf(r.id)) await notify(f.user_id, "safety_report", { recipientId: r.id, code, kind: i.kind }, "sms");
-  await notify(null, "safety_report", { recipientId: r.id, code, kind: i.kind, escalate: true });
-  return { code };
+  const { raiseAlert } = await import("./alerts");
+  const alert = await raiseAlert({ kind: "safety_report", recipientId: r.id, raisedBy: u.id, raisedRole: "senior" });
+  return { code, alert };
 }
 export async function callback(u: SessionUser, reason: "talk" | "doctor" | "lonely") {
   const r = await recipientOf(u);
@@ -250,7 +331,11 @@ export async function opsCommunity() {
   const reported = await q(`SELECT p.id, p.body, p.status, p.reports, p.created_at, g.name AS group_name FROM group_posts p JOIN community_groups g ON g.id=p.group_id WHERE p.reports > 0 ORDER BY p.status='hidden' DESC, p.created_at DESC LIMIT 50`);
   const safety = await q(`SELECT s.code, s.kind, s.category, s.happened, s.amount_paise, s.status, s.created_at, r.name FROM safety_reports s LEFT JOIN care_recipients r ON r.id=s.care_recipient_id WHERE s.status='open' ORDER BY s.created_at DESC LIMIT 50`);
   const callbacks = await q(`SELECT c.id, c.reason, c.created_at, r.name, r.locality FROM callback_requests c LEFT JOIN care_recipients r ON r.id=c.care_recipient_id WHERE c.status='open' ORDER BY c.created_at LIMIT 50`);
-  return { reported, safety, callbacks, groups: await q("SELECT id, name FROM community_groups ORDER BY name") };
+  const people = await q(`SELECT x.id::int AS id, x.reason, x.created_at, r.name, r.locality, (SELECT count(*)::int FROM user_reports y WHERE y.reported=x.reported) AS times
+    FROM user_reports x LEFT JOIN LATERAL (SELECT name, locality FROM care_recipients WHERE senior_user_id=x.reported ORDER BY created_at LIMIT 1) r ON true WHERE x.status='open' ORDER BY x.created_at LIMIT 50`);
+  const ai = (await q<any>(`SELECT id, body_enc, report_reason, reported_at FROM companion_messages WHERE role='assistant' AND reported_at IS NOT NULL AND report_closed_at IS NULL ORDER BY reported_at LIMIT 50`))
+    .map((m) => ({ id: Number(m.id), reply: dec(m.body_enc), reason: m.report_reason, at: m.reported_at })); // the AI reply only; the senior's own words stay private
+  return { reported, people, ai, safety, callbacks, groups: await q("SELECT id, name FROM community_groups ORDER BY name") };
 }
 export async function opsPost(id: string, status: "live" | "hidden") { await q("UPDATE group_posts SET status=$2, reports=CASE WHEN $2='live' THEN 0 ELSE reports END WHERE id=$1", [id, status]); if (status === "live") await q("DELETE FROM post_reports WHERE post_id=$1", [id]); }
 export const EventIn = z.object({ title: z.string().min(3).max(100), about: z.string().max(500).optional(), place: z.string().min(3).max(200), startsAt: z.string(), capacity: z.number().int().min(1).max(1000).optional(), groupId: z.string().uuid().optional() });

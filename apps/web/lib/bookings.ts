@@ -1,3 +1,4 @@
+import { checkShiftCode } from "./ratelimit";
 import { policyNow } from "./settings";
 import type { PoolClient } from "pg";
 import {
@@ -17,6 +18,12 @@ const RATE_COL: Record<CareType, string> = { day: "rate_day_paise", night: "rate
 const START_TIMES: Record<CareType, string[]> = { day: ["07:00", "09:00", "10:00"], night: ["20:00"], live: ["09:00"] };
 
 // ───────── access ─────────
+/** Checklist rows the caregiver did not mark during this shift day. Shown to the family when the shift closes, so nothing reads as done that was not. */
+async function notMarked(c: any, b: any, day: number): Promise<string[]> {
+  const rows = (await c.query("SELECT checklist_enc FROM shift_logs WHERE booking_id=$1 AND day=$2", [b.id, day])).rows;
+  const done = new Set<string>(); for (const r of rows) Object.keys(decJson<Record<string, string>>(r.checklist_enc) ?? {}).forEach((k) => done.add(k));
+  return checklistFor(b.tier).flatMap((sec) => sec.items).filter((i) => !done.has(i.id)).map((i) => i.label);
+}
 export async function familyRole(userId: string, recipientId: string): Promise<string | null> {
   const r = await one<{ role: string }>("SELECT role FROM family_members WHERE user_id=$1 AND care_recipient_id=$2 AND accepted_at IS NOT NULL", [userId, recipientId]);
   return r?.role ?? null;
@@ -118,7 +125,7 @@ export async function createBooking(u: SessionUser, i: CreateInput) {
        need.id, i.careNeedNote?.slice(0, 200) ?? null, JSON.stringify(required), HOME_COMMITMENTS_VERSION, weekly ? "weekly" : "upfront", dayOff, disc.coupon, disc.bps, awaitingPayment])).rows[0];
     await c.query("INSERT INTO payments (booking_id, gateway, gateway_ref, method, amount_paise, status) VALUES ($1,$2,$3,$4,$5,$6)",
       [b.id, (await gateway()).name, hold.gatewayRef, i.method, holdAmount, awaitingPayment ? "pending" : "held"]);
-    if (disc.coupon) { await c.query("INSERT INTO coupon_redemptions (code, booking_id, user_id) VALUES ($1,$2,$3)", [disc.coupon, b.id, u.id]); await c.query("UPDATE coupons SET used=used+1 WHERE code=$1", [disc.coupon]); }
+    if (disc.coupon) { await c.query("INSERT INTO coupon_redemptions (code, booking_id, user_id) VALUES ($1,$2,$3)", [disc.coupon, b.id, u.id]); if (!(await c.query("UPDATE coupons SET used=used+1 WHERE code=$1 AND (max_uses IS NULL OR used < max_uses) RETURNING 1", [disc.coupon])).rowCount) throw new AppError("This coupon has just been used up. Remove it and try again."); }
     for (const cy of cycles ?? []) {
       const due = new Date(Math.max(Date.now(), shiftStart(i.startDate, i.startTime, cy.fromDay - 1).getTime() - 48 * 3600e3));
       await c.query(`INSERT INTO billing_cycles (booking_id, cycle_no, from_day, to_day, care_paise, platform_paise, gst_paise, amount_paise, status, due_at, gateway_ref)
@@ -178,7 +185,13 @@ export async function getBooking(u: SessionUser, id: string) {
     out.review = await one("SELECT stars, tags FROM reviews WHERE booking_id=$1", [id]);
     out.tickets = await q("SELECT code, category, status, urgent, sla_due_at FROM tickets WHERE booking_id=$1 ORDER BY created_at", [id]);
   }
-  if (isCg && confirmed) {
+  // The caregiver sees the home address and health details only inside the care window: from 24 hours before the
+  // first shift until care ends. Earlier than that she sees the area, dates and care needs only.
+  const startsAt = shiftStart(String(b.start_date instanceof Date ? b.start_date.toISOString() : b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), 0).getTime();
+  const inWindow = b.status !== "accepted" || startsAt - Date.now() <= 24 * 3600e3;
+  if (isCg && !fam) { out.logs = confirmed ? out.logs : []; if (confirmed && !inWindow) out.addressFrom = new Date(startsAt - 24 * 3600e3).toISOString(); }
+  if (isCg && confirmed && inWindow) {
+    await q("INSERT INTO audit_log (actor_id, action, entity, entity_id, reason) VALUES ($1,'view_health','booking',$2,'caregiver opened address and shared health details')", [u.id, b.id]).catch(() => {});
     out.address = dec(b.address_enc);
     if (["enroute", "arrived", "active"].includes(b.status)) out.accessNotes = dec(b.access_notes_enc);
     out.careNeeds = b.care_needs;
@@ -260,7 +273,7 @@ export async function releaseTx(c: PoolClient, b: any, actor: SessionUser | null
   const unused = await escrowBalance(c, b.id);
   await closeFuture(c, b.id);
   if (pay?.status === "held") { await (await gateway()).release(pay.gateway_ref); await c.query("UPDATE payments SET status='released', updated_at=now() WHERE id=$1", [pay.id]); }
-  else if (pay && unused > 0) { await (await gateway()).refund(pay.gateway_ref, unused); await c.query("UPDATE payments SET refunded_paise=refunded_paise+$2, status='partially_refunded', updated_at=now() WHERE id=$1", [pay.id, unused]);
+  else if (pay && unused > 0) { await (await gateway()).refund(pay.payment_id ?? pay.gateway_ref, unused); await c.query("UPDATE payments SET refunded_paise=refunded_paise+$2, status='partially_refunded', updated_at=now() WHERE id=$1", [pay.id, unused]);
     await ledger(c, b.id, [["escrow", unused, 0, "refund unused days"], ["family_refunds", 0, unused, "refund unused days"]]); }
   await c.query("UPDATE bookings SET status='released', refund_paise=$2, tried=COALESCE($3, tried), proposed_caregiver_id=NULL, offer_expires_at=NULL, updated_at=now() WHERE id=$1", [b.id, unused, tried ?? null]);
   await event(c, b, actor, role, "released", msg);
@@ -310,6 +323,10 @@ export async function act(u: SessionUser, id: string, a: Action) {
     switch (a.action) {
       case "accept": {
         assertTransition(b.status, "accepted", "caregiver");
+        // Two requests for overlapping days can both be waiting. Lock this caregiver, then check she is still free.
+        await c.query("SELECT pg_advisory_xact_lock(hashtext($1))", ["caregiver:" + b.caregiver_id]);
+        const from = new Date(Date.parse(String(b.start_date instanceof Date ? b.start_date.toISOString() : b.start_date).slice(0, 10) + "T00:00:00Z") + b.days_done * 864e5).toISOString().slice(0, 10);
+        if ((await busyCaregivers(c, from, b.days - b.days_done, b.id)).has(b.caregiver_id)) throw new AppError("You already have care booked on some of these days. Decline this request so the family can find someone else.", 409);
         const pay = (await c.query("SELECT * FROM payments WHERE booking_id=$1 ORDER BY created_at DESC LIMIT 1 FOR UPDATE", [b.id])).rows[0];
         let captured = 0;
         // A replacement caregiver taking over paid care: nothing new to capture.
@@ -385,7 +402,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
           const avail = await escrowBalance(c, b.id);
           qte.feePaise = Math.min(qte.feePaise, avail); qte.refundPaise = Math.max(0, avail - qte.feePaise);
           await closeFuture(c, b.id);
-          if (qte.refundPaise > 0) { await (await gateway()).refund(pay.gateway_ref, qte.refundPaise); await c.query("UPDATE payments SET refunded_paise=refunded_paise+$2, status='partially_refunded', updated_at=now() WHERE id=$1", [pay.id, qte.refundPaise]); }
+          if (qte.refundPaise > 0) { await (await gateway()).refund(pay.payment_id ?? pay.gateway_ref, qte.refundPaise); await c.query("UPDATE payments SET refunded_paise=refunded_paise+$2, status='partially_refunded', updated_at=now() WHERE id=$1", [pay.id, qte.refundPaise]); }
           const lines: [string, number, number, string][] = [];
           if (qte.refundPaise) lines.push(["escrow", qte.refundPaise, 0, "cancellation refund"], ["family_refunds", 0, qte.refundPaise, "cancellation refund"]);
           if (qte.feePaise) lines.push(["escrow", qte.feePaise, 0, "late cancellation fee"], [`caregiver:${b.caregiver_id}`, 0, qte.feePaise, "late cancellation fee"]);
@@ -421,6 +438,8 @@ export async function act(u: SessionUser, id: string, a: Action) {
         if (r.lat != null && a.lat != null && a.lng != null && distanceM(r.lat, r.lng, a.lat, a.lng) > geofenceM)
           throw new AppError(`You need to be within ${geofenceM} metres of the home to mark arrival`);
         await c.query("UPDATE bookings SET status='arrived', updated_at=now() WHERE id=$1", [b.id]);
+        // No position from the phone: arrival is allowed (care must not be blocked by a weak GPS signal) but is shown as unverified. The family's start code is the proof.
+        if (a.lat == null || a.lng == null) await c.query("INSERT INTO booking_events (booking_id, actor_id, actor_role, message) VALUES ($1,$2,'caregiver','Arrival marked without a phone location, so the place could not be checked. The start code confirms she is at the door.')", [b.id, u.id]);
         await c.query("INSERT INTO attendance (booking_id, day, kind, lat, lng) VALUES ($1,$2,'arrived',$3,$4)", [b.id, b.days_done + 1, a.lat ?? null, a.lng ?? null]);
         await event(c, b, u, "caregiver", "arrived", `${first} arrived.`);
         await tellFamily(b.care_recipient_id, "caregiver_arrived", { bookingId: b.id });
@@ -428,7 +447,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
       }
       case "start":
         assertTransition(b.status, "active", "caregiver");
-        if (dec(b.start_code_enc) !== a.code) throw new AppError("Code does not match. Ask the family to read it again.");
+        await checkShiftCode(b.id, dec(b.start_code_enc), a.code, () => notify(null, "caregiver_late", { bookingId: b.id, reason: "five wrong shift codes" }));
         await c.query("UPDATE bookings SET status='active', end_code_enc=$2, updated_at=now() WHERE id=$1", [b.id, enc(shiftCode())]);
         await c.query("INSERT INTO attendance (booking_id, day, kind) VALUES ($1,$2,'start')", [b.id, b.days_done + 1]);
         await event(c, b, u, "caregiver", "active", `Shift ${b.days_done + 1} started, code verified.`);
@@ -444,7 +463,8 @@ export async function act(u: SessionUser, id: string, a: Action) {
           throw new AppError("Blood pressure, pulse and temperature are recorded by Tier 3 nurses only. Note any concern for the family instead.");
         if (b.tier < 3) delete checklist.vitals;
         const flags = vitalsFlags(v);
-        const meal = a.meal ?? !!checklist.breakfast, meds = a.meds ?? !!checklist.medication;
+        // Only what the caregiver stated. A ticked checklist row is not taken to mean a meal was eaten or a medicine swallowed.
+        const meal = a.meal ?? null, meds = a.meds ?? null;
         await c.query("INSERT INTO shift_logs (booking_id, day, caregiver_id, meal, meds, mood, note_enc, checklist_enc, vitals_enc, flags) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
           [b.id, b.days_done + 1, cgId, meal, meds, String(a.mood).slice(0, 40), enc(a.note?.slice(0, 1000), "health"),
            Object.keys(checklist).length ? encJson(checklist) : null, Object.keys(v).length ? encJson(v) : null, flags]);
@@ -452,7 +472,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
         for (const [k, kind] of Object.entries(KIND)) { const val = (v as any)[k]; if (typeof val === "number")
           await c.query("INSERT INTO readings (care_recipient_id, kind, value_enc, source, booking_id, recorded_at, created_by) VALUES ($1,$2,$3,'caregiver',$4, now(), $5)", [b.care_recipient_id, kind, enc(String(val), "health"), b.id, u.id]); }
         if (flags.length) {
-          await event(c, b, u, "caregiver", null, `Readings outside the usual range: ${flags.join(", ")}. Family and Uday alerted.`);
+          await event(c, b, u, "caregiver", null, `Readings outside the usual range: ${flags.join(", ")}. A message was sent to the family and noted for the Uday team. This is not a medical assessment.`);
           await tellFamily(b.care_recipient_id, "vitals_alert", { bookingId: b.id });
           await notify(null, "vitals_alert", { bookingId: b.id, flags });
         } else await tellFamily(b.care_recipient_id, "shift_log", { bookingId: b.id });
@@ -466,14 +486,16 @@ export async function act(u: SessionUser, id: string, a: Action) {
         const last = day === b.days;
         if (b.care_type === "live" && !last) throw new AppError("For live in care, close each day instead. The end code is for the last day.");
         if (b.away) throw new AppError("You are on your day off");
-        if (dec(b.end_code_enc) !== a.code) throw new AppError("Code does not match.");
+        await checkShiftCode(b.id, dec(b.end_code_enc), a.code, () => notify(null, "caregiver_late", { bookingId: b.id, reason: "five wrong shift codes" }));
         await releaseDay(c, b, day, b.caregiver_id);
         await c.query("INSERT INTO attendance (booking_id, day, kind) VALUES ($1,$2,'end')", [b.id, day]);
         const nextStatus: BookingStatus = last ? "completed" : "accepted";
         assertTransition("active", nextStatus, "caregiver");
         await c.query("UPDATE bookings SET status=$2, days_done=$3, start_code_enc=$4, end_code_enc=NULL, updated_at=now() WHERE id=$1",
           [b.id, nextStatus, day, last ? null : enc(shiftCode())]);
+        const missing = await notMarked(c, b, day);
         await event(c, b, u, "caregiver", nextStatus, `Shift ${day} of ${b.days} completed. ${rupees(b.rate_paise)} added to ${first}'s payout.` + (last ? " All shifts done." : " Next shift scheduled."));
+        if (missing.length) await event(c, b, u, "caregiver", null, `Not marked done in shift ${day}: ${missing.join("; ")}. Ask the caregiver if any of these were needed.`);
         await tellFamily(b.care_recipient_id, last ? "rate_request" : "shift_ended", { bookingId: b.id });
         break;
       }
@@ -485,6 +507,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
         if (day >= b.days) throw new AppError("This is the last day. Use the end code from the family.");
         if (TIME_CHECKS && Date.now() < shiftStart(String(b.start_date).slice(0, 10), String(b.start_time).slice(0, 5), day).getTime() - 3600e3) throw new AppError("You can close the day from one hour before it ends");
         if (!(await c.query("SELECT 1 FROM shift_logs WHERE booking_id=$1 AND day=$2 LIMIT 1", [b.id, day])).rowCount) throw new AppError("Save today's care log first");
+        { const missing = await notMarked(c, b, day); if (missing.length) await event(c, b, u, "caregiver", null, `Not marked done on day ${day}: ${missing.join("; ")}. Ask the caregiver if any of these were needed.`); }
         await releaseDay(c, b, day, b.caregiver_id, "day");
         await c.query("INSERT INTO attendance (booking_id, day, kind) VALUES ($1,$2,'day_close')", [b.id, day]);
         const relief = (await c.query("SELECT r.id, c.display_name FROM relief_shifts r JOIN caregivers c ON c.id=r.caregiver_id WHERE r.booking_id=$1 AND r.day_no=$2 AND r.status='accepted'", [b.id, day + 1])).rows[0];
@@ -497,7 +520,7 @@ export async function act(u: SessionUser, id: string, a: Action) {
       case "return": {
         if (!b.away) throw new AppError("You are not on a day off");
         if (!b.return_code_enc) throw new AppError("The relief day has not ended yet");
-        if (dec(b.return_code_enc) !== a.code) throw new AppError("Code does not match. Ask the family to read it again.");
+        await checkShiftCode(b.id, dec(b.return_code_enc), a.code, () => notify(null, "caregiver_late", { bookingId: b.id, reason: "five wrong shift codes" }));
         await c.query("UPDATE bookings SET away=false, return_code_enc=NULL, updated_at=now() WHERE id=$1", [b.id]);
         await c.query("INSERT INTO attendance (booking_id, day, kind) VALUES ($1,$2,'return')", [b.id, b.days_done + 1]);
         await event(c, b, u, "caregiver", null, `${first} is back after her day off.`);

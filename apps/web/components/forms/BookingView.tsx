@@ -72,9 +72,9 @@ export function BookingView({ id }: { id: string }) {
 
       {b.viewer === "family" && <Chat id={id} name={first} />}
       {!!b.logs?.length && <div className="card"><h2 className="text-lg font-bold">Shift log</h2><div className="mt-3 grid gap-3">{b.logs.slice().reverse().map((l: any, k: number) => (
-        <div key={k} className="border-l-4 border-teal-500 pl-3 text-sm"><b className="text-ink">Day {l.day} · {new Date(l.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</b><div>{[l.checklist && `${Object.keys(l.checklist).length} care tasks done`, l.meal && "Meal given", l.meds && "Medicines given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</div>
+        <div key={k} className="border-l-4 border-teal-500 pl-3 text-sm"><b className="text-ink">Day {l.day} · {new Date(l.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</b><div>{[l.checklist && `${Object.keys(l.checklist).length} care tasks marked done by the caregiver`, l.meal === true && "Meal: caregiver says given", l.meds === true && "Medicines: caregiver says given as prescribed", l.meds === false && "Medicines: caregiver says NOT given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</div>
         {l.vitals && <div>{[l.vitals.bpSys && `BP ${l.vitals.bpSys}/${l.vitals.bpDia}`, l.vitals.pulse && `Pulse ${l.vitals.pulse}`, l.vitals.tempC && `Temp ${l.vitals.tempC}°C`, l.vitals.pain != null && `Pain ${l.vitals.pain}/10`, l.vitals.appetite && `Appetite ${l.vitals.appetite}`, l.vitals.skinConcern && "Skin concern noted"].filter(Boolean).join(" · ")}</div>}
-        {l.flags?.length ? <div className="mt-1 rounded-lg bg-coral-50 px-2 py-1 font-semibold text-coral-600">Outside usual range: {l.flags.join(", ")}. Uday has been alerted.</div> : null}
+        {l.flags?.length ? <div className="mt-1 rounded-lg bg-coral-50 px-2 py-1 font-semibold text-coral-600">Outside usual range: {l.flags.join(", ")}. Noted for the Uday team. Not a medical assessment: call the doctor if you are worried.</div> : null}
         {l.note && <div className="text-muted">{l.note}</div>}</div>))}</div></div>}
 
       <div className="flex flex-wrap gap-2">

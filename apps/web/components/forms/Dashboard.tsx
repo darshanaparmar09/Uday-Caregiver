@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, inr, TYPE, DUR, STATUS } from "../api";
 import { InviteBanner } from "./FamilyTools";
+import { AlertBanner } from "./AlertBanner";
 
 export function Dashboard() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export function Dashboard() {
         <div className="flex gap-2"><Link href="/hire" className="btn">Hire a caregiver</Link><Link href="/app/account" className="btn-ghost">My account</Link><button onClick={logout} className="btn-ghost">Sign out</button></div>
       </div>
 
+      <AlertBanner />
       <InviteBanner />
       <Intros />
       <section>

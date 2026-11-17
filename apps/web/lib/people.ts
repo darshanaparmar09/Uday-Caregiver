@@ -49,10 +49,9 @@ export async function createRecipient(u: SessionUser, i: z.infer<typeof Recipien
         [r.id, e.name, e.relation, enc(normalisePhone(e.phone)), e.city, e.isLocal]);
     await c.query("INSERT INTO consents (care_recipient_id, purpose, scope, granted_by, on_behalf) VALUES ($1,'caregiver_access',$2,$3,$4)",
       [r.id, i.consent.shareWithCaregiver, u.id, i.consent.onBehalf]);
-    if (seniorPhone) {
-      const existing = (await c.query("SELECT id FROM users WHERE phone_hash=$1", [lookupHash(seniorPhone)])).rows[0];
-      if (existing) await c.query("UPDATE care_recipients SET senior_user_id=$1 WHERE id=$2", [existing.id, r.id]);
-    }
+    // The parent is never linked silently. The link waits until the parent, signed in with that number, agrees to it
+    // in the app (lib/senior.ts answerLink). Until then this family sees none of the parent's own activity.
+    if (seniorPhone) await c.query("UPDATE care_recipients SET senior_link='pending' WHERE id=$1", [r.id]);
     return r;
   });
 }
@@ -110,38 +109,59 @@ export async function checkIn(u: SessionUser, status: "ok" | "help" | "medical" 
     rid = r.id;
   } else if (!rid || !(await familyRole(u.id, rid))) throw new AppError("Not allowed", 403);
   await q("INSERT INTO checkins (care_recipient_id, status, source) VALUES ($1,$2,$3)", [rid, status, u.role === "senior" ? "app" : "family"]);
-  const fam = await q<{ user_id: string }>("SELECT user_id FROM family_members WHERE care_recipient_id=$1 AND accepted_at IS NOT NULL", [rid]);
-  const tpl = ({ ok: "checkin_ok", help: "checkin_help", medical: "checkin_medical", lonely: "checkin_lonely" } as const)[status];
-  const urgent = status === "help" || status === "medical";
-  for (const f of fam) await notify(f.user_id, tpl, { recipientId: rid }, urgent ? "sms" : "push");
-  if (urgent) await notify(null, tpl, { recipientId: rid, escalate: true });
-  return { ok: true, recipientId: rid };
+  const { raiseAlert, resolveAlertsFor } = await import("./alerts");
+  if (status === "help" || status === "medical") {
+    // An urgent check in is an alert: it must be acknowledged by a person, and escalates until it is.
+    const alert = await raiseAlert({ kind: status === "help" ? "checkin_help" : "checkin_medical", recipientId: rid, raisedBy: u.id, raisedRole: u.role });
+    return { ok: true, recipientId: rid, alert };
+  }
+  await resolveAlertsFor(rid!, ["checkin_missed"], "Checked in", u.id);
+  const fam = await q<{ user_id: string }>("SELECT user_id FROM family_members WHERE care_recipient_id=$1 AND accepted_at IS NOT NULL AND user_id <> $2", [rid, u.id]);
+  let told = 0;
+  for (const f of fam) { const o = await notify(f.user_id, status === "ok" ? "checkin_ok" : "checkin_lonely", { recipientId: rid }); if (o.status === "sent") told++; }
+  // told = family phones a provider accepted the message for. The app says "your family can see this", never "your family knows".
+  return { ok: true, recipientId: rid, told, family: fam.length };
 }
 
-/** Missed check ins: family and local contact are alerted. Run by the cron endpoint. */
+/**
+ * Missed check ins raise an alert that escalates until someone acknowledges it (lib/alerts.ts). Run by cron.
+ * Monitored: seniors who check in by app (has their own phone) or by the daily phone call. A senior with neither
+ * is not monitored, and the family screen says so.
+ */
 export async function sweepMissedCheckins() {
-  const rows = await q<{ id: string }>(`SELECT r.id FROM care_recipients r WHERE r.has_phone
-      AND (now() AT TIME ZONE 'Asia/Kolkata')::time > r.checkin_by + ((SELECT missed_checkin_grace_min FROM policy_settings WHERE id=1) || ' minutes')::interval
-      AND NOT EXISTS (SELECT 1 FROM checkins k WHERE k.care_recipient_id=r.id AND (k.at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date)
-      AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.template='checkin_missed' AND n.payload->>'recipientId' = r.id::text AND n.at > now() - interval '20 hours')`);
+  const today = "(now() AT TIME ZONE 'Asia/Kolkata')::date";
+  // Minutes since midnight avoids the wrap when check in time plus grace passes midnight.
+  const rows = await q<{ id: string }>(`SELECT r.id FROM care_recipients r WHERE (r.has_phone OR r.checkin_mode='call')
+      AND extract(epoch FROM (now() AT TIME ZONE 'Asia/Kolkata')::time) / 60 > extract(epoch FROM r.checkin_by) / 60 + (SELECT missed_checkin_grace_min FROM policy_settings WHERE id=1)
+      AND NOT EXISTS (SELECT 1 FROM checkins k WHERE k.care_recipient_id=r.id AND (k.at AT TIME ZONE 'Asia/Kolkata')::date = ${today})
+      AND NOT EXISTS (SELECT 1 FROM alerts a WHERE a.care_recipient_id=r.id AND a.kind='checkin_missed' AND (a.created_at AT TIME ZONE 'Asia/Kolkata')::date = ${today})`);
   // Gentle reminder to the senior at their own check in time, once a day.
-  const remind = await q<{ id: string; senior_user_id: string }>(`SELECT r.id, r.senior_user_id FROM care_recipients r WHERE r.senior_user_id IS NOT NULL
+  const remind = await q<{ id: string; senior_user_id: string }>(`SELECT r.id, r.senior_user_id FROM care_recipients r WHERE r.senior_user_id IS NOT NULL AND r.senior_link='confirmed'
       AND (now() AT TIME ZONE 'Asia/Kolkata')::time > r.checkin_by
-      AND NOT EXISTS (SELECT 1 FROM checkins k WHERE k.care_recipient_id=r.id AND (k.at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date)
+      AND NOT EXISTS (SELECT 1 FROM checkins k WHERE k.care_recipient_id=r.id AND (k.at AT TIME ZONE 'Asia/Kolkata')::date = ${today})
       AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.template='checkin_reminder' AND n.payload->>'recipientId' = r.id::text AND n.at > now() - interval '20 hours')`);
   for (const r of remind) await notify(r.senior_user_id, "checkin_reminder", { recipientId: r.id });
-  for (const r of rows) {
-    const fam = await q<{ user_id: string }>("SELECT user_id FROM family_members WHERE care_recipient_id=$1", [r.id]);
-    for (const f of fam) await notify(f.user_id, "checkin_missed", { recipientId: r.id }, "whatsapp");
-  }
+  const { raiseAlert } = await import("./alerts");
+  for (const r of rows) await raiseAlert({ kind: "checkin_missed", recipientId: r.id, raisedBy: null, raisedRole: "system" }).catch((e) => console.error("missed check in alert failed", r.id, e));
   return rows.length;
 }
 
+/**
+ * SOS. Returns who was really reached, so the app can tell the truth. A booking id is honoured only for a
+ * family member of that booking's parent or its assigned caregiver.
+ */
 export async function sos(u: SessionUser, bookingId?: string, lat?: number, lng?: number) {
-  const ev = await one<{ id: number }>("INSERT INTO sos_events (user_id, booking_id, role, lat, lng) VALUES ($1,$2,$3,$4,$5) RETURNING id", [u.id, bookingId ?? null, u.role, lat ?? null, lng ?? null]);
-  // Every SOS opens a critical incident for the safety team.
-  const { incidentFromSos } = await import("./ops"); await incidentFromSos(Number(ev!.id), u.id, u.role, bookingId).catch((e) => console.error("incident from SOS failed", e));
-  await notify(null, "sos", { userId: u.id, role: u.role, bookingId, lat, lng }, "sms");
-  if (bookingId) await q("INSERT INTO booking_events (booking_id, actor_id, actor_role, message) VALUES ($1,$2,$3,'SOS raised. Safety team alerted.')", [bookingId, u.id, u.role]);
-  return { ok: true };
+  const { limit } = await import("./ratelimit"); await limit("sos:" + u.id, 20, 600, "SOS already raised. Call 112 if you are in danger.");
+  let recipientId: string | null = null; let booking: string | null = null;
+  if (bookingId) {
+    const b = await one<any>("SELECT b.id, b.care_recipient_id, c.user_id AS cg_user FROM bookings b JOIN caregivers c ON c.id=b.caregiver_id WHERE b.id=$1", [bookingId]);
+    if (b && (b.cg_user === u.id || (await familyRole(u.id, b.care_recipient_id)))) { booking = b.id; recipientId = u.role === "caregiver" ? null : b.care_recipient_id; }
+  }
+  if (u.role === "senior") recipientId = (await one<{ id: string }>("SELECT id FROM care_recipients WHERE senior_user_id=$1 AND senior_link='confirmed' ORDER BY created_at LIMIT 1", [u.id]))?.id ?? null;
+  const ev = await one<{ id: number }>("INSERT INTO sos_events (user_id, booking_id, role, lat, lng) VALUES ($1,$2,$3,$4,$5) RETURNING id", [u.id, booking, u.role, lat ?? null, lng ?? null]);
+  const { raiseAlert } = await import("./alerts");
+  const alert = await raiseAlert({ kind: "sos", recipientId, bookingId: booking, raisedBy: u.id, raisedRole: u.role, lat, lng });
+  await q("UPDATE incidents SET sos_id=$2 WHERE alert_id=$1 AND sos_id IS NULL", [alert.id, ev!.id]).catch(() => {});
+  if (booking) await q("INSERT INTO booking_events (booking_id, actor_id, actor_role, message) VALUES ($1,$2,$3,$4)", [booking, u.id, u.role, alert.anyoneReached ? "SOS raised. Alerts sent." : "SOS raised."]);
+  return { ok: true, alert };
 }

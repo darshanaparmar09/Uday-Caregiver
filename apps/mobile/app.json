@@ -8,6 +8,7 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#1A1040",
     "splash": {
+      "image": "./assets/splash.png",
       "backgroundColor": "#1A1040",
       "resizeMode": "contain"
     },
@@ -16,10 +17,41 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSHealthShareUsageDescription": "Uday reads heart rate, oxygen, steps, sleep, blood pressure and weight so your family can see how you are.",
-        "NSHealthUpdateUsageDescription": "Uday does not write to Apple Health."
+        "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
         "com.apple.developer.healthkit": true
+      },
+      "buildNumber": "1",
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "35F9.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "E174.1"
+            ]
+          }
+        ]
       }
     },
     "android": {
@@ -34,8 +66,10 @@
         "android.permission.health.READ_WEIGHT"
       ],
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1A1040"
-      }
+      },
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
@@ -62,9 +96,7 @@
         "expo-build-properties",
         {
           "android": {
-            "minSdkVersion": 26,
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35
+            "minSdkVersion": 26
           }
         }
       ]
@@ -73,6 +105,7 @@
       "eas": {
         "projectId": "SET_BY_AGENCY"
       }
-    }
+    },
+    "icon": "./assets/icon.png"
   }
 }

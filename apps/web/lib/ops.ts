@@ -61,7 +61,9 @@ export async function dashboard() {
       (SELECT count(*)::int FROM billing_cycles WHERE status='failed') AS failed_payments,
       (SELECT count(*)::int FROM leave_requests WHERE status='requested') AS leave,
       (SELECT count(*)::int FROM facilities WHERE status='review') AS facilities_review,
-      (SELECT count(*)::int FROM post_reports r JOIN group_posts p ON p.id=r.post_id WHERE NOT p.hidden) AS reports`).catch(() => null),
+      (SELECT count(*)::int FROM post_reports r JOIN group_posts p ON p.id=r.post_id WHERE p.status <> 'hidden') AS reports,
+      (SELECT count(*)::int FROM notifications WHERE status='failed' AND at > now() - interval '24 hours') AS failed_messages,
+      (SELECT count(*)::int FROM alerts WHERE status='open') AS open_alerts`),
     q(`SELECT s.id, s.role, s.booking_id, s.at, s.lat, s.lng, u.name, b.code FROM sos_events s JOIN users u ON u.id=s.user_id LEFT JOIN bookings b ON b.id=s.booking_id
        WHERE s.resolved_at IS NULL ORDER BY s.at DESC LIMIT 20`),
     q("SELECT id, code, severity, category, status, summary, opened_at FROM incidents WHERE status <> 'closed' ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, opened_at LIMIT 10"),
@@ -70,9 +72,12 @@ export async function dashboard() {
       (SELECT count(*)::int FROM checkins WHERE (at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date) AS checkins,
       (SELECT count(*)::int FROM care_recipients WHERE has_phone OR checkin_mode='call') AS seniors,
       (SELECT count(*)::int FROM attendance WHERE kind='start' AND (at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date) AS shifts_started,
-      (SELECT COALESCE(sum(amount_paise),0)::bigint FROM payments WHERE status IN ('captured','partially_refunded') AND (created_at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date) AS collected`).catch(() => null),
+      (SELECT COALESCE(sum(amount_paise),0)::bigint FROM payments WHERE status IN ('captured','partially_refunded') AND (created_at AT TIME ZONE 'Asia/Kolkata')::date = (now() AT TIME ZONE 'Asia/Kolkata')::date) AS collected`),
   ]);
-  return { byStatus, counts, sos, incidents, tickets, today };
+  const { opsAlerts } = await import("./alerts");
+  const cron = await q("SELECT job, last_ok_at, last_error, last_error_at FROM cron_runs ORDER BY job");
+  const cronStale = !cron.length || cron.some((c: any) => !c.last_ok_at || Date.now() - new Date(c.last_ok_at).getTime() > 5 * 60e3);
+  return { byStatus, counts, sos, incidents, tickets, today, alerts: await opsAlerts(), cron, cronStale };
 }
 
 /** One box finds people, bookings, tickets and incidents: by name, phone number, last 4 digits or code. */
@@ -360,15 +365,11 @@ export async function incidentAct(u: SessionUser & { opsRole: OpsRole }, id: str
   await audit(u.id, "incident_" + a.action, "incident", id, "reason" in a ? a.reason : undefined);
   return incidentDetail(id);
 }
-/** An SOS opens a critical incident at once. */
-export async function incidentFromSos(sosId: number, userId: string, role: string, bookingId?: string | null) {
-  const name = (await one<{ name: string }>("SELECT name FROM users WHERE id=$1", [userId]))?.name ?? "Someone";
-  return openIncident(null, { severity: "critical", category: "safety", summary: `SOS from ${name} (${role})`, bookingId: bookingId ?? undefined, sosId });
-}
 export async function resolveSos(u: SessionUser, id: number, resolution: string) {
   await q("UPDATE sos_events SET resolved_at=now(), resolved_by=$2, resolution=$3 WHERE id=$1 AND resolved_at IS NULL", [id, u.id, resolution]);
   const inc = await one<any>("SELECT id FROM incidents WHERE sos_id=$1", [id]);
   if (inc) await q("INSERT INTO incident_events (incident_id, author_id, kind, body_enc) VALUES ($1,$2,'action',$3)", [inc.id, u.id, enc(`SOS handled: ${resolution}`)]);
+  await q("UPDATE alerts SET status='resolved', resolved_at=now(), resolved_by=$2, resolution=$3, next_escalation_at=NULL WHERE id=(SELECT alert_id FROM incidents WHERE sos_id=$1) AND status <> 'resolved'", [id, u.id, resolution]);
   await audit(u.id, "resolve", "sos", String(id), resolution); return { ok: true };
 }
 
@@ -407,7 +408,17 @@ async function setCaregiverStatus(u: SessionUser, id: string, status: "active" |
     const waiting = await q<{ id: string }>("SELECT id FROM bookings WHERE caregiver_id=$1 AND status IN ('offered','accepted')", [id]);
     for (const w of waiting) await tx(async (cl) => { const b = await lockBooking(cl, w.id); if (["offered", "accepted"].includes(b.status)) await toProposalTx(cl, b, u, "ops", "The caregiver is not available."); });
   }
-  if (c.user_id) await notify(c.user_id, "stage_updated", { status });
+  if (status === "exited" && c.user_id) {
+    // Removed from Uday: every session ends now and her phone stops receiving family alerts.
+    await q("UPDATE sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL", [c.user_id]); await q("DELETE FROM push_tokens WHERE user_id=$1", [c.user_id]);
+  }
+  if (status !== "active") {
+    // Care already under way is never cut off by the system: a person decides. Each such booking gets an urgent help request.
+    const live = await q<{ id: string; code: string; payer_id: string }>("SELECT id, code, payer_id FROM bookings WHERE caregiver_id=$1 AND status IN ('enroute','arrived','active')", [id]);
+    for (const b of live) await q("INSERT INTO tickets (code, booking_id, user_id, category, urgent, sla_due_at) VALUES ($1,$2,$3,$4,true, now() + interval '15 minutes')",
+      [code("TKT"), b.id, b.payer_id, `Caregiver ${status === "paused" ? "paused" : "removed"} while care is in progress: arrange a replacement`]);
+  }
+  if (c.user_id && status !== "exited") await notify(c.user_id, "stage_updated", { status });
   await audit(u.id, "status_" + status, "caregiver", id, reason);
 }
 export const CaregiverIn = z.discriminatedUnion("action", [

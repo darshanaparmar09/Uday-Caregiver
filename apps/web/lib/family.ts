@@ -1,6 +1,7 @@
 import { matchPartner } from "./partners";
 import { policyNow } from "./settings";
 import { z } from "zod";
+import { createHmac } from "node:crypto";
 import { PLUS, postProblem, fees } from "@uday/core";
 import { one, q, tx } from "./db";
 import { dec, enc, lookupHash, normalisePhone } from "./crypto";
@@ -87,7 +88,8 @@ export async function document(u: SessionUser, rid: string, id: string) {
 }
 export async function deleteDocument(u: SessionUser, rid: string, id: string) {
   const role = await familyRole(u.id, rid); if (!role || !MANAGE.includes(role)) throw new AppError("Not allowed", 403);
-  await q("DELETE FROM health_documents WHERE id=$1 AND care_recipient_id=$2", [id, rid]);
+  const d = await one<{ storage_key: string }>("DELETE FROM health_documents WHERE id=$1 AND care_recipient_id=$2 RETURNING storage_key", [id, rid]);
+  if (d?.storage_key) { const { removeStored } = await import("./storage"); await removeStored(d.storage_key); } // the file itself goes too, not only the record
 }
 
 // ───────── optional customer ID check ─────────
@@ -160,17 +162,32 @@ function distKm(a: number, b: number, c: number, d: number) { const R = 6371, r 
 // ───────── coupons and Uday Plus ─────────
 export async function plusStatus(u: SessionUser) {
   const m = await one<any>("SELECT status, current_period_end, amount_paise FROM memberships WHERE user_id=$1", [u.id]);
-  const active = !!m && m.status === "active" || (!!m && m.status === "cancelled" && String(m.current_period_end instanceof Date ? m.current_period_end.toISOString() : m.current_period_end).slice(0, 10) >= istDay());
-  return { plan: PLUS, member: active, membership: m };
+  // A member only while a paid period is running. "pending" (checkout not finished) and lapsed periods give no benefits.
+  const inPeriod = !!m && String(m.current_period_end instanceof Date ? m.current_period_end.toISOString() : m.current_period_end).slice(0, 10) >= istDay();
+  const active = !!m && inPeriod && (m.status === "active" || m.status === "cancelled");
+  return { plan: PLUS, member: active, membership: m, pending: m?.status === "pending" };
 }
 export async function joinPlus(u: SessionUser) {
   if (u.role !== "family") throw new AppError("For family accounts", 403);
   const s = await plusStatus(u); if (s.member && s.membership?.status === "active") throw new AppError("You are already an Uday Plus member");
   const r = await (await gateway()).subscribe("plus", PLUS.pricePaise, `PLUS-${u.id.slice(0, 8)}`);
-  await q(`INSERT INTO memberships (user_id, status, amount_paise, gateway_ref, current_period_end) VALUES ($1,'active',$2,$3, current_date + 30)
-    ON CONFLICT (user_id) DO UPDATE SET status='active', amount_paise=$2, gateway_ref=$3, current_period_end=current_date + 30`, [u.id, PLUS.pricePaise, r.ref]);
-  await q("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ('family_payments',$1,0,'Uday Plus'),('uday_membership_revenue',0,$1,'Uday Plus')", [PLUS.pricePaise]);
-  return { member: true, checkoutUrl: r.checkoutUrl };
+  // Benefits start only when the gateway confirms payment. The mock gateway in tests confirms at once; Razorpay confirms by webhook.
+  const paid = r.status === "active";
+  await q(`INSERT INTO memberships (user_id, status, amount_paise, gateway_ref, current_period_end) VALUES ($1,$4,$2,$3, CASE WHEN $4='active' THEN current_date + 30 ELSE current_date - 1 END)
+    ON CONFLICT (user_id) DO UPDATE SET status=$4, amount_paise=$2, gateway_ref=$3, current_period_end=CASE WHEN $4='active' THEN current_date + 30 ELSE memberships.current_period_end END`, [u.id, PLUS.pricePaise, r.ref, paid ? "active" : "pending"]);
+  if (paid) await q("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ('family_payments',$1,0,'Uday Plus'),('uday_membership_revenue',0,$1,'Uday Plus')", [PLUS.pricePaise]);
+  return { member: paid, pending: !paid, checkoutUrl: r.checkoutUrl };
+}
+/** Razorpay subscription webhook: a charge starts or renews the paid period; a halt or cancel ends renewal. */
+export async function plusWebhook(event: string, sub: { id: string; current_end?: number }) {
+  const m = await one<any>("SELECT user_id, amount_paise FROM memberships WHERE gateway_ref=$1", [sub.id]); if (!m) return false;
+  if (event === "subscription.charged" || event === "subscription.activated") {
+    const end = sub.current_end ? new Date(sub.current_end * 1000).toISOString().slice(0, 10) : null;
+    await q("UPDATE memberships SET status='active', current_period_end=COALESCE($2::date, current_date + 30) WHERE gateway_ref=$1", [sub.id, end]);
+    if (event === "subscription.charged") await q("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ('family_payments',$1,0,'Uday Plus'),('uday_membership_revenue',0,$1,'Uday Plus')", [m.amount_paise]);
+  } else if (event === "subscription.halted" || event === "subscription.pending") await q("UPDATE memberships SET status='past_due' WHERE gateway_ref=$1", [sub.id]);
+  else if (event === "subscription.cancelled" || event === "subscription.completed") await q("UPDATE memberships SET status='cancelled' WHERE gateway_ref=$1", [sub.id]);
+  return true;
 }
 export async function leavePlus(u: SessionUser) { await q("UPDATE memberships SET status='cancelled' WHERE user_id=$1 AND status='active'", [u.id]); return { ok: true }; }
 /** The platform fee discount for a booking: Uday Plus and a coupon do not stack; the larger wins. */
@@ -212,38 +229,59 @@ const SCRIPTED_BY: Record<string, string[]> = {
   mr: ["हे ऐकून छान वाटलं. तुमच्या दिवसाबद्दल अजून सांगा.", "मी तुमच्यासोबत आहे. आज नाश्त्याला काय खाल्लं?", "तुमचं कुटुंब तुमच्यावर खूप प्रेम करतं. नंतर एक बुद्धीचा खेळ खेळूया?", "हे महत्त्वाचं वाटतं. उदयने तुम्हाला फोन करावा का?"],
 };
 const CRISIS_REPLY: Record<string, string> = {
-  en: "This sounds serious. Please press the red SOS button now, or call 112. I am telling your family and the Uday team to call you.",
+  en: "This sounds serious. Please call 112 now if you are in danger, or press the red SOS button. I am sending an alert to your family and the Uday team.",
   hi: "यह गंभीर लगता है। कृपया अभी लाल SOS बटन दबाएँ या 112 पर कॉल करें। मैं आपके परिवार और उदय टीम को फ़ोन करने के लिए कह रहा हूँ।",
   mr: "हे गंभीर वाटतं. कृपया आत्ता लाल SOS बटण दाबा किंवा 112 ला फोन करा. मी तुमच्या कुटुंबाला आणि उदय टीमला फोन करायला सांगत आहे.",
 };
 const SCRIPTED = ["That is lovely to hear. Tell me more about your day.", "I am here with you. What did you have for breakfast today?", "Your family loves you very much. Shall we play a brain game together later?", "That sounds important. Would you like Uday to call you to talk about it?"];
 export async function companion(u: SessionUser, message: string) {
   if (u.role !== "senior") throw new AppError("For seniors", 403);
+  if (!(await one("SELECT 1 FROM senior_settings WHERE user_id=$1 AND companion_consent_at IS NOT NULL", [u.id]))) throw new AppError("Please read about the companion and agree first", 428);
   const text = message.trim().slice(0, 600); if (!text) throw new AppError("Write a message");
   const recent = await one<{ n: number }>("SELECT count(*)::int AS n FROM companion_messages WHERE user_id=$1 AND created_at > now() - interval '1 hour' AND role='user'", [u.id]);
   if ((recent?.n ?? 0) >= 40) throw new AppError("Let us rest a little and talk again soon.", 429);
   const crisis = CRISIS.test(text);
   const lang = (await one<{ language: string }>("SELECT language FROM senior_settings WHERE user_id=$1", [u.id]))?.language ?? "en";
   await q("INSERT INTO companion_messages (user_id, role, body_enc, flagged) VALUES ($1,'user',$2,$3)", [u.id, enc(text, "health"), crisis]);
-  let reply: string; let source = "safety";
+  let reply: string; let source = "safety"; let alert: any = null;
   if (crisis) {
     reply = CRISIS_REPLY[lang] ?? CRISIS_REPLY.en;
-    const r = await one<{ id: string }>("SELECT id FROM care_recipients WHERE senior_user_id=$1 ORDER BY created_at LIMIT 1", [u.id]);
-    if (r) { const fam = await q<{ user_id: string }>("SELECT user_id FROM family_members WHERE care_recipient_id=$1 AND accepted_at IS NOT NULL", [r.id]);
-      for (const f of fam) await notify(f.user_id, "checkin_help", { recipientId: r.id, from: "companion" }, "sms");
-      await notify(null, "checkin_help", { recipientId: r.id, from: "companion", escalate: true }); }
+    const r = await one<{ id: string }>("SELECT id FROM care_recipients WHERE senior_user_id=$1 AND senior_link='confirmed' ORDER BY created_at LIMIT 1", [u.id]);
+    const { raiseAlert } = await import("./alerts");
+    alert = await raiseAlert({ kind: "companion_crisis", recipientId: r?.id ?? null, raisedBy: u.id, raisedRole: "senior" }).catch((e) => { console.error("companion alert failed", e); return null; });
   } else {
     const hist = (await q<any>("SELECT role, body_enc FROM companion_messages WHERE user_id=$1 ORDER BY id DESC LIMIT 12", [u.id])).reverse().map((m) => ({ role: m.role, content: dec(m.body_enc) ?? "" }));
     const ai = await companionReply(`${SYSTEM}\nThe person chose ${LANG_NAME[lang] ?? "English"} in their settings. Use it unless they write in another language.`, hist).catch(() => null);
     const pool = SCRIPTED_BY[lang] ?? SCRIPTED; reply = ai ?? pool[Math.floor(Math.random() * pool.length)]; source = ai ? "ai" : "scripted";
   }
-  await q("INSERT INTO companion_messages (user_id, role, body_enc) VALUES ($1,'assistant',$2)", [u.id, enc(reply, "health")]);
-  return { reply, crisis, source };
+  const saved = await one<{ id: number }>("INSERT INTO companion_messages (user_id, role, body_enc) VALUES ($1,'assistant',$2) RETURNING id", [u.id, enc(reply, "health")]);
+  return { id: Number(saved!.id), reply, crisis, source, alert, label: source === "ai" ? "Written by AI. It can be wrong." : source === "scripted" ? "An automatic reply." : "A safety message from Uday." };
+}
+export const COMPANION_ABOUT = [
+  "The companion is a computer program (AI), not a person and not a doctor.",
+  "It can be wrong. Do not use it for medical, money or legal decisions.",
+  "Your messages are sent to Anthropic, the company that makes the AI, to write the replies. They are kept by Uday for 30 days.",
+  "Your family cannot read these chats. If you write about an emergency, Uday alerts your family and team.",
+  "In an emergency press SOS or call 112.",
+];
+/** The senior agrees once, before the first message. Taking it back stops the companion at once. */
+export async function companionConsent(u: SessionUser, agree: boolean) {
+  if (u.role !== "senior") throw new AppError("For seniors", 403);
+  await q("INSERT INTO senior_settings (user_id, companion_consent_at) VALUES ($1, CASE WHEN $2::boolean THEN now() END) ON CONFLICT (user_id) DO UPDATE SET companion_consent_at=CASE WHEN $2::boolean THEN COALESCE(senior_settings.companion_consent_at, now()) END", [u.id, agree]);
+  return { consented: agree };
+}
+/** Flag a reply as wrong or upsetting. It goes to the Operations team for review. */
+export async function reportCompanionReply(u: SessionUser, id: number, reason?: string) {
+  const r = await one("UPDATE companion_messages SET reported_at=now(), report_reason=$3 WHERE id=$1 AND user_id=$2 AND role='assistant' RETURNING id", [id, u.id, reason?.slice(0, 300) ?? null]);
+  if (!r) throw new AppError("Not found", 404);
+  return { reported: true };
 }
 export async function companionHistory(u: SessionUser) {
   // Kept for 30 days. Families cannot read these conversations; only safety alerts reach them.
   await q("DELETE FROM companion_messages WHERE user_id=$1 AND created_at < now() - interval '30 days'", [u.id]);
-  return (await q<any>("SELECT role, body_enc, created_at FROM companion_messages WHERE user_id=$1 ORDER BY id DESC LIMIT 40", [u.id])).reverse().map((m) => ({ role: m.role, text: dec(m.body_enc), at: m.created_at }));
+  const consented = !!(await one("SELECT 1 FROM senior_settings WHERE user_id=$1 AND companion_consent_at IS NOT NULL", [u.id]));
+  const messages = (await q<any>("SELECT id, role, body_enc, created_at, reported_at FROM companion_messages WHERE user_id=$1 ORDER BY id DESC LIMIT 40", [u.id])).reverse().map((m) => ({ id: Number(m.id), role: m.role, text: dec(m.body_enc), at: m.created_at, reported: !!m.reported_at }));
+  return { consented, about: COMPANION_ABOUT, messages };
 }
 
 // ───────── partner leads ─────────
@@ -276,22 +314,32 @@ export async function sweepCheckinCalls() {
     AND NOT EXISTS (SELECT 1 FROM ivr_calls i WHERE i.care_recipient_id=r.id AND i.created_at > now() - interval '20 minutes')`);
   for (const r of due) {
     const row = await one<{ id: string }>("INSERT INTO ivr_calls (care_recipient_id, day) VALUES ($1, (now() AT TIME ZONE 'Asia/Kolkata')::date) RETURNING id", [r.id]);
-    const c = await checkinCall(dec(r.call_phone_enc)!, row!.id).catch(() => null);
-    await q("UPDATE ivr_calls SET provider_ref=$2, status=$3 WHERE id=$1", [row!.id, c?.ref ?? null, c ? "placed" : "failed"]);
+    const c = await checkinCall(dec(r.call_phone_enc)!, ivrRef(row!.id)).catch(() => null);
+    // "simulated" means test mode logged the call and no phone rang. It is never shown as placed.
+    await q("UPDATE ivr_calls SET provider_ref=$2, status=$3 WHERE id=$1", [row!.id, c?.ref ?? null, !c ? "failed" : c.simulated ? "simulated" : "placed"]);
   }
   return due.length;
 }
-/** Voice flow callback: digit 1 means well, 2 means help. Secured by a shared token in the URL. */
-export async function ivrResult(token: string, callId: string, digit: string) {
-  if (!process.env.IVR_TOKEN || token !== process.env.IVR_TOKEN) throw new AppError("Forbidden", 403);
-  const c = await one<any>("SELECT * FROM ivr_calls WHERE id=$1", [callId]); if (!c) throw new AppError("Unknown call", 404);
+/** The reference given to the voice provider: the call id plus a signature, so a call result cannot be forged for another call. */
+export function ivrRef(callId: string) { return callId + "." + createHmac("sha256", process.env.IVR_TOKEN ?? "").update(callId).digest("hex").slice(0, 20); }
+/**
+ * Voice flow callback: digit 1 means well, 2 means help. The request must carry the shared token and the signed
+ * call reference, and each call is accepted once, within 30 minutes of being placed.
+ */
+export async function ivrResult(token: string, ref: string, digit: string) {
+  const { sameSecret } = await import("./ratelimit");
+  const [callId, sig] = ref.split(".");
+  if (!sameSecret(token, process.env.IVR_TOKEN) || !/^[0-9a-f-]{36}$/i.test(callId ?? "") || !sameSecret(ref, ivrRef(callId))) throw new AppError("Forbidden", 403);
+  void sig;
   const status = digit === "1" ? "ok" : digit === "2" ? "help" : null;
-  await q("UPDATE ivr_calls SET digit=$2, status=$3 WHERE id=$1", [callId, digit, status ? "answered" : "no_answer"]);
+  const c = await one<any>("UPDATE ivr_calls SET digit=$2, status=$3 WHERE id=$1 AND digit IS NULL AND status IN ('placed','simulated') AND created_at > now() - interval '30 minutes' RETURNING care_recipient_id", [callId, digit, status ? "answered" : "no_answer"]);
+  if (!c) throw new AppError("This call was already recorded or has expired", 409);
   if (!status) return { ok: true };
   await q("INSERT INTO checkins (care_recipient_id, status, source) VALUES ($1,$2,'ivr')", [c.care_recipient_id, status]);
-  const fam = await q<{ user_id: string }>("SELECT user_id FROM family_members WHERE care_recipient_id=$1 AND accepted_at IS NOT NULL", [c.care_recipient_id]);
-  for (const f of fam) await notify(f.user_id, status === "ok" ? "checkin_ok" : "checkin_help", { recipientId: c.care_recipient_id, via: "call" }, status === "help" ? "sms" : "push");
-  if (status === "help") await notify(null, "checkin_help", { recipientId: c.care_recipient_id, escalate: true });
+  const { raiseAlert, resolveAlertsFor } = await import("./alerts");
+  if (status === "help") await raiseAlert({ kind: "checkin_help", recipientId: c.care_recipient_id, raisedBy: null, raisedRole: "senior" });
+  else { await resolveAlertsFor(c.care_recipient_id, ["checkin_missed"], "Checked in by phone call");
+    for (const f of await q<{ user_id: string }>("SELECT user_id FROM family_members WHERE care_recipient_id=$1 AND accepted_at IS NOT NULL", [c.care_recipient_id])) await notify(f.user_id, "checkin_ok", { recipientId: c.care_recipient_id, via: "call" }); }
   return { ok: true, status };
 }
 

@@ -1,3 +1,4 @@
+import { AccountData } from "../shared/AccountData";
 import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { api, API, countdown, inr, PLAN, READING, SOURCE, STATUS, TYPE } from "../shared/api";
@@ -10,10 +11,11 @@ import { C } from "../shared/theme";
 
 export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }) {
   const [recips, setRecips] = useState<any[]>([]); const [bookings, setBookings] = useState<any[]>([]); const [open, setOpen] = useState<string | null>(null); const [readings, setReadings] = useState<any>(null);
-  const [view, setView] = useState<"home" | "hire" | "onboard">("home"); const [health, setHealth] = useState<any>(null); const [invites, setInvites] = useState<any[]>([]);
+  const [view, setView] = useState<"home" | "hire" | "onboard">("home"); const [health, setHealth] = useState<any>(null); const [invites, setInvites] = useState<any[]>([]); const [alerts, setAlerts] = useState<any[]>([]);
   useEffect(() => { registerForPush(); api<any[]>("/api/invites").then(setInvites).catch(() => {});
     return onNotificationTap((d) => { if (d?.bookingId) setOpen(d.bookingId); }); }, []);
-  const load = useCallback(async () => { const [r, b] = await Promise.all([api<any[]>("/api/recipients"), api<any[]>("/api/bookings")]); setRecips(r); setBookings(b); }, []);
+  const loadAlerts = useCallback(() => api<any[]>("/api/alerts").then(setAlerts).catch(() => {}), []);
+  const load = useCallback(async () => { const [r, b] = await Promise.all([api<any[]>("/api/recipients"), api<any[]>("/api/bookings")]); setRecips(r); setBookings(b); loadAlerts(); }, [loadAlerts]);
   useEffect(() => { load().catch(() => {}); const t = setInterval(() => load().catch(() => {}), 10000); return () => clearInterval(t); }, [load]);
   if (open) return <BookingDetail id={open} onBack={() => { setOpen(null); load(); }} />;
   if (readings) return <Readings r={readings} onBack={() => setReadings(null)} />;
@@ -24,6 +26,11 @@ export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }
   return (
     <Screen>
       <T size={34} weight="bold">Namaste{me.user.name ? `, ${me.user.name.split(" ")[0]}` : ""}</T>
+      {alerts.map((a) => a.status === "open" ? <Card key={a.id} tone="coral"><T size={24} weight="bold">{a.name} {a.what}</T><T>Call them now. If you cannot reach them and fear danger, call 112 (India).</T>
+          {a.mine ? <T>You raised this. Someone else needs to respond.</T> : <Button title="I am responding" tone="night" onPress={() => api(`/api/alerts/${a.id}`, { action: "ack" }).then(loadAlerts).catch(() => {})} />}
+          <T color={C.inkSoft}>Until someone responds, Uday keeps alerting the emergency contacts and its own team.</T></Card>
+        : <Card key={a.id} tone="teal"><T weight="semi">{a.name} {a.what}. {a.acknowledgedBy ?? "Someone"} is responding.</T>
+          <Button title="All is well now" tone="outline" onPress={() => api(`/api/alerts/${a.id}`, { action: "resolve", note: "Family confirmed all is well" }).then(loadAlerts).catch(() => {})} /></Card>)}
       {invites.map((i) => <Card key={i.id} tone="amber"><T weight="semi">{i.inviter ?? "A family member"} invited you to help care for {i.senior}.</T>
         <Button title="Join" tone="teal" onPress={() => api(`/api/invites/${i.id}`, { accept: true }).then(() => { setInvites(invites.filter((x) => x.id !== i.id)); load(); })} /></Card>)}
       {!recips.length && <Card><T weight="semi">Start by adding your parent. It takes about five minutes.</T><Button title="Add your parent" onPress={() => setView("onboard")} /></Card>}
@@ -48,6 +55,7 @@ export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }
         </Pressable>))}
       <Button title="Hire a caregiver" onPress={() => setView("hire")} />
       {!!recips.length && <Button title="Add another person" tone="outline" onPress={() => setView("onboard")} />}
+      <AccountData onDeleted={onSignOut} />
       <Button title="Sign out" tone="outline" onPress={onSignOut} />
     </Screen>
   );
@@ -76,7 +84,7 @@ function BookingDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {b.isLive && b.daysDone > 0 && !b.dayChecks?.some((x: any) => x.day === b.daysDone) && b.status === "active" && <Card tone="amber"><T weight="semi">Day {b.daysDone}: was everything well?</T>
         <Button title="Yes, all well" tone="teal" busy={busy} onPress={() => act({ action: "day_check", day: b.daysDone, ok: true })} />
         <Button title="Something was wrong" tone="outline" onPress={() => act({ action: "day_check", day: b.daysDone, ok: false, note: "Flagged from the app" })} /></Card>}
-      {b.logs?.slice(-3).reverse().map((l: any, i: number) => <Card key={i}><T weight="semi">Shift log · day {l.day}</T><T>{[l.checklist && `${Object.keys(l.checklist).length} care tasks done`, l.meal && "Meal given", l.meds && "Medicines given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</T>
+      {b.logs?.slice(-3).reverse().map((l: any, i: number) => <Card key={i}><T weight="semi">Shift log · day {l.day}</T><T>{[l.checklist && `${Object.keys(l.checklist).length} care tasks marked done by the caregiver`, l.meal === true && "Meal: caregiver says given", l.meds === true && "Medicines: caregiver says given as prescribed", l.meds === false && "Medicines: caregiver says NOT given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</T>
         {l.vitals ? <T>{[l.vitals.bpSys && `BP ${l.vitals.bpSys}/${l.vitals.bpDia}`, l.vitals.pulse && `Pulse ${l.vitals.pulse}`, l.vitals.tempC && `Temp ${l.vitals.tempC}°C`, l.vitals.pain != null && `Pain ${l.vitals.pain}/10`].filter(Boolean).join(" · ")}</T> : null}
         {l.flags?.length ? <Card tone="coral" style={{ padding: 12 }}><T weight="semi">Outside usual range: {l.flags.join(", ")}</T></Card> : null}{l.note ? <T color={C.inkSoft}>{l.note}</T> : null}</Card>)}
       {b.status === "completed" && <Card><T weight="semi">How was the care?</T><View style={{ flexDirection: "row", justifyContent: "space-between" }}>{[1, 2, 3, 4, 5].map((n) =>

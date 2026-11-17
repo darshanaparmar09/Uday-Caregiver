@@ -1,3 +1,4 @@
+import { withLock } from "./db";
 import { tierRates } from "./settings";
 import { z } from "zod";
 import { one, q, tx } from "./db";
@@ -210,23 +211,47 @@ export async function earnings(u: SessionUser) {
 }
 
 /** Weekly payout run. Called by the scheduler each Monday (or by ops). Skips accounts changed in the last 48 hours. */
+/**
+ * Weekly payouts. Safe against running twice: one run at a time (lock), each caregiver's balance is read again
+ * under her own lock, and the payout is recorded as "processing" with its reference BEFORE the bank is asked, so
+ * a crash can never pay without a record. The caregiver is told "paid" only when the bank says paid.
+ */
 export async function runPayouts() {
-  const due = await q<any>(`SELECT c.id, c.user_id, c.bank_ref, c.bank_last4,
-      (SELECT COALESCE(sum(credit_paise),0) - COALESCE(sum(debit_paise),0) FROM ledger_entries l WHERE l.account='caregiver:'||c.id)::int AS bal
-    FROM caregivers c WHERE c.bank_ref IS NOT NULL AND (c.bank_changed_at IS NULL OR c.bank_changed_at < now() - interval '48 hours')`);
-  let paid = 0;
-  for (const d of due.filter((x) => x.bal > 0)) {
-    await tx(async (cl) => {
-      const ref = "PO" + Date.now().toString(36).toUpperCase();
-      const r = await (await gateway()).payout(d.bank_ref, d.bal, ref);
-      await cl.query("INSERT INTO payouts (caregiver_id, amount_paise, status, gateway_ref, bank_last4, period_end, paid_at) VALUES ($1,$2,$3,$4,$5, current_date, CASE WHEN $3='paid' THEN now() END)",
-        [d.id, d.bal, r.status, r.ref, d.bank_last4]);
-      await cl.query("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ($1,$2,0,'weekly payout'),('bank_payouts',0,$2,'weekly payout')", [`caregiver:${d.id}`, d.bal]);
-    });
-    await notify(d.user_id, "payout_paid", { amountPaise: d.bal });
-    paid++;
-  }
-  return { paid };
+  const out = await withLock("payouts-run", async () => {
+    const due = await q<any>(`SELECT c.id, c.user_id, c.bank_ref, c.bank_last4 FROM caregivers c
+      WHERE c.bank_ref IS NOT NULL AND (c.bank_changed_at IS NULL OR c.bank_changed_at < now() - interval '48 hours')
+        AND NOT EXISTS (SELECT 1 FROM payouts p WHERE p.caregiver_id=c.id AND p.status='processing' AND p.created_at > now() - interval '3 days')`);
+    let paid = 0, processing = 0, failed = 0;
+    for (const d of due) {
+      const ref = "PO" + Date.now().toString(36).toUpperCase() + d.id.slice(0, 4).toUpperCase();
+      // Step 1: reserve the money in the ledger and record the intent, in one transaction.
+      const amt = await tx(async (cl) => {
+        await cl.query("SELECT pg_advisory_xact_lock(hashtext($1))", ["payout:" + d.id]);
+        const bal = Number((await cl.query("SELECT COALESCE(sum(credit_paise),0) - COALESCE(sum(debit_paise),0) AS b FROM ledger_entries WHERE account=$1", [`caregiver:${d.id}`])).rows[0].b);
+        if (bal <= 0) return 0;
+        await cl.query("INSERT INTO payouts (caregiver_id, amount_paise, status, gateway_ref, bank_last4, period_end) VALUES ($1,$2,'processing',$3,$4, current_date)", [d.id, bal, ref, d.bank_last4]);
+        await cl.query("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ($1,$2,0,'weekly payout'),('bank_payouts',0,$2,'weekly payout')", [`caregiver:${d.id}`, bal]);
+        return bal;
+      });
+      if (!amt) continue;
+      // Step 2: ask the bank. The reference makes a repeat request harmless at the gateway.
+      try {
+        const r = await (await gateway()).payout(d.bank_ref, amt, ref);
+        await q("UPDATE payouts SET status=$2, gateway_ref=COALESCE($3, gateway_ref), paid_at=CASE WHEN $2='paid' THEN now() END WHERE gateway_ref=$1", [ref, r.status, r.ref ?? null]);
+        if (r.status === "paid") { paid++; await notify(d.user_id, "payout_paid", { amountPaise: amt }); } else if ((r.status as string) === "failed") { failed++; await reversePayout(ref, d.id, amt); } else processing++;
+      } catch (e: any) {
+        // The request may or may not have reached the bank: leave it "processing" for reconciliation rather than risk paying twice.
+        processing++; console.error(`[payout] ${ref} uncertain: ${String(e?.message ?? e).slice(0, 200)}`);
+      }
+    }
+    return { paid, processing, failed };
+  });
+  return out ?? { paid: 0, processing: 0, failed: 0, skipped: true };
+}
+/** A payout the bank refused: the money goes back to the caregiver's balance. */
+async function reversePayout(ref: string, caregiverId: string, amt: number) {
+  await q("INSERT INTO ledger_entries (account, debit_paise, credit_paise, reason) VALUES ('bank_payouts',$2,0,'payout failed, returned'),($1,0,$2,'payout failed, returned')", [`caregiver:${caregiverId}`, amt]);
+  await notify(null, "payment_failed", { payout: ref, caregiverId });
 }
 
 // ───────── ratings and coaching ─────────

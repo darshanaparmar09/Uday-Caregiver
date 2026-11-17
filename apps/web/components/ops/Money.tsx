@@ -86,7 +86,7 @@ export function Pricing() {
   useEffect(() => { if (d) { setP(d.policy); setRates(Object.fromEntries(d.rates.map((r: any) => [`${r.tier}-${r.care_type}`, String(r.rate_paise / 100)]))); } }, [d]);
   if (err) return <p className="text-red-700">{err}</p>; if (!d || !p) return <p>Loading</p>;
   const edit = can("pricing");
-  async function savePolicy() { setM(null); try { const { updatedAt, ...body } = p; setD(await api("/api/ops/pricing", { method: "PUT", body: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, Number(v)])) })); setM([true, "Policy saved. New bookings use it."]); } catch (e: any) { setM([false, e.message]); } }
+  async function savePolicy() { setM(null); try { const { updatedAt, ...body } = p; setD(await api("/api/ops/pricing", { method: "PUT", body: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, k === "oncallPhones" ? String(v ?? "") : Number(v)])) })); setM([true, "Policy saved. New bookings use it."]); } catch (e: any) { setM([false, e.message]); } }
   async function saveRates() { setM(null); try { setD(await api("/api/ops/pricing/rates", { method: "PUT", body: { applyToCaregivers: apply, rates: Object.entries(rates).map(([k, v]) => { const [t, c] = k.split("-"); return { tier: Number(t), careType: c, ratePaise: Math.round(Number(v) * 100) }; }) } })); setM([true, apply ? "Rates saved and applied to caregivers. Existing bookings keep their price." : "Standard rates saved for new caregivers."]); } catch (e: any) { setM([false, e.message]); } }
   const F = (k: string, label: string, unit: string, help?: string) => <label className="grid gap-1 text-sm font-semibold">{label} ({unit})<input className="input-sm" type="number" step="any" disabled={!edit} value={p[k]} onChange={(e) => setP({ ...p, [k]: e.target.value })} />{help && <span className="text-xs font-normal text-muted">{help}</span>}</label>;
   const fee = Number(p.platformFeePct) || 0; const gst = d.gstRatePct;
@@ -107,6 +107,9 @@ export function Pricing() {
           {F("lateCancelPct", "Late cancellation fee", "% of one day", "Paid to the caregiver")}{F("offerSameDayMin", "Answer time, start within 24 h", "minutes")}
           {F("offerFutureMin", "Answer time, later starts", "minutes")}{F("missedCheckinGraceMin", "Missed check in alert after", "minutes")}
           {F("ticketSlaMin", "Help request answer time", "minutes")}{F("urgentTicketSlaMin", "Urgent help answer time", "minutes")}
+          {F("urgentEscalateMin", "SOS and help: alert again every", "minutes", "Until someone responds")}{F("missedEscalateMin", "Missed check in: alert again every", "minutes")}
+          <label className="grid gap-1 text-sm font-semibold sm:col-span-2">On call phones for urgent alerts<input className="input-sm" disabled={!edit} value={p.oncallPhones ?? ""} onChange={(e) => setP({ ...p, oncallPhones: e.target.value })} placeholder="+919822000000, +919822000001" />
+            <span className={`text-xs font-normal ${p.oncallPhones ? "text-muted" : "text-red-700"}`}>{p.oncallPhones ? "Every SOS, help request and missed check in is sent to these numbers by SMS, so alerts do not depend on someone watching the console." : "Not set: urgent alerts reach the Uday team only if someone is watching the console. Add at least one number."}</span></label>
         </div><p className="note mt-2">Last changed {when(p.updatedAt)}.</p></Box>
     </div>
     <div className="mt-5"><OpsFamily /></div>

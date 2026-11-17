@@ -113,9 +113,15 @@ export function nextMatch(c: MatchCandidate[], tier: Tier, careType: CareType, t
   return pool[0] ?? null;
 }
 
-/** Four digit start or end code. */
-export function shiftCode(rand: () => number = Math.random): string {
-  return String(1000 + Math.floor(rand() * 9000));
+/**
+ * Four digit start or end code, drawn from a cryptographic random source. Four digits are kept on purpose: a parent
+ * reads the code aloud at the door. Guessing is stopped by the server, which locks codes after five wrong tries.
+ */
+export function shiftCode(rand?: () => number): string {
+  if (rand) return String(1000 + Math.floor(rand() * 9000));
+  const g = (globalThis as any).crypto; const a = new Uint32Array(1);
+  // Rejection sampling keeps every code equally likely.
+  for (;;) { g.getRandomValues(a); if (a[0] < 4294962000) return String(1000 + (a[0] % 9000)); }
 }
 
 export function rupees(paise: number): string {

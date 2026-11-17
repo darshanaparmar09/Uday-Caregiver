@@ -41,6 +41,9 @@ export async function verifyCheckout(u: SessionUser, orderId: string, paymentId:
 export async function webhook(raw: string, signature: string) {
   if (!(await gateway()).verifyWebhook(raw, signature)) throw new AppError("Bad signature", 400);
   const e = JSON.parse(raw); const pay = e?.payload?.payment?.entity;
+  if (String(e.event ?? "").startsWith("subscription.") && e.payload?.subscription?.entity?.id) {
+    const { plusWebhook } = await import("./family"); if (await plusWebhook(e.event, e.payload.subscription.entity)) return { ok: true };
+  }
   if (pay?.order_id && ["payment.authorized", "payment.captured"].includes(e.event)) {
     if (await one("SELECT 1 FROM mandates WHERE order_ref=$1", [pay.order_id])) return (await mandateAuthorised(pay.order_id, pay.id)) ?? { ok: true };
     const y = await one<any>("SELECT id FROM billing_cycles WHERE order_ref=$1 OR gateway_ref=$2", [pay.order_id, pay.id]);

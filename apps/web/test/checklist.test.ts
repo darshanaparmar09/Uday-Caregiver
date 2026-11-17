@@ -35,7 +35,7 @@ test("Tier 2: checklist saved, vitals refused, high pain alerts family", async (
   assert.equal((await call(t, `/api/bookings/${id}/action`, { action: "log", mood: "Tired", checklist: { hygiene: now, breakfast: now, medication: now, bogus: now }, vitals: { pain: 8, appetite: "low" } })).status, 200);
   const f = await call(fam, `/api/bookings/${id}`); const l = f.j.logs.at(-1);
   assert.deepEqual(Object.keys(l.checklist).sort(), ["breakfast", "hygiene", "medication"]);
-  assert.equal(l.meal, true); assert.equal(l.meds, true); assert.deepEqual(l.flags, ["Pain 8 of 10"]);
+  assert.equal(l.meal, null, "a tick is not taken as a meal eaten"); assert.equal(l.meds, null, "a tick is not taken as medicines given"); assert.deepEqual(l.flags, ["Pain 8 of 10"]);
   assert.ok(f.j.events.some((e: any) => e.message.includes("outside the usual range")));
 });
 

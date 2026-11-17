@@ -1,3 +1,4 @@
+import { tfetch } from "./net";
 import { TEST_MODE } from "./env";
 import { cfg } from "./settings";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
@@ -70,7 +71,7 @@ class RazorpayGateway implements Gateway {
   private auth: string;
   constructor(private c: Record<string, string>) { this.keyId = c.keyId; this.auth = "Basic " + Buffer.from(`${c.keyId}:${c.keySecret}`).toString("base64"); }
   private async call(path: string, body?: unknown, method = "POST") {
-    const r = await fetch("https://api.razorpay.com/v1" + path, { method, headers: { Authorization: this.auth, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+    const r = await tfetch("https://api.razorpay.com/v1" + path, { method, headers: { Authorization: this.auth, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
     if (!r.ok) { const t = await r.text().catch(() => ""); throw new Error(`Razorpay ${path} failed: ${r.status} ${t.slice(0, 160)}`); }
     return r.json() as Promise<any>;
   }

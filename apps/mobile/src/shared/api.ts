@@ -12,11 +12,21 @@ export const tokenStore = {
   async clear() { try { Platform.OS === "web" ? localStorage.removeItem(KEY) : await SecureStore.deleteItemAsync(KEY); } catch {} },
 };
 
-export async function api<T = any>(path: string, body?: unknown, method?: string): Promise<T> {
+/** Called when the server says this session is no longer valid (signed out elsewhere, account deleted or switched off). */
+let onUnauthorised: (() => void) | null = null;
+export function setUnauthorisedHandler(fn: (() => void) | null) { onUnauthorised = fn; }
+
+export async function api<T = any>(path: string, body?: unknown, method?: string, extraHeaders?: Record<string, string>): Promise<T> {
   const t = await tokenStore.get();
-  const r = await fetch(API + path, { method: method ?? (body ? "POST" : "GET"), headers: { "Content-Type": "application/json", ...(t ? { Authorization: "Bearer " + t } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  // 20 second limit: a dead connection shows an error (and queues care logs) instead of a spinner that never ends.
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 20000);
+  let r: Response;
+  try { r = await fetch(API + path, { method: method ?? (body ? "POST" : "GET"), headers: { "Content-Type": "application/json", ...(t ? { Authorization: "Bearer " + t } : {}), ...(extraHeaders ?? {}) }, body: body ? JSON.stringify(body) : undefined, signal: ctl.signal }); }
+  catch { throw new Error("No connection. Please check your internet and try again."); } // no status: callers treat this as offline
+  finally { clearTimeout(timer); }
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(new Error(j.error ?? "Something went wrong. Please try again."), { status: r.status });
+  if (r.status === 401 && t) onUnauthorised?.();
+  if (!r.ok) throw Object.assign(new Error(j.error ?? "Something went wrong. Please try again."), { status: r.status, data: j });
   return j as T;
 }
 

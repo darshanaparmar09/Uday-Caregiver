@@ -1,3 +1,4 @@
+import { tfetch } from "./net";
 import { TEST_MODE } from "./env";
 import { cfg } from "./settings";
 /**
@@ -24,7 +25,7 @@ export async function verifyAadhaar(aadhaar: string, name: string): Promise<KycR
     return { result: "clear", reference: "MOCKKYC-" + Date.now().toString(36).toUpperCase(), last4: n.slice(-4), provider: "mock" };
   }
   if ((c.provider ?? "manual") === "manual") return { result: "pending", reference: "MANUAL-" + Date.now().toString(36).toUpperCase(), last4: n.slice(-4), provider: "manual" };
-  const r = await fetch(c.baseUrl.replace(/\/$/, "") + (c.startPath || "/aadhaar/otp"), { method: "POST", headers: head(c), body: JSON.stringify({ aadhaar_number: n, consent: "Y", reason: "Identity check for Uday care services" }) });
+  const r = await tfetch(c.baseUrl.replace(/\/$/, "") + (c.startPath || "/aadhaar/otp"), { method: "POST", headers: head(c), body: JSON.stringify({ aadhaar_number: n, consent: "Y", reason: "Identity check for Uday care services" }) });
   const j: any = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j?.message ?? "The identity partner could not start the check. Please try again.");
   const ref = j.request_id ?? j.reference_id ?? j.client_id ?? j.data?.request_id ?? j.data?.client_id ?? j.id;
@@ -35,7 +36,7 @@ export async function verifyAadhaar(aadhaar: string, name: string): Promise<KycR
 export async function verifyAadhaarOtp(reference: string, otp: string, name: string): Promise<KycResult & { nameOnRecord?: string }> {
   if (!/^\d{6}$/.test(otp)) throw new Error("Enter the 6 digit code");
   const c = await cfg("kyc"); if (!c || c.provider !== "api") throw new Error("No code is needed for this check");
-  const r = await fetch(c.baseUrl.replace(/\/$/, "") + (c.verifyPath || "/aadhaar/verify"), { method: "POST", headers: head(c), body: JSON.stringify({ request_id: reference, client_id: reference, otp }) });
+  const r = await tfetch(c.baseUrl.replace(/\/$/, "") + (c.verifyPath || "/aadhaar/verify"), { method: "POST", headers: head(c), body: JSON.stringify({ request_id: reference, client_id: reference, otp }) });
   const j: any = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j?.message ?? "The code did not work. Please try again.");
   const d = j.data ?? j; const onRecord: string = d.full_name ?? d.name ?? "";
