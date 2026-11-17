@@ -14,7 +14,7 @@ export function Onboarding() {
   const [p, setP] = useState({ name: "", dob: "", gender: "", languages: "Marathi, Hindi", hasPhone: true, phone: "", hospital: "", diet: "", caregiverGender: "No preference" });
   const [home, setHome] = useState({ address: "", locality: "", accessNotes: "" });
   const [needs, setNeeds] = useState<Record<string, boolean>>({});
-  const [ec, setEc] = useState<EC[]>([{ name: "", relation: "", phone: "", city: "Pune", isLocal: true }, { name: "", relation: "", phone: "", city: "", isLocal: false }]);
+  const [ec, setEc] = useState<EC[]>([{ name: "", relation: "", phone: "", city: "", isLocal: true }, { name: "", relation: "", phone: "", city: "", isLocal: false }]);
   const [consent, setConsent] = useState({ onBehalf: true, allergies: true, medicines: true, conditions: false, agree: false });
   useEffect(() => { api("/api/me").then((m) => setMe((s) => ({ ...s, name: m.user.name ?? "", email: m.user.email ?? "", country: m.user.country ?? s.country, city: m.user.city ?? "" }))).catch(() => {}); }, []);
 
@@ -65,13 +65,13 @@ export function Onboarding() {
             {F("cg", "Caregiver preference", <select id="cg" className="input" value={p.caregiverGender} onChange={(e) => setP({ ...p, caregiverGender: e.target.value })}><option>No preference</option><option>Female caregiver</option><option>Male caregiver</option></select>)}</div>
         </>}
         {step === 2 && <>
-          {F("ad", "Full home address in Pune", <textarea id="ad" className="input min-h-[90px] py-3" required value={home.address} onChange={(e) => setHome({ ...home, address: e.target.value })} autoComplete="street-address" />, "The caregiver sees this only after accepting your request.")}
+          {F("ad", "Full home address", <textarea id="ad" className="input min-h-[90px] py-3" required value={home.address} onChange={(e) => setHome({ ...home, address: e.target.value })} autoComplete="street-address" />, "The caregiver sees this only after accepting your request.")}
           {F("lc", "Locality", <input id="lc" className="input" required placeholder="For example Kothrud" value={home.locality} onChange={(e) => setHome({ ...home, locality: e.target.value })} />, "Shown to caregivers before they accept.")}
           {F("ac", "Getting in (optional)", <textarea id="ac" className="input min-h-[80px] py-3" placeholder="Gate, floor, lift, society entry" value={home.accessNotes} onChange={(e) => setHome({ ...home, accessNotes: e.target.value })} />, "Encrypted. Released to the caregiver only when they start travelling.")}
           {F("hs", "Preferred hospital", <input id="hs" className="input" required value={p.hospital} onChange={(e) => setP({ ...p, hospital: e.target.value })} />)}
         </>}
         {step === 3 && <>
-          <p>At least two contacts. One should be in Pune and able to reach the home within about an hour.</p>
+          <p>At least two contacts. One should live near your parent and be able to reach the home within about an hour.</p>
           {ec.map((c, i) => (
             <fieldset key={i} className="grid gap-3 rounded-2xl border border-line p-4"><legend className="px-1 text-sm font-semibold text-ink">Contact {i + 1}</legend>
               <div className="grid gap-3 sm:grid-cols-2">

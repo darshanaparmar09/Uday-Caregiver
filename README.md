@@ -1,6 +1,6 @@
 # Uday caregiver
 
-Care marketplace for Pune: families hire Uday certified caregivers by day shift, night shift or 24 hour live in care, for a day, week, month or quarter. Seniors get a free daily check in.
+Elder care platform for families across India, launching first in Pune: families hire Uday certified caregivers by day shift, night shift or 24 hour live in care, for a day, week, month or quarter. Seniors get a free daily check in.
 
 | Part | Folder | Technology |
 | --- | --- | --- |

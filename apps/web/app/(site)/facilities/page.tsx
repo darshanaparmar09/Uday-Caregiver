@@ -6,7 +6,7 @@ import { FACILITY_TYPES_EXPLAINED, CHOOSING_STEPS } from "@/components/facilityG
 export const metadata = meta("/facilities");
 export default function Page() {
   return (<>
-    <PageHero eyebrow="Care facilities" title="When home care is no longer enough" lead="Compare assisted living, nursing homes, memory care and retirement communities in Pune. Read reviews from families who visited, book a visit, and use our checklist when you go." img="clinic" alt="An Uday staff member assists an elderly woman at a reception desk" pos="center 60%" />
+    <PageHero eyebrow="Care facilities" title="When home care is no longer enough" lead="Compare assisted living, nursing homes, memory care and retirement communities near your parents, starting with Pune. Read reviews from families who visited, book a visit, and use our checklist when you go." img="clinic" alt="An Uday staff member assists an elderly woman at a reception desk" pos="center 60%" />
     <Section><Directory /></Section>
     <Section tone="tint">
       <Head eyebrow="Guide" title="Choosing the right facility" lead="Give yourself as much time as you can. A careful choice is a much better match in the end." />

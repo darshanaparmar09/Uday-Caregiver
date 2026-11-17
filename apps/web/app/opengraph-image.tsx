@@ -13,7 +13,7 @@ export default function Image() {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <div style={{ fontSize: 68, fontWeight: 800, lineHeight: 1.05, maxWidth: 950 }}>Certified caregivers for your parents</div>
-        <div style={{ fontSize: 32, color: "#FFD9A8" }}>Day, night or live in care · Free daily check in · Pune</div>
+        <div style={{ fontSize: 32, color: "#FFD9A8" }}>Day, night or live in care · Free daily check in · Across India</div>
       </div>
       <div style={{ position: "absolute", right: -120, bottom: -260, width: 620, height: 620, borderRadius: 620, background: "radial-gradient(circle, #FFC56B 0%, #F5891F 45%, rgba(245,137,31,0) 70%)", display: "flex" }} />
     </div>, size);

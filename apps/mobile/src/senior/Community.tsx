@@ -106,7 +106,7 @@ function People() {
   if (!d) return null;
   if (!d.discoverable) return (
     <Card tone="amber"><T size={26} weight="bold">Meet people near you</T>
-      <T>Turn this on to see other Uday members in Pune, and to let them see your first name and area. Your phone number is never shown.</T>
+      <T>Turn this on to see other Uday members near you, and to let them see your first name and area. Your phone number is never shown.</T>
       <Button title="Let people near me find me" onPress={() => api("/api/senior/settings", { discoverable: true }, "PUT").then(load)} /></Card>);
   return <>{!d.people.length && <T>No one nearby has turned this on yet. Join a group to meet people.</T>}
     {d.people.map((p: any) => (

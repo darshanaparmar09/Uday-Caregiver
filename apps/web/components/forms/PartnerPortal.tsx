@@ -21,7 +21,7 @@ export function PartnerPortal() {
 
   if (me === undefined) return <p>Loading</p>;
   if (!me) return (<div className="card text-center"><h1 className="text-3xl font-extrabold">List your care facility on Uday</h1>
-    <p className="mx-auto mt-3 max-w-xl">Families in Pune use Uday to compare facilities, book visits and read reviews from other families. Create your profile, choose a monthly plan, and start receiving visit requests.</p>
+    <p className="mx-auto mt-3 max-w-xl">Families across India use Uday to compare facilities, book visits and read reviews from other families. Create your profile, choose a monthly plan, and start receiving visit requests.</p>
     <div className="mx-auto mt-6 grid max-w-2xl gap-4 sm:grid-cols-2 text-left">{Object.entries(FACILITY_PLANS).map(([k, p]) => <div key={k} className="card"><h3 className="font-bold">{p.name}</h3><p className="font-display text-2xl font-extrabold text-ink">{inr(p.pricePaise)}<span className="text-sm font-normal text-muted"> a month + GST</span></p><ul className="mt-2 list-disc pl-5 text-sm">{p.features.map((x) => <li key={x}>{x}</li>)}</ul></div>)}</div>
     <Link href="/signin?next=/partner" className="btn mt-6">Sign in with your facility's phone number</Link><p className="note mt-3">Use a number that is not your family account.</p></div>);
   if (!["facility", "family"].includes(me.user.role)) return <p>This account cannot list a facility.</p>;

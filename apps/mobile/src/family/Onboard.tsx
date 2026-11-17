@@ -11,7 +11,7 @@ const NEEDS = ["Help walking", "Memory loss", "Diabetes", "Lives alone", "Needs 
 export function Onboard({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
   const [step, setStep] = useState(1); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const [f, setF] = useState({ name: "", dob: "", address: "", locality: "", hospital: "", hasPhone: true, phone: "", langs: [] as string[], needs: [] as string[],
-    c1n: "", c1r: "", c1p: "", c1c: "", c2n: "", c2r: "", c2p: "", c2c: "Pune", allergies: true, medicines: true, conditions: false, onBehalf: false });
+    c1n: "", c1r: "", c1p: "", c1c: "", c2n: "", c2r: "", c2p: "", c2c: "", allergies: true, medicines: true, conditions: false, onBehalf: false });
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
     setErr(""); setBusy(true);

@@ -4,8 +4,8 @@ import { JsonLd } from "@/components/JsonLd";
 export const metadata = meta("/");
 // Organization details for search results. Phone and social links to be added once live.
 const ORG = { "@context": "https://schema.org", "@type": "Organization", name: "Uday", url: SITE_URL, logo: `${SITE_URL}/icon.svg`,
-  description: "Certified caregivers by the day, night or live in, with a free daily check in for parents. Pune, India.",
-  areaServed: { "@type": "City", name: "Pune" }, address: { "@type": "PostalAddress", addressLocality: "Pune", addressRegion: "Maharashtra", addressCountry: "IN" } };
+  description: "Certified caregivers by the day, night or live in, with a free daily check in for parents, across India.",
+  areaServed: { "@type": "Country", name: "India" }, address: { "@type": "PostalAddress", addressLocality: "Pune", addressRegion: "Maharashtra", addressCountry: "IN" } };
 import { Section, Head, Photo } from "@/components/Section";
 
 const TIERS = [
@@ -23,7 +23,7 @@ export default function Home() {
         <div aria-hidden className="absolute -bottom-56 left-1/2 h-[28rem] w-[56rem] -translate-x-1/2 rounded-full bg-orange-400/40 blur-3xl" />
         <div className="wrap relative grid items-center gap-10 py-14 sm:py-20 lg:grid-cols-[1.05fr_.95fr]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm text-indigo-100"><span className="h-2 w-2 rounded-full bg-orange-400" />Pune pilot · opening 2027</span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm text-indigo-100"><span className="h-2 w-2 rounded-full bg-orange-400" />Across India · first city Pune, 2027</span>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] text-white sm:text-6xl">Care for your parents, <span className="text-orange-400">every single day.</span></h1>
             <p className="mt-5 max-w-xl text-lg text-indigo-100/85">Uday certified caregivers by the day, night or live in. A free daily check in for your parents. Every shift verified, logged and visible to you, wherever you live.</p>
             <div className="mt-8 flex flex-wrap gap-3">
