@@ -2651,6 +2651,172 @@
      "notes": ""
     }
    ]
+  },
+  {
+   "sheet": "Readiness",
+   "title": "Readiness sprint (branch readiness-sprint, not deployed)",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Safety",
+     "feature": "SOS and urgent alerts reach people",
+     "what": "Family, emergency contacts by SMS, on call phones; stays open until someone responds; escalates",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Tested in code. Real SMS needs MSG91 or Twilio connected"
+    },
+    {
+     "id": "02",
+     "module": "Safety",
+     "feature": "Honest message status",
+     "what": "Every message is recorded as sent, simulated, failed or no channel",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "03",
+     "module": "Safety",
+     "feature": "Scheduler health check",
+     "what": "Turns red if alerts or missed check ins stop running",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Point an uptime monitor at /api/health"
+    },
+    {
+     "id": "04",
+     "module": "Safety",
+     "feature": "Care log honesty",
+     "what": "Medicines recorded only when stated; tasks not marked shown to family at shift end",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "05",
+     "module": "Security",
+     "feature": "Test sign in codes locked to development",
+     "what": "Staging and production refuse the fixed code; named tester numbers for store review",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Checked by hand on a staging server"
+    },
+    {
+     "id": "06",
+     "module": "Privacy",
+     "feature": "Parent agrees before a family is linked",
+     "what": "Senior sees 'Is this your family?' first",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "07",
+     "module": "Privacy",
+     "feature": "Download data, sign out everywhere, delete account",
+     "what": "In all apps, web account page and public /delete-account",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "08",
+     "module": "Privacy",
+     "feature": "Caregiver sees address and health only during care",
+     "what": "From 24 hours before the first shift to the end of care; every view logged",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "09",
+     "module": "Store",
+     "feature": "Community block, report, rules",
+     "what": "Required by Apple and Google for user posts",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Someone must review reports daily"
+    },
+    {
+     "id": "10",
+     "module": "Store",
+     "feature": "AI companion consent and labels",
+     "what": "Consent screen, AI label, report reply",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "11",
+     "module": "Store",
+     "feature": "App config, icons, privacy manifest",
+     "what": "Both apps",
+     "status": "Partial",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Icons are placeholders for a designer"
+    },
+    {
+     "id": "12",
+     "module": "Store",
+     "feature": "Upgrade to Expo SDK 54 or later",
+     "what": "Both stores reject the current SDK",
+     "status": "Pending",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Needs real phone testing, 2 to 3 days"
+    },
+    {
+     "id": "13",
+     "module": "Store",
+     "feature": "Pay inside the family mobile app",
+     "what": "Razorpay native checkout",
+     "status": "Pending",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "With the SDK upgrade"
+    },
+    {
+     "id": "14",
+     "module": "Security",
+     "feature": "Next.js upgrade",
+     "what": "Clears a critical npm audit finding",
+     "status": "Pending",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "1 day plus regression"
+    },
+    {
+     "id": "15",
+     "module": "Legal",
+     "feature": "Privacy policy and terms",
+     "what": "Needed for both stores",
+     "status": "Pending",
+     "phase": "Launch",
+     "owner": "You",
+     "notes": "Counsel"
+    },
+    {
+     "id": "16",
+     "module": "Clinical",
+     "feature": "Review of vitals alert limits",
+     "what": "Clinical decision",
+     "status": "Pending",
+     "phase": "Launch",
+     "owner": "You",
+     "notes": "Clinical advisor"
+    }
+   ]
   }
  ],
  "journey": {
