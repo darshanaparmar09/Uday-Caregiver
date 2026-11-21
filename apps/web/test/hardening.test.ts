@@ -97,8 +97,10 @@ test("SOS tells the truth: who was reached, repeats join, family acknowledges, e
   assert.equal((await call(s, `/api/alerts/${a.id}`, { action: "ack" })).status, 404, "the person in trouble cannot acknowledge their own alert");
   // nobody answers: the timer escalates to every contact and opens an urgent help request
   await db.query("UPDATE alerts SET next_escalation_at = now() - interval '1 minute' WHERE id=$1", [a.id]);
-  assert.equal((await cron()).status, 200);
-  const esc = (await db.query("SELECT level FROM alerts WHERE id=$1", [a.id])).rows[0]; assert.equal(esc.level, 1);
+  // Other test files may run the scheduler at the same moment; its lock lets one run through, so retry briefly.
+  let esc: any = null;
+  for (let i = 0; i < 6; i++) { assert.equal((await cron()).status, 200); esc = (await db.query("SELECT level FROM alerts WHERE id=$1", [a.id])).rows[0]; if (esc.level >= 1) break; await new Promise((r) => setTimeout(r, 500)); }
+  assert.equal(esc.level, 1);
   assert.ok((await db.query("SELECT count(*)::int AS n FROM alert_deliveries WHERE alert_id=$1 AND level=1", [a.id])).rows[0].n >= 2);
   assert.ok((await db.query("SELECT count(*)::int AS n FROM tickets WHERE urgent AND category LIKE 'Unanswered alert%' AND created_at > now() - interval '1 minute'")).rows[0].n >= 1);
   // a contact without the app acknowledges from the SMS link

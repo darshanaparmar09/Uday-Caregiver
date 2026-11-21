@@ -15,9 +15,17 @@ export function Hire({ onBack, onBooked }: { onBack: () => void; onBooked: (id: 
   const [cat, setCat] = useState<any>(null); const [need, setNeed] = useState(""); const [type, setType] = useState("day"); const [days, setDays] = useState(1); const [tier, setTier] = useState(0);
   const [list, setList] = useState<any[] | null>(null); const [pick, setPick] = useState<any>(null); const [profile, setProfile] = useState<any>(null);
   useEffect(() => { api("/api/catalog").then(setCat).catch(() => {}); }, []);
-  useEffect(() => { if (!need) return; setList(null); api<any[]>(`/api/caregivers?type=${type}${tier ? `&tier=${tier}` : ""}`).then(setList).catch(() => setList([])); }, [need, type, tier]);
-  const n = cat?.careNeeds.find((x: any) => x.id === need);
-  const sorted = useMemo(() => (list ?? []).slice().sort((a, b) => (b.skills.filter((s: string) => n?.skills.includes(s)).length - a.skills.filter((s: string) => n?.skills.includes(s)).length)), [list, n]);
+  // Ranked by the server for this parent and dates, with the reasons ("Why this match").
+  const [forId, setForId] = useState(""); const [mine, setMine] = useState<any[]>([]);
+  useEffect(() => { api<any[]>("/api/recipients").then((r) => { setMine(r); if (r[0]) setForId(r[0].id); }).catch(() => {}); }, []);
+  useEffect(() => {
+    if (!need) return; setList(null);
+    const start = new Date(Date.now() + 86400e3).toISOString().slice(0, 10);
+    const p = `type=${type}${tier ? `&tier=${tier}` : ""}${need !== "other" ? `&need=${need}` : ""}${forId ? `&recipientId=${forId}` : ""}&start=${start}&days=${days}`;
+    api<any[]>(`/api/caregivers?${p}`).then(setList).catch(() => setList([]));
+  }, [need, type, tier, forId, days]);
+  const n = cat?.careNeeds.find((x: any) => x.id === need); void n;
+  const sorted = useMemo(() => list ?? [], [list]);
   if (!cat) return <Screen><T>Loading</T></Screen>;
   if (pick) return <Checkout cat={cat} c={pick} type={type} days={days} need={need} onBack={() => setPick(null)} onBooked={onBooked} />;
   if (profile) return <Profile id={profile.id} onBack={() => setProfile(null)} onHire={() => { setPick(profile); setProfile(null); }} />;
@@ -34,15 +42,19 @@ export function Hire({ onBack, onBooked }: { onBack: () => void; onBooked: (id: 
         <Chips options={Object.values(TYPE)} value={[TYPE[type]]} multi={false} onChange={(v) => setType(Object.keys(TYPE).find((k) => TYPE[k] === v[0])!)} />
         <Chips options={[1, 7, 30, 90].map((d) => PLAN[d])} value={[PLAN[days]]} multi={false} onChange={(v) => setDays(Number(Object.keys(PLAN).find((k) => PLAN[Number(k)] === v[0])))} />
         <Chips options={["All tiers", TIER[1], TIER[2], TIER[3]]} value={[tier ? TIER[tier] : "All tiers"]} multi={false} onChange={(v) => setTier(v[0] === "All tiers" ? 0 : Number(Object.keys(TIER).find((k) => TIER[Number(k)] === v[0])))} />
+        {mine.length > 1 && <><T weight="semi">For</T><Chips options={mine.map((r) => r.name)} value={[mine.find((r) => r.id === forId)?.name ?? ""]} multi={false} onChange={(v) => setForId(mine.find((r) => r.name === v[0])?.id ?? forId)} /></>}
         <T weight="semi">3. Choose a caregiver</T>
+        <T color={C.inkSoft}>Ranked by fit for the care need, shared language, distance, free days from tomorrow, ratings and past care for your parent.</T>
         {list === null ? <T>Loading</T> : !sorted.length ? <T>No caregivers for this choice yet.</T> : sorted.map((c) => (
           <Card key={c.id}>
             <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
               {c.photo ? <Image source={{ uri: `${API}/api/caregivers/${c.id}/photo` }} style={{ width: 64, height: 64, borderRadius: 32 }} /> : <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: C.night, alignItems: "center", justifyContent: "center" }}><T weight="bold" color={C.amber}>{c.initials}</T></View>}
               <View style={{ flex: 1 }}><T size={24} weight="bold">{c.display_name}</T><T color={C.inkSoft}>{TIER[c.tier]} · {c.rating_count ? `★ ${c.rating.toFixed(1)} (${c.rating_count})` : "New on Uday"}</T></View></View>
+            {c.match?.reasons?.length ? <View style={{ backgroundColor: c.match.available ? "#E3F4F1" : "#FDE4E4", borderRadius: 14, padding: 10, gap: 2 }}>
+              <T weight="bold" size={16}>WHY THIS MATCH</T>{c.match.reasons.map((r: string) => <T key={r}>{c.match.available ? "✓ " : ""}{r}</T>)}</View> : null}
             <T>{c.skills.join(" · ")}</T><T color={C.inkSoft}>{c.police_verified ? "✓ Police verified  " : ""}{c.id_verified ? "✓ ID verified" : ""}</T>
             <T weight="bold">{inr(c[RATE[type]])} a day · {inr(c[RATE[type]] * days)} care fee</T>
-            <View style={{ flexDirection: "row", gap: 10 }}><Button title="Profile" tone="outline" onPress={() => setProfile(c)} style={{ flex: 1 }} /><Button title="Hire" onPress={() => setPick(c)} style={{ flex: 1 }} /></View>
+            <View style={{ flexDirection: "row", gap: 10 }}><Button title="Profile" tone="outline" onPress={() => setProfile(c)} style={{ flex: 1 }} /><Button title={c.match && !c.match.available ? "Not free" : "Hire"} onPress={() => { if (!c.match || c.match.available) setPick(c); }} style={{ flex: 1 }} /></View>
           </Card>))}</>}
     </Screen>);
 }

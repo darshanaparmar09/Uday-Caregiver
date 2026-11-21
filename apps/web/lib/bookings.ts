@@ -167,6 +167,7 @@ export async function getBooking(u: SessionUser, id: string) {
   const relief = await q<any>(`SELECT r.id, r.day_no, r.day::text AS day, r.status, r.start_code_enc, r.end_code_enc, c.id AS cg_id, c.display_name, c.photo_status
     FROM relief_shifts r LEFT JOIN caregivers c ON c.id=r.caregiver_id WHERE r.booking_id=$1 AND r.status<>'cancelled' ORDER BY r.day_no`, [id]);
   out.relief = relief.map((r) => ({ id: r.id, dayNo: r.day_no, day: r.day, status: r.status, caregiver: r.cg_id && ["accepted", "arrived", "active", "done"].includes(r.status) ? { id: r.cg_id, name: r.display_name, photo: r.photo_status === "verified" ? `/api/caregivers/${r.cg_id}/photo` : null } : null }));
+  if (fam || u.role === "ops") out.updates = await (await import("./insights")).dailyUpdates(id);
   out.extension = await one("SELECT id, days, status, expires_at FROM extension_requests WHERE booking_id=$1 ORDER BY created_at DESC LIMIT 1", [id]);
   if (fam) {
     // Codes the family reads out at the door. Live in care: start code on day 1, end code on the last day only.

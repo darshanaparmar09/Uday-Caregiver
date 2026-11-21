@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, inr, TYPE, DUR, STATUS } from "../api";
 import { InviteBanner } from "./FamilyTools";
 import { AlertBanner } from "./AlertBanner";
+import { CareToday } from "./CareToday";
 
 export function Dashboard() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export function Dashboard() {
       </div>
 
       <AlertBanner />
+      <CareToday />
       <InviteBanner />
       <Intros />
       <section>
@@ -41,6 +43,7 @@ export function Dashboard() {
             <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
               {!r.has_health && <Link className="text-indigo-600" href={`/app/health/${r.id}`}>Add health details (optional)</Link>}
               {r.has_health && <Link className="text-indigo-600" href={`/app/health/${r.id}`}>Health details</Link>}
+              <Link className="text-indigo-600" href={`/app/health/${r.id}#appointments`}>Appointments</Link>
               <Link className="text-indigo-600" href={`/app/readings/${r.id}`}>Readings and devices</Link>
               <Link className="text-indigo-600" href={`/app/family/${r.id}`}>Family and check in</Link>
               {!today && <button className="text-indigo-600" disabled={busy === r.id} onClick={() => checkFor(r.id)}>I spoke to them today</button>}

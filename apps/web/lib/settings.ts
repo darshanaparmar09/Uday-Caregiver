@@ -44,8 +44,10 @@ export const SPECS: Spec[] = [
   { key: "video", group: "Video", name: "Video for intro calls", what: "The video link a family and caregiver use to meet before booking.", signup: "https://www.daily.co",
     fields: [{ k: "provider", label: "Service", options: ["jitsi", "daily", "template"], help: "jitsi needs no account. daily needs an API key" },
       { k: "apiKey", label: "Daily API key", secret: true }, { k: "domain", label: "Daily domain", help: "for example uday.daily.co" }, { k: "template", label: "Link template", help: "Any link with {room}, for template only" }] },
-  { key: "anthropic", group: "AI", name: "Claude (Talk to Uday)", what: "Replies in the senior companion chat. Without a key, short written replies are used.", signup: "https://console.anthropic.com",
+  { key: "anthropic", group: "AI", name: "Claude", what: "Companion chat replies, daily family updates, care note checks, sorting spoken requests, reading appointment dates from documents and weekly quality themes. Used only for families who turned on AI help. Without a key, Uday uses fixed rules and written templates.", signup: "https://console.anthropic.com",
     fields: [{ k: "apiKey", label: "API key", secret: true, required: true }, { k: "model", label: "Model", help: "Default claude-haiku-5-5" }] },
+  { key: "sarvam", group: "AI", name: "Sarvam AI speech to text", what: "Turns speech into text in Marathi, Hindi, English and other Indian languages: Speak to Uday, the companion's voice and caregiver dictation. Without a key, spoken requests are kept for the Uday team to listen to.", signup: "https://dashboard.sarvam.ai",
+    fields: [{ k: "apiKey", label: "API subscription key", secret: true, required: true }, { k: "model", label: "Model", help: "Default saaras:v4" }] },
 ];
 const byKey = new Map(SPECS.map((s) => [s.key, s]));
 
@@ -60,6 +62,7 @@ const ENV: Record<string, Record<string, string | undefined>> = {
   kyc: { provider: process.env.KYC_PROVIDER },
   video: { template: process.env.VIDEO_ROOM_URL_TEMPLATE, provider: process.env.VIDEO_ROOM_URL_TEMPLATE ? "template" : undefined },
   anthropic: { apiKey: process.env.ANTHROPIC_API_KEY, model: process.env.ANTHROPIC_MODEL },
+  sarvam: { apiKey: process.env.SARVAM_API_KEY, model: process.env.SARVAM_MODEL },
 };
 
 let cache: { at: number; rows: Map<string, { enabled: boolean; config: Record<string, string> }> } | null = null;

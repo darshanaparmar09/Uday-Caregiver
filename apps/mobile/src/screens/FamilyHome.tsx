@@ -1,5 +1,6 @@
 import { AccountData } from "../shared/AccountData";
 import { useCallback, useEffect, useState } from "react";
+import { CareToday } from "../family/CareToday";
 import { Linking, Pressable, View } from "react-native";
 import { api, API, countdown, inr, PLAN, READING, SOURCE, STATUS, TYPE } from "../shared/api";
 import { Button, Card, ErrorText, Field, Screen, T, Chips } from "../shared/ui";
@@ -33,6 +34,7 @@ export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }
           <Button title="All is well now" tone="outline" onPress={() => api(`/api/alerts/${a.id}`, { action: "resolve", note: "Family confirmed all is well" }).then(loadAlerts).catch(() => {})} /></Card>)}
       {invites.map((i) => <Card key={i.id} tone="amber"><T weight="semi">{i.inviter ?? "A family member"} invited you to help care for {i.senior}.</T>
         <Button title="Join" tone="teal" onPress={() => api(`/api/invites/${i.id}`, { accept: true }).then(() => { setInvites(invites.filter((x) => x.id !== i.id)); load(); })} /></Card>)}
+      {recips.length > 0 && <CareToday recips={recips} openBooking={setOpen} />}
       {!recips.length && <Card><T weight="semi">Start by adding your parent. It takes about five minutes.</T><Button title="Add your parent" onPress={() => setView("onboard")} /></Card>}
       {recips.map((r) => { const today = r.last_checkin && new Date(r.last_checkin.at).toDateString() === new Date().toDateString(); const help = today && ["help", "medical"].includes(r.last_checkin.status);
         return (<Card key={r.id} tone={help ? "coral" : today ? "teal" : "amber"}>
@@ -62,7 +64,7 @@ export function FamilyHome({ me, onSignOut }: { me: any; onSignOut: () => void }
 }
 
 function BookingDetail({ id, onBack }: { id: string; onBack: () => void }) {
-  const [b, setB] = useState<any>(null); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [quote, setQuote] = useState<any>(null); const [, tick] = useState(0);
+  const [b, setB] = useState<any>(null); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [quote, setQuote] = useState<any>(null); const [, tick] = useState(0); const [fullLog, setFullLog] = useState(false);
   const load = useCallback(() => api(`/api/bookings/${id}`).then(setB).catch((e) => setErr(e.message)), [id]);
   useEffect(() => { load(); const a = setInterval(load, 5000); const t = setInterval(() => tick((n) => n + 1), 1000); return () => { clearInterval(a); clearInterval(t); }; }, [load]);
   async function act(body: any) { setBusy(true); setErr(""); try { await api(`/api/bookings/${id}/action`, body); setQuote(null); await load(); } catch (e: any) { setErr(e.message); } finally { setBusy(false); } }
@@ -84,7 +86,10 @@ function BookingDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {b.isLive && b.daysDone > 0 && !b.dayChecks?.some((x: any) => x.day === b.daysDone) && b.status === "active" && <Card tone="amber"><T weight="semi">Day {b.daysDone}: was everything well?</T>
         <Button title="Yes, all well" tone="teal" busy={busy} onPress={() => act({ action: "day_check", day: b.daysDone, ok: true })} />
         <Button title="Something was wrong" tone="outline" onPress={() => act({ action: "day_check", day: b.daysDone, ok: false, note: "Flagged from the app" })} /></Card>}
-      {b.logs?.slice(-3).reverse().map((l: any, i: number) => <Card key={i}><T weight="semi">Shift log · day {l.day}</T><T>{[l.checklist && `${Object.keys(l.checklist).length} care tasks marked done by the caregiver`, l.meal === true && "Meal: caregiver says given", l.meds === true && "Medicines: caregiver says given as prescribed", l.meds === false && "Medicines: caregiver says NOT given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</T>
+      {b.updates?.[0] && <Card tone="teal"><T size={22} weight="bold">Day {b.updates[0].day} update</T><T>{b.updates[0].text}</T>
+        <T color={C.inkSoft}>{b.updates[0].label}. Not a medical assessment.</T>
+        <Button title={fullLog ? "Hide full log" : "See full log"} tone="outline" onPress={() => setFullLog(!fullLog)} /></Card>}
+      {(fullLog || !b.updates?.length) && b.logs?.slice(-3).reverse().map((l: any, i: number) => <Card key={i}><T weight="semi">Shift log · day {l.day}</T><T>{[l.checklist && `${Object.keys(l.checklist).length} care tasks marked done by the caregiver`, l.meal === true && "Meal: caregiver says given", l.meds === true && "Medicines: caregiver says given as prescribed", l.meds === false && "Medicines: caregiver says NOT given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</T>
         {l.vitals ? <T>{[l.vitals.bpSys && `BP ${l.vitals.bpSys}/${l.vitals.bpDia}`, l.vitals.pulse && `Pulse ${l.vitals.pulse}`, l.vitals.tempC && `Temp ${l.vitals.tempC}°C`, l.vitals.pain != null && `Pain ${l.vitals.pain}/10`].filter(Boolean).join(" · ")}</T> : null}
         {l.flags?.length ? <Card tone="coral" style={{ padding: 12 }}><T weight="semi">Outside usual range: {l.flags.join(", ")}</T></Card> : null}{l.note ? <T color={C.inkSoft}>{l.note}</T> : null}</Card>)}
       {b.status === "completed" && <Card><T weight="semi">How was the care?</T><View style={{ flexDirection: "row", justifyContent: "space-between" }}>{[1, 2, 3, 4, 5].map((n) =>

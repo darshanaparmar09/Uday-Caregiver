@@ -21,10 +21,10 @@ import type { SessionUser } from "./auth";
  *
  * Uday is not an emergency service. Every message says to call 112 when there is danger to life.
  */
-export type AlertKind = "sos" | "checkin_help" | "checkin_medical" | "checkin_missed" | "safety_report" | "companion_crisis";
-const URGENT: AlertKind[] = ["sos", "checkin_help", "checkin_medical", "companion_crisis"];
-const TEMPLATE: Record<AlertKind, Template> = { sos: "sos", checkin_help: "checkin_help", checkin_medical: "checkin_medical", checkin_missed: "checkin_missed", safety_report: "safety_report", companion_crisis: "checkin_help" };
-const WORDS: Record<AlertKind, string> = { sos: "pressed SOS", checkin_help: "asked for help", checkin_medical: "asked for medical help", checkin_missed: "has not checked in today", safety_report: "reported fraud or a crime", companion_crisis: "may need help now" };
+export type AlertKind = "sos" | "checkin_help" | "checkin_medical" | "checkin_missed" | "safety_report" | "companion_crisis" | "voice_help";
+const URGENT: AlertKind[] = ["sos", "checkin_help", "checkin_medical", "companion_crisis", "voice_help"];
+const TEMPLATE: Record<AlertKind, Template> = { sos: "sos", checkin_help: "checkin_help", checkin_medical: "checkin_medical", checkin_missed: "checkin_missed", safety_report: "safety_report", companion_crisis: "checkin_help" , voice_help: "checkin_help" };
+const WORDS: Record<AlertKind, string> = { sos: "pressed SOS", checkin_help: "asked for help", checkin_medical: "asked for medical help", checkin_missed: "has not checked in today", safety_report: "reported fraud or a crime", companion_crisis: "may need help now" , voice_help: "asked for urgent help by voice" };
 const MAX_LEVEL = 4;
 const hash = (t: string) => createHash("sha256").update(t).digest("hex");
 

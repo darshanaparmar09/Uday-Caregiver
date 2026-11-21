@@ -26,7 +26,7 @@ Checked 17 November 2026 against Apple's official pages (sources at the end). St
 | A12 | Medical and health apps: no diagnosis claims (Guideline 1.4.1) | **Done** | Wording says "not a medical assessment"; companion says "not a doctor". Keep store listing free of clinical claims. [3] |
 | A13 | SOS wording must not imply an emergency service | **Done** | App tells the person to call 112 and states what Uday sends. Add "Uday is not an emergency service" to the store description. |
 | A14 | Export compliance | **Done** | `ITSAppUsesNonExemptEncryption: false` (standard HTTPS only). |
-| A15 | Camera and microphone not requested by the caregiver app | **Done** | Image picker set to library only; verified in resolved config. |
+| A15 | Permissions match use: camera not requested; microphone only for Speak to Uday, companion voice and caregiver dictation | **Done** | Image picker set to library only. Microphone purpose strings set in both apps (added 21 Nov 2026). Speech is sent to Sarvam AI: declare it in App Privacy (Audio Data) and the privacy policy. |
 | A16 | Build number management | **Done** | `buildNumber` set; `cli.appVersionSource: remote` with auto increment. |
 
 ## Owner actions in App Store Connect

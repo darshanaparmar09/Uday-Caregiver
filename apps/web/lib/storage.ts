@@ -15,8 +15,9 @@ import { s3 } from "./s3";
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
-export async function putEncrypted(data: Buffer, mime: string, cls: KeyClass) {
-  if (!ALLOWED.includes(mime)) throw new Error("Only JPG, PNG, WEBP or PDF files are accepted");
+export const AUDIO_MIMES = ["audio/m4a", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/webm", "audio/ogg", "audio/3gpp", "audio/amr"];
+export async function putEncrypted(data: Buffer, mime: string, cls: KeyClass, allowed: string[] = ALLOWED) {
+  if (!allowed.includes(mime)) throw new Error("Only JPG, PNG, WEBP or PDF files are accepted");
   if (data.length > MAX_BYTES) throw new Error("File is larger than 5 MB");
   const fileKey = randomBytes(32), iv = randomBytes(12);
   const c = createCipheriv("aes-256-gcm", fileKey, iv);

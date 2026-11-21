@@ -13,7 +13,7 @@ import type { SessionUser } from "./auth";
 export const istDay = (d = new Date()) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 const display = (name: string | null) => { const p = (name ?? "Member").trim().split(/\s+/); return p.length > 1 ? `${p[0]} ${p[p.length - 1][0]}.` : p[0]; };
 
-async function recipientOf(u: SessionUser) {
+export async function recipientOf(u: SessionUser) {
   if (u.role !== "senior") throw new AppError("For seniors only", 403);
   const r = await one<any>("SELECT id, name, locality, checkin_by FROM care_recipients WHERE senior_user_id=$1 AND senior_link='confirmed' ORDER BY created_at LIMIT 1", [u.id]);
   if (!r) throw new AppError("Your family has not linked your profile yet. Ask them to add your number in Uday.", 404);
@@ -75,7 +75,7 @@ export async function home(u: SessionUser) {
   }
   const dayOfYear = Math.floor((Date.parse(today) - Date.parse(today.slice(0, 4) + "-01-01")) / 864e5);
   return { linked: true, name: r.name, locality: r.locality, checkinBy: String(r.checkin_by).slice(0, 5), checkedInToday, lastStatus: last?.status ?? null, lastAt: last?.at ?? null,
-    streak: await streak(r.id), contacts, thought: THOUGHTS[dayOfYear % THOUGHTS.length],
+    streak: await streak(r.id), contacts, nextAppointment: await (await import("./appointments")).nextForSenior(r.id), thought: THOUGHTS[dayOfYear % THOUGHTS.length],
     meds: { due: m.items.filter((i) => !i.taken).length, total: m.items.length, next: m.items.find((i) => !i.taken) ?? null },
     gamesToday: played.map((p) => p.game), caregiver, newNamastes: namastes?.n ?? 0, nextEvent: next };
 }

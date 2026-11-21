@@ -17,7 +17,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSHealthShareUsageDescription": "Uday reads heart rate, oxygen, steps, sleep, blood pressure and weight so your family can see how you are.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "Uday records your voice only when you tap Speak, so your family and the Uday team can hear your request."
       },
       "entitlements": {
         "com.apple.developer.healthkit": true
@@ -98,6 +99,12 @@
           "android": {
             "minSdkVersion": 26
           }
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Uday records your voice only when you tap Speak, so your family and the Uday team can hear your request."
         }
       ]
     ],

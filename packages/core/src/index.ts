@@ -407,3 +407,46 @@ export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
 // ───────── membership and coupons ─────────
 /** Uday Plus for families. Price and benefits are assumptions to confirm. */
 export const PLUS = { name: "Uday Plus", pricePaise: 49900, feeDiscountBps: 2000, benefits: ["20% off the Uday platform fee on every booking", "Free cancellation at any time", "Replacement caregiver proposed within 4 hours"] } as const;
+
+// ───────── care matching ─────────
+/** Straight line distance in km between two points. */
+export function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371, rad = (d: number) => (d * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+export interface MatchFacts {
+  tier: number; skills: string[]; languages: string[]; rating: number; ratingCount: number;
+  needTier?: number; needSkills?: string[]; needLabel?: string;
+  seniorLanguages: string[];
+  km: number | null;            // straight line distance, when both have a location
+  sameArea: boolean;            // caregiver works in the senior's locality
+  daysAsked: number; daysBusy: number;
+  rehireStars: number | null;   // the family's rating the last time this caregiver cared for this senior
+}
+/**
+ * How well one caregiver fits one booking. Plain rules, so every reason shown to a family is true:
+ * skills for the care need 30, shared language 20, distance 20, rating 15, cared for this senior before 15.
+ * A caregiver busy on any asked day is never shown as a match; they sort last with the reason.
+ */
+export function matchScore(f: MatchFacts): { score: number; available: boolean; reasons: string[] } {
+  const reasons: string[] = []; let score = 0;
+  const available = f.daysBusy === 0;
+  const need = (f.needSkills ?? []).map((s) => s.toLowerCase());
+  const have = f.skills.filter((s) => need.includes(s.toLowerCase()));
+  if (need.length) { score += Math.round((30 * have.length) / need.length); if (have.length) reasons.push(`Trained in ${have.join(", ")}`); }
+  else score += 15;
+  if (f.needTier && f.tier >= f.needTier) score += 0; else if (f.needTier) score -= 30;
+  const shared = f.languages.filter((l) => f.seniorLanguages.map((x) => x.toLowerCase()).includes(l.toLowerCase()));
+  if (shared.length) { score += 20; reasons.push(`Speaks ${shared.join(" and ")}`); }
+  if (f.km != null) {
+    score += Math.round(20 * Math.max(0, Math.min(1, (20 - f.km) / 17)));
+    reasons.push(f.km < 1 ? "Less than 1 km away" : `About ${Math.round(f.km)} km away`);
+  } else if (f.sameArea) { score += 15; reasons.push("Works in your parent's area"); }
+  if (f.ratingCount > 0) { score += Math.round(15 * Math.max(0, Math.min(1, (f.rating - 3) / 2))); reasons.push(`Rated ${f.rating.toFixed(1)} by ${f.ratingCount} ${f.ratingCount === 1 ? "family" : "families"}`); }
+  if (f.rehireStars != null && f.rehireStars >= 4) { score += 15; reasons.unshift(`Cared for your parent before, rated ${f.rehireStars} stars`); }
+  if (available) { if (f.daysAsked > 1) reasons.push(`Free on all ${f.daysAsked} days`); }
+  else reasons.unshift(`Not free on ${f.daysBusy} of your ${f.daysAsked} days`);
+  return { score: available ? score : score - 100, available, reasons: reasons.slice(0, 4) };
+}

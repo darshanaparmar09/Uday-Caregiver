@@ -117,6 +117,53 @@ export async function companionReply(system: string, messages: { role: "user" | 
   const j: any = await r.json(); return (j.content ?? []).filter((x: any) => x.type === "text").map((x: any) => x.text).join("\n").trim() || null;
 }
 
+// ───────── Claude for care support (summaries, flags, sorting, reading dates) ─────────
+/**
+ * One Claude request. Returns null when Claude is not connected or fails, so every caller has a rules based fallback.
+ * `content` may include document or image blocks (Messages API content blocks).
+ */
+export async function claudeText(system: string, content: string | any[], maxTokens = 500): Promise<string | null> {
+  const c = await cfg("anthropic"); if (!c?.apiKey) return null;
+  try {
+    const r = await must(await tfetch("https://api.anthropic.com/v1/messages", { method: "POST",
+      headers: { "x-api-key": c.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({ model: c.model || "claude-haiku-5-5", max_tokens: maxTokens, system, messages: [{ role: "user", content }] }) }, 30000), "Claude");
+    const j: any = await r.json(); return (j.content ?? []).filter((x: any) => x.type === "text").map((x: any) => x.text).join("\n").trim() || null;
+  } catch (e) { console.error("[claude]", (e as Error).message); return null; }
+}
+/** Claude asked to answer in JSON. Returns the parsed object, or null. */
+export async function claudeJson<T = any>(system: string, content: string | any[], maxTokens = 600): Promise<T | null> {
+  const t = await claudeText(system + "\nAnswer with JSON only, no other text.", content, maxTokens); if (!t) return null;
+  const m = t.match(/[\[{][\s\S]*[\]}]/); if (!m) return null;
+  try { return JSON.parse(m[0]) as T; } catch { return null; }
+}
+export async function claudeConnected() { return !!(await cfg("anthropic"))?.apiKey; }
+
+// ───────── speech to text (Sarvam AI) ─────────
+export const VOICE_LANG: Record<string, string> = { en: "en-IN", hi: "hi-IN", mr: "mr-IN" };
+/**
+ * Speech to text through Sarvam AI's REST API (POST https://api.sarvam.ai/speech-to-text, multipart, header
+ * api-subscription-key; model saaras:v4; returns transcript and language_code). Meant for clips under 30 seconds.
+ * Returns null when Sarvam is not connected, so callers can keep the audio for a person instead.
+ */
+export async function transcribe(audio: Buffer, mime: string, lang?: string): Promise<{ text: string; language: string | null } | null> {
+  const c = await cfg("sarvam"); if (!c?.apiKey) return null;
+  const f = new FormData();
+  f.append("file", new Blob([audio], { type: mime }), "speech." + (mime.split("/")[1]?.split(";")[0] || "m4a"));
+  f.append("model", c.model || "saaras:v4");
+  f.append("language_code", lang ? VOICE_LANG[lang] ?? "unknown" : "unknown");
+  const r = await must(await tfetch("https://api.sarvam.ai/speech-to-text", { method: "POST", headers: { "api-subscription-key": c.apiKey }, body: f }, 30000), "Sarvam");
+  const j: any = await r.json(); return { text: String(j.transcript ?? "").trim(), language: j.language_code ?? null };
+}
+export async function voiceConnected() { return !!(await cfg("sarvam"))?.apiKey; }
+/** One second of silence as a 16 kHz WAV, for the admin connection test. */
+function silentWav() {
+  const n = 16000, b = Buffer.alloc(44 + n * 2);
+  b.write("RIFF", 0); b.writeUInt32LE(36 + n * 2, 4); b.write("WAVEfmt ", 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
+  b.writeUInt32LE(16000, 24); b.writeUInt32LE(32000, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34); b.write("data", 36); b.writeUInt32LE(n * 2, 40);
+  return b;
+}
+
 // ───────── connection test for the admin module ─────────
 /** A read only call that proves the keys work. With a phone number, also sends one test message or call. */
 export async function probe(key: string, c: Record<string, string>, phone?: string): Promise<string> {
@@ -153,6 +200,11 @@ export async function probe(key: string, c: Record<string, string>, phone?: stri
     }
     case "video": {
       const url = await videoRoom("testroom"); return `Intro call links will look like ${url}`;
+    }
+    case "sarvam": {
+      const t = await transcribe(silentWav(), "audio/wav");
+      if (!t) throw new Error("Add the API key");
+      return "Sarvam accepted a test recording. Speech to text is ready.";
     }
     case "anthropic": {
       const t = await companionReply("Reply with one short friendly sentence.", [{ role: "user", content: "Namaste" }]);

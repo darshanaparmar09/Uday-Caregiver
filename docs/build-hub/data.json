@@ -2817,6 +2817,112 @@
      "notes": "Clinical advisor"
     }
    ]
+  },
+  {
+   "sheet": "AI care",
+   "title": "AI assisted care (branch readiness-sprint, not deployed)",
+   "rows": [
+    {
+     "id": "01",
+     "module": "Families",
+     "feature": "Daily update card",
+     "what": "Short summary of each care day from the caregiver's records; See full log",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "AI wording needs Claude connected and AI help on"
+    },
+    {
+     "id": "02",
+     "module": "Families",
+     "feature": "Why this match",
+     "what": "Ranked by care need, language, distance, free days, ratings, past care",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "03",
+     "module": "Families",
+     "feature": "Appointments and reminders",
+     "what": "Add, confirm, reminders a day and two hours before; dates suggested from documents",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Document reading needs Claude"
+    },
+    {
+     "id": "04",
+     "module": "Seniors",
+     "feature": "Speak to Uday",
+     "what": "Large button; request kept for family and Uday; urgent words raise an alert",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Speech to text needs a Sarvam AI account"
+    },
+    {
+     "id": "05",
+     "module": "Seniors",
+     "feature": "Companion voice",
+     "what": "Speak to the companion; replies read aloud",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Test Marathi voices on real phones"
+    },
+    {
+     "id": "06",
+     "module": "Caregivers",
+     "feature": "Dictated notes",
+     "what": "Microphone button fills the shift note",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "Needs Sarvam AI"
+    },
+    {
+     "id": "07",
+     "module": "Operations",
+     "feature": "Tomorrow's risks",
+     "what": "At risk shifts with reasons and free standbys",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "08",
+     "module": "Operations",
+     "feature": "Care flags",
+     "what": "Notes that need a person to look; reviewed and recorded",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": "English rules; other languages need Claude"
+    },
+    {
+     "id": "09",
+     "module": "Operations",
+     "feature": "Weekly quality report",
+     "what": "Reliability per caregiver and area, complaints, themes",
+     "status": "Completed",
+     "phase": "Launch",
+     "owner": "Claude",
+     "notes": ""
+    },
+    {
+     "id": "10",
+     "module": "Partners",
+     "feature": "Community admin page",
+     "what": "Daily summaries for senior living residents",
+     "status": "Pending",
+     "phase": "Launch",
+     "owner": "You",
+     "notes": "Waiting for your direction"
+    }
+   ]
   }
  ],
  "journey": {

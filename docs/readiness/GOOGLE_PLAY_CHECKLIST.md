@@ -23,7 +23,7 @@ Checked 17 November 2026 against Google's official pages (sources at the end). S
 | G9 | AI generated content: prevent offensive output and act on user feedback | **Done** | Safety prompt, crisis words routed to an alert, report button on every companion reply, Operations queue. The help page asks developers to "incorporate user feedback"; an in app flag is how Uday meets it. [6] |
 | G10 | Health Connect: declare each permission and justify it in the Health apps declaration | **Open (owner)** | Read only: heart rate, oxygen, steps, sleep, blood pressure, weight. Complete the declaration form in Play Console. [7] |
 | G11 | Health apps declaration and "not a medical device" disclaimer | **Open (owner)** | Complete in Play Console; add disclaimer to listing. Wording in the app already says "not a medical assessment". [7] |
-| G12 | Permissions: request only what is used | **Done** | Caregiver app blocks CAMERA and RECORD_AUDIO (verified in resolved config); location used for arrival check only, while in use. |
+| G12 | Permissions: request only what is used | **Done** | Caregiver app blocks CAMERA. RECORD_AUDIO is now used in both apps, only while the person taps the microphone (added 21 Nov 2026). Declare Audio in the Data safety form; speech goes to Sarvam AI. |
 | G13 | Version code management | **Done** | `versionCode` set; remote auto increment in EAS. |
 | G14 | SOS feature wording | **Done in app** | Add "Uday is not an emergency service. Call 112." to the listing. |
 

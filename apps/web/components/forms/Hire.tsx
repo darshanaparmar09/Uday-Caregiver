@@ -6,7 +6,8 @@ import { RateCare } from "./RateCare";
 import { payOnGateway } from "../checkout";
 import { api, inr, TYPE, DUR, TIER } from "../api";
 
-type CG = { id: string; display_name: string; initials: string; tier: number; care_types: string[]; languages: string[]; skills: string[]; area: string; experience_years: number; rating: number; rating_count: number; rate_day_paise: number; rate_night_paise: number; rate_live_paise: number; police_verified: boolean; id_verified: boolean; photo?: boolean };
+type Match = { score: number; available: boolean; reasons: string[] };
+type CG = { match?: Match; id: string; display_name: string; initials: string; tier: number; care_types: string[]; languages: string[]; skills: string[]; area: string; experience_years: number; rating: number; rating_count: number; rate_day_paise: number; rate_night_paise: number; rate_live_paise: number; police_verified: boolean; id_verified: boolean; photo?: boolean };
 const RATE = { day: "rate_day_paise", night: "rate_night_paise", live: "rate_live_paise" } as const;
 const TIMES: Record<string, [string, string][]> = { day: [["07:00", "7 AM to 3 PM"], ["09:00", "9 AM to 5 PM"], ["10:00", "10 AM to 6 PM"]], night: [["20:00", "8 PM to 8 AM"]], live: [["09:00", "Starts 9 AM"]] };
 const COLORS = ["#4B3AA8", "#E07B00", "#1F7A6D"];
@@ -29,8 +30,16 @@ export function Hire() {
   const [need, setNeed] = useState<string | null>(null); const [needNote, setNeedNote] = useState("");
   function chooseNeed(id: string) { setNeed(id); const n = careNeed(id); if (n && n.tier > 1) setTier(n.tier); else setTier(0); }
   const needSkills = need ? careNeed(need)?.skills ?? [] : [];
-  const score = (c: CG) => c.skills.filter((s) => needSkills.includes(s)).length;
-  useEffect(() => { setList(null); api<CG[]>(`/api/caregivers?type=${type}${tier ? `&tier=${tier}` : ""}`).then(setList).catch((e) => setErr(e.message)); }, [type, tier]);
+  void needSkills;
+  // Signed in families: rank for their parent and dates, so "Why this match" can use language, distance and free days.
+  const [mine, setMine] = useState<any[]>([]); const [forId, setForId] = useState(""); const [from, setFrom] = useState(() => new Date(Date.now() + 86400e3).toISOString().slice(0, 10));
+  useEffect(() => { api<any>("/api/me").then(async (m) => { if (m?.user?.role === "family") { const r = await api<any[]>("/api/recipients"); setMine(r); if (r[0]) setForId(r[0].id); } }).catch(() => {}); }, []);
+  useEffect(() => {
+    setList(null);
+    const p = new URLSearchParams({ type }); if (tier) p.set("tier", String(tier)); if (need && need !== "other") p.set("need", need);
+    if (forId) p.set("recipientId", forId); if (from) { p.set("start", from); p.set("days", String(days)); }
+    api<CG[]>(`/api/caregivers?${p}`).then(setList).catch((e) => setErr(e.message));
+  }, [type, tier, need, forId, from, days]);
   return (
     <div>
       <div className="card mb-5">
@@ -49,19 +58,25 @@ export function Hire() {
         <Seg label="Type of care" value={type} set={setType} opts={[["day", "Day shift", "8 hours"], ["night", "Night shift", "8 PM to 8 AM"], ["live", "24 hour live in", "Stays in the home"]]} />
         <Seg label="How long" value={days} set={setDays} opts={[[1, "One day"], [7, "Weekly"], [30, "Monthly"], [90, "Quarterly"]]} />
         <Seg label="Tier" value={tier} set={setTier} opts={[[0, "All tiers"], [1, "Tier 1 Companion"], [2, "Tier 2 Trained"], [3, "Tier 3 Nurse"]]} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {mine.length > 0 && <div className="field"><label htmlFor="hf">Care for</label><select id="hf" className="input" value={forId} onChange={(e) => setForId(e.target.value)}>{mine.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select></div>}
+          <div className="field"><label htmlFor="hs">Starting</label><input id="hs" type="date" className="input" value={from} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setFrom(e.target.value)} /></div>
+        </div>
       </div>
       {err && <p className="mt-4 text-coral-600">{err}</p>}
-      <p className="note mt-5">{list ? `${list.length} caregivers for ${TYPE[type].toLowerCase()}, ${DUR[days].toLowerCase()}.` : "Loading caregivers"} Rates are pilot samples until confirmed.</p>
+      <p className="note mt-5">{list ? `${list.length} caregivers for ${TYPE[type].toLowerCase()}, ${DUR[days].toLowerCase()}.` : "Loading caregivers"} Rates are pilot samples until confirmed. Ranked by fit for the care need, shared language, distance, free days, ratings and past care for your parent.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {list?.slice().sort((a, b) => score(b) - score(a)).map((c) => { const f = fees(c[RATE[type]], days); return (
-          <article key={c.id} className="card flex flex-col gap-3">
+        {list?.map((c) => { const f = fees(c[RATE[type]], days); const busy = c.match && !c.match.available; return (
+          <article key={c.id} className={`card flex flex-col gap-3 ${busy ? "opacity-60" : ""}`}>
             <div className="flex items-center gap-3">{c.photo ? <img src={`/api/caregivers/${c.id}/photo`} alt={`Photo of ${c.display_name}`} className="h-14 w-14 rounded-full object-cover" /> : <span className="grid h-12 w-12 place-items-center rounded-full font-display font-bold text-white" style={{ background: COLORS[c.tier - 1] }}>{c.initials}</span>}
               <div className="min-w-0"><h3 className="text-lg font-bold">{c.display_name}</h3><p className="text-sm text-muted">{c.rating_count ? `★ ${c.rating.toFixed(1)} (${c.rating_count} ratings)` : "New on Uday, no ratings yet"}{c.experience_years ? ` · ${c.experience_years} yrs` : ""} · {c.area}</p></div></div>
-            <div className="flex flex-wrap gap-1.5">{score(c) > 0 && <span className="pill-wait">Good match</span>}<span className="chip">{TIER[c.tier]}</span>{c.police_verified && <span className="pill-ok">✓ Police verified</span>}{c.id_verified && <span className="pill-ok">✓ ID verified</span>}</div>
+            {!!c.match?.reasons.length && <div className={`rounded-xl px-3 py-2 text-sm ${busy ? "bg-coral-50 text-coral-600" : "bg-teal-50 text-ink"}`}><b className="block text-xs uppercase tracking-wider">Why this match</b>
+              <ul className="mt-1 grid gap-0.5">{c.match.reasons.map((r) => <li key={r}>{busy ? "" : "✓ "}{r}</li>)}</ul></div>}
+            <div className="flex flex-wrap gap-1.5"><span className="chip">{TIER[c.tier]}</span>{c.police_verified && <span className="pill-ok">✓ Police verified</span>}{c.id_verified && <span className="pill-ok">✓ ID verified</span>}</div>
             <p className="text-sm">{c.skills.join(" · ")} <span className="text-muted">· {c.languages.join(", ")}</span></p>
             <div className="mt-auto flex items-end justify-between border-t border-line pt-3">
               <div><div className="text-xs text-muted">{inr(c[RATE[type]])} a day · {DUR[days]}</div><div className="font-display text-xl font-extrabold text-ink">{inr(f.care)}</div></div>
-              <button className="btn" onClick={() => { setTrial(false); setPick(c); }}>Hire</button></div>
+              <button className="btn" disabled={busy} onClick={() => { setTrial(false); setPick(c); }}>{busy ? "Not free" : "Hire"}</button></div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-indigo-600">
               <button onClick={() => setProfile(c)}>{c.rating_count ? `Read ${c.rating_count} review${c.rating_count > 1 ? "s" : ""}` : "View profile"}</button>
               <button onClick={() => setIntro(c)}>Meet first (video call)</button>

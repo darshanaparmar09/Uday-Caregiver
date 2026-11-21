@@ -63,7 +63,8 @@ export async function dashboard() {
       (SELECT count(*)::int FROM facilities WHERE status='review') AS facilities_review,
       (SELECT count(*)::int FROM post_reports r JOIN group_posts p ON p.id=r.post_id WHERE p.status <> 'hidden') AS reports,
       (SELECT count(*)::int FROM notifications WHERE status='failed' AND at > now() - interval '24 hours') AS failed_messages,
-      (SELECT count(*)::int FROM alerts WHERE status='open') AS open_alerts`),
+      (SELECT count(*)::int FROM alerts WHERE status='open') AS open_alerts,
+      (SELECT count(*)::int FROM care_flags WHERE status='open') + (SELECT count(*)::int FROM voice_requests WHERE status IN ('new','seen')) AS open_insights`),
     q(`SELECT s.id, s.role, s.booking_id, s.at, s.lat, s.lng, u.name, b.code FROM sos_events s JOIN users u ON u.id=s.user_id LEFT JOIN bookings b ON b.id=s.booking_id
        WHERE s.resolved_at IS NULL ORDER BY s.at DESC LIMIT 20`),
     q("SELECT id, code, severity, category, status, summary, opened_at FROM incidents WHERE status <> 'closed' ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, opened_at LIMIT 10"),

@@ -9,6 +9,8 @@ import { sweepBilling, sweepNoShows, sweepRelief } from "@/lib/care";
 import { sweepCheckinCalls } from "@/lib/family";
 import { sweepUnpaid } from "@/lib/checkout";
 import { sweepAlerts } from "@/lib/alerts";
+import { sweepAppointments } from "@/lib/appointments";
+import { sweepVoice } from "@/lib/voice";
 import { runJob, sweepRetention } from "@/lib/cron";
 import { TEST_MODE } from "@/lib/env";
 import { sameSecret } from "@/lib/ratelimit";
@@ -27,5 +29,6 @@ export const POST = handle(async (req: Request) => {
     alerts: await runJob("alerts", sweepAlerts), missedCheckins: await runJob("missed_checkins", sweepMissedCheckins), checkinCalls: await runJob("checkin_calls", sweepCheckinCalls),
     noShows: await runJob("no_shows", sweepNoShows), offersExpired: await runJob("offers", sweepOffers), relief: await runJob("relief", sweepRelief),
     unpaid: await runJob("unpaid", sweepUnpaid), billing: await runJob("billing", () => sweepBilling()), retention: await runJob("retention", sweepRetention),
+    appointments: await runJob("appointments", sweepAppointments), voice: await runJob("voice_retention", sweepVoice),
   };
 });

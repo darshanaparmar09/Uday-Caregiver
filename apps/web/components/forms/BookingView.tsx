@@ -13,6 +13,7 @@ function countdown(iso?: string) { if (!iso) return ""; const s = Math.max(0, Ma
 export function BookingView({ id }: { id: string }) {
   const [b, setB] = useState<any>(null); const [err, setErr] = useState(""); const [panel, setPanel] = useState<string | null>(null);
   const [quote, setQuote] = useState<any>(null); const [busy, setBusy] = useState(false); const [, tick] = useState(0);
+  const [fullLog, setFullLog] = useState(false);
   const [reason, setReason] = useState(""); const [concern, setConcern] = useState("");
   const [date, setDate] = useState(""); const [cat, setCat] = useState("Caregiver is late or did not arrive"); const [txt, setTxt] = useState("");
   const load = useCallback(() => api(`/api/bookings/${id}`).then(setB).catch((e) => setErr(e.message)), [id]);
@@ -71,7 +72,8 @@ export function BookingView({ id }: { id: string }) {
       {(b.status === "cancelled" || b.status === "released") && <div className="card"><div className="eyebrow text-muted">{s[1]}</div><p className="mt-2">{b.events.slice(-1)[0]?.message}</p>{b.refundPaise != null && <p className="mt-2 font-semibold text-ink">Refund {inr(b.refundPaise)}{b.cancelFeePaise ? ` · fee ${inr(b.cancelFeePaise)}` : ""}. Back to your payment method in 5 to 7 working days (gateway dependent).</p>}</div>}
 
       {b.viewer === "family" && <Chat id={id} name={first} />}
-      {!!b.logs?.length && <div className="card"><h2 className="text-lg font-bold">Shift log</h2><div className="mt-3 grid gap-3">{b.logs.slice().reverse().map((l: any, k: number) => (
+      {!!b.updates?.length && <DailyUpdate updates={b.updates} onFull={() => setFullLog((v) => !v)} full={fullLog} />}
+      {!!b.logs?.length && (fullLog || !b.updates?.length) && <div className="card" id="full-log"><h2 className="text-lg font-bold">Full shift log</h2><div className="mt-3 grid gap-3">{b.logs.slice().reverse().map((l: any, k: number) => (
         <div key={k} className="border-l-4 border-teal-500 pl-3 text-sm"><b className="text-ink">Day {l.day} · {new Date(l.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</b><div>{[l.checklist && `${Object.keys(l.checklist).length} care tasks marked done by the caregiver`, l.meal === true && "Meal: caregiver says given", l.meds === true && "Medicines: caregiver says given as prescribed", l.meds === false && "Medicines: caregiver says NOT given", `Mood: ${l.mood}`].filter(Boolean).join(" · ")}</div>
         {l.vitals && <div>{[l.vitals.bpSys && `BP ${l.vitals.bpSys}/${l.vitals.bpDia}`, l.vitals.pulse && `Pulse ${l.vitals.pulse}`, l.vitals.tempC && `Temp ${l.vitals.tempC}°C`, l.vitals.pain != null && `Pain ${l.vitals.pain}/10`, l.vitals.appetite && `Appetite ${l.vitals.appetite}`, l.vitals.skinConcern && "Skin concern noted"].filter(Boolean).join(" · ")}</div>}
         {l.flags?.length ? <div className="mt-1 rounded-lg bg-coral-50 px-2 py-1 font-semibold text-coral-600">Outside usual range: {l.flags.join(", ")}. Noted for the Uday team. Not a medical assessment: call the doctor if you are worried.</div> : null}
@@ -118,4 +120,17 @@ export function BookingView({ id }: { id: string }) {
         <ul className="mt-3 grid gap-2 text-sm">{b.events.slice().reverse().map((e: any, k: number) => <li key={k} className="flex gap-3"><time className="w-20 shrink-0 text-muted">{new Date(e.at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</time><span>{e.message}</span></li>)}</ul></details>
     </div>
   );
+}
+
+/** The day's short update for the family, written from the caregiver's records. The full log stays one tap away. */
+function DailyUpdate({ updates, full, onFull }: { updates: any[]; full: boolean; onFull: () => void }) {
+  const [i, setI] = useState(0); const u = updates[i];
+  return (<div className="card border-l-4 border-l-teal-500">
+    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-bold">Day {u.day} update</h2>
+      {updates.length > 1 && <div className="flex gap-2 text-sm font-semibold text-indigo-600">
+        <button disabled={i >= updates.length - 1} onClick={() => setI(i + 1)}>Earlier day</button>{i > 0 && <button onClick={() => setI(i - 1)}>Later day</button>}</div>}</div>
+    <p className="mt-2 text-[17px] leading-relaxed text-ink">{u.text}</p>
+    <p className="note mt-2">{u.label}. Not a medical assessment.</p>
+    <button className="mt-2 text-sm font-semibold text-indigo-600" onClick={onFull} aria-expanded={full} aria-controls="full-log">{full ? "Hide full log" : "See full log"}</button>
+  </div>);
 }

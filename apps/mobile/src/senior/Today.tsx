@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Companion } from "./Companion";
 import { tr } from "../shared/i18n";
 import { UrgentCard, useUrgent } from "../shared/alerts";
+import { MicButton } from "../shared/voice";
 import type { Tab } from "./SeniorApp";
 
 const MOOD: Record<string, string> = { ok: "I am okay", help: "I need some help", medical: "I need medical help", lonely: "I feel lonely" };
@@ -14,7 +15,7 @@ const SLOT: Record<string, string> = { morning: "Morning", afternoon: "Afternoon
 
 /** Home: check in status and streak, SOS, your people, medicines, thought of the day, today's game. */
 export function Today({ h, reload, go, onCheckIn }: { h: any; reload: () => Promise<any>; go: (t: Tab) => void; onCheckIn: () => void }) {
-  const [meds, setMeds] = useState(false); const sos = useUrgent(); const [asked, setAsked] = useState(false); const [talk, setTalk] = useState(false);
+  const [meds, setMeds] = useState(false); const sos = useUrgent(); const [asked, setAsked] = useState(false); const [talk, setTalk] = useState(false); const [heard, setHeard] = useState<any>(null);
   if (meds) return <Medicines onBack={() => { setMeds(false); reload(); }} />;
   const first = (h.name || "").split(" ")[0]; const hour = new Date().getHours(); const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   if (talk) return <Companion onBack={() => setTalk(false)} onSos={() => { setTalk(false); raiseSos(); }} />;
@@ -34,6 +35,19 @@ export function Today({ h, reload, go, onCheckIn }: { h: any; reload: () => Prom
           <Button title="Change my answer" tone="outline" onPress={onCheckIn} />
         </Card>
       ) : <Button title="Check in now" sub="Tell your family you are well" tone="amber" onPress={onCheckIn} style={{ minHeight: 100 }} />}
+
+      <MicButton purpose="request" big tone="night" title={tr("Speak to Uday")} stopTitle={tr("Tap to send")} onResult={setHeard} />
+      {heard && <Card tone={heard.category === "urgent" ? "coral" : "teal"}>
+        <T size={24} weight="bold">{heard.heard ? tr("Uday heard you") : tr("Uday got your message")}</T>
+        {heard.heard ? <T>"{heard.heard}"</T> : null}
+        <T>{heard.category === "urgent"
+          ? (heard.alert ? tr("Your family and the Uday team are being alerted now. If you are in danger, call 112.") : tr("We could not send the alert. Press SOS or call 112 now."))
+          : heard.familyTold > 0 ? tr("Your family has been told. They or Uday will reply.") : tr("The Uday team will see it and reply.")}</T>
+        <Button title={tr("Done")} tone="outline" onPress={() => setHeard(null)} />
+      </Card>}
+      {h.nextAppointment && <Card tone="cream"><T weight="bold">{tr("Next appointment")}</T>
+        <T size={22}>{h.nextAppointment.title}</T>
+        <T>{new Date(h.nextAppointment.at).toLocaleString("en-IN", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}{h.nextAppointment.place ? `, ${h.nextAppointment.place}` : ""}</T></Card>}
 
       {h.caregiver && <Card tone="teal"><View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}>
           {h.caregiver.photo ? <Image source={{ uri: API + h.caregiver.photo }} style={{ width: 84, height: 84, borderRadius: 42 }} accessibilityLabel={`Photo of ${h.caregiver.name}`} />

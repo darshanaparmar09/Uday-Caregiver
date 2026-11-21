@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { act, type Action } from "@/lib/bookings";
 import { handle, body, once } from "@/lib/http";
+import { afterCareRecord } from "@/lib/insights";
 const I = z.discriminatedUnion("action", [
   z.object({ action: z.literal("accept") }), z.object({ action: z.literal("decline"), reason: z.string().min(2).max(120) }),
   z.object({ action: z.literal("approve") }), z.object({ action: z.literal("reject") }), z.object({ action: z.literal("cancel") }),
@@ -23,4 +24,10 @@ const I = z.discriminatedUnion("action", [
   z.object({ action: z.literal("rate"), areas: z.record(z.string(), z.number().int().min(1).max(5)), tags: z.array(z.string().max(40)).max(8).default([]), note: z.string().max(1000).optional(), publicText: z.string().max(400).optional() }),
   z.object({ action: z.literal("ticket"), category: z.string().min(2).max(80), text: z.string().max(2000).optional() }),
 ]);
-export const POST = handle(async (req: Request, { params }: { params: { id: string } }) => { const u = await requireUser(); const a = I.parse(await body(req)) as Action; return once(req, u.id, () => act(u, params.id, a)); });
+export const POST = handle(async (req: Request, { params }: { params: { id: string } }) => {
+  const u = await requireUser(); const a = I.parse(await body(req)) as Action;
+  const r = await once(req, u.id, () => act(u, params.id, a));
+  // A care record changed: refresh the family's daily update and check the note for things a person should see.
+  if (["log", "end", "day_close"].includes(a.action)) await afterCareRecord(params.id, a.action).catch((e) => console.error("[after care record]", e));
+  return r;
+});

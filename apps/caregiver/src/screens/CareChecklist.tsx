@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Button, Card, Chips, Field, T } from "../shared/ui";
 import { C, S } from "../shared/theme";
+import { MicButton } from "../shared/voice";
 
 const MOODS = ["Cheerful", "Calm", "Tired", "Unwell, family told", "Upset"];
 const PAIN: [number, string][] = [[0, "0 None"], [2, "2"], [4, "4"], [6, "6"], [8, "8"], [10, "10 Worst"]];
@@ -68,6 +69,8 @@ export function CareChecklist({ template, tier, busy, onSave }: { template: { id
       <T weight="bold">Mood</T>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>{MOODS.map((m) => <Button key={m} title={m} tone={mood === m ? "amber" : "outline"} onPress={() => setMood(m)} style={{ flexGrow: 1 }} />)}</View>
       <Field label="Note for the family" value={note} onChangeText={setNote} multiline style={{ minHeight: 110, fontSize: 22, paddingTop: 14 }} />
+      <MicButton purpose="note" title="🎤 Speak the note" stopTitle="Tap to finish" tone="outline" onResult={(r) => r?.text && setNote((n) => (n ? n + " " : "") + r.text)} />
+      <T color={C.inkSoft} size={16}>Speak in Marathi, Hindi or English. Read the text before you save.</T>
       <Button title="Save care log" tone="night" busy={busy} onPress={save} />
     </View>
   );

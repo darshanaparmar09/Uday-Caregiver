@@ -37,6 +37,7 @@ export function YourData() {
             <label key={k} className="flex items-center gap-3 text-sm"><input type="checkbox" checked={!!consent[r.id]?.shareWithCaregiver?.[k]}
               onChange={(e) => run("c" + r.id, () => share(r.id, k, e.target.checked), "Saved.")} />{l}</label>))}
         </div>))}
+      {recips.map((r) => <AiHelp key={"ai" + r.id} rid={r.id} name={r.name} />)}
       <div className="grid gap-2 border-t border-line pt-3"><h3 className="font-semibold">Sign out everywhere</h3><p className="text-sm">Ends every session on every phone and browser, including this one.</p>
         <button className="btn-ghost justify-self-start" disabled={busy === "so"} onClick={() => run("so", async () => { await api("/api/me/sessions", { method: "DELETE" }); router.push("/signin"); }, "Signed out everywhere.")}>Sign out everywhere</button></div>
       <div className="grid gap-2 border-t border-line pt-3"><h3 className="font-semibold">Delete my account</h3>
@@ -50,4 +51,17 @@ export function YourData() {
           <button className="btn-ghost justify-self-start" onClick={() => { setOpen(false); setText(""); }}>Keep my account</button></>}
       </div>
     </div>);
+}
+
+/** AI help for one parent: off by default. With it on, Claude writes daily updates, checks notes and reads documents. */
+function AiHelp({ rid, name }: { rid: string; name: string }) {
+  const [a, setA] = useState<any>(null); const [err, setErr] = useState("");
+  useEffect(() => { api(`/api/recipients/${rid}/ai-help`).then(setA).catch(() => {}); }, [rid]);
+  if (!a) return null;
+  return (<div className="grid gap-2 border-t border-line pt-3"><h3 className="font-semibold">AI help for {name}: {a.on ? "on" : "off"}</h3>
+    {a.about.map((t: string) => <p key={t} className="text-sm">{t}</p>)}
+    {!a.connected && <p className="note">AI is not connected for Uday yet, so fixed rules and templates are used either way.</p>}
+    {err && <p className="text-sm font-semibold text-coral-600">{err}</p>}
+    <button className="btn-ghost justify-self-start" onClick={() => api(`/api/recipients/${rid}/ai-help`, { method: "PUT", body: { on: !a.on } }).then((r: any) => setA({ ...a, on: r.on })).catch((e) => setErr(e.message))}>{a.on ? "Turn AI help off" : "Turn AI help on"}</button>
+  </div>);
 }

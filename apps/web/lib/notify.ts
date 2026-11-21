@@ -12,7 +12,7 @@ import { dec } from "./crypto";
 export type Template =
   | "booking_requested" | "booking_offer" | "booking_accepted" | "booking_proposal" | "booking_released"
   | "caregiver_enroute" | "caregiver_arrived" | "shift_started" | "shift_log" | "shift_ended"
-  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event" | "day_closed" | "caregiver_back" | "extension_request" | "extension_accepted" | "extension_declined" | "shift_reminder" | "caregiver_late" | "relief_offer" | "relief_assigned" | "relief_unfilled" | "payment_failed" | "payment_due" | "payment_taken" | "intro_request" | "intro_confirmed" | "intro_declined" | "new_message" | "ticket_reply" | "ticket_resolved" | "incident_opened" | "alert_ack" | "senior_link";
+  | "booking_cancelled" | "rate_request" | "ticket_opened" | "checkin_ok" | "checkin_help" | "checkin_missed" | "sos" | "payout_paid" | "leave_decided" | "stage_updated" | "vitals_alert" | "visit_requested" | "visit_updated" | "facility_review" | "checkin_medical" | "checkin_lonely" | "checkin_reminder" | "safety_report" | "callback_request" | "namaste" | "senior_event" | "day_closed" | "caregiver_back" | "extension_request" | "extension_accepted" | "extension_declined" | "shift_reminder" | "caregiver_late" | "relief_offer" | "relief_assigned" | "relief_unfilled" | "payment_failed" | "payment_due" | "payment_taken" | "intro_request" | "intro_confirmed" | "intro_declined" | "new_message" | "ticket_reply" | "ticket_resolved" | "incident_opened" | "alert_ack" | "senior_link" | "daily_update" | "voice_request" | "appointment_reminder" | "appointment_suggested";
 
 export type NotifyStatus = "sent" | "simulated" | "failed" | "no_channel" | "recorded";
 export interface NotifyOutcome { id: number; status: NotifyStatus; channels: Record<string, string>; error?: string }
@@ -100,6 +100,10 @@ const PUSH_TEXT: Partial<Record<Template, PushMessage>> = {
   stage_updated: { title: "Your Uday profile was updated", body: "Open the app to see what changed." },
   sos: { title: "SOS: help needed now", body: "An SOS was pressed. Call them now. If you cannot reach them, call 112.", urgent: true },
   senior_link: { title: "Your parent answered your request", body: "Open Uday to see whether they agreed to connect." },
+  daily_update: { title: "Today's care update", body: "Open Uday to read today's update." },
+  voice_request: { title: "Your parent spoke to Uday", body: "Open Uday to see or hear what they asked." },
+  appointment_reminder: { title: "Appointment coming up", body: "Open Uday for the time and place." },
+  appointment_suggested: { title: "Dates found in a document", body: "Open Uday to confirm or remove them." },
   alert_ack: { title: "Someone is responding", body: "A family member has seen the alert and is responding." },
   payment_taken: { title: "Weekly payment received", body: "Thank you. Next week's care is paid." },
   intro_request: { title: "A family wants to meet you", body: "Choose a time for a short video call." },

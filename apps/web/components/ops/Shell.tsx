@@ -14,6 +14,7 @@ const NAV: { href: string; label: string; icon: string; group: string; perm?: st
   { href: "/ops/help", label: "Help requests", icon: "✉", group: "Live" },
   { href: "/ops/incidents", label: "Incidents", icon: "⚑", group: "Live" },
   { href: "/ops/care", label: "Relief and intros", icon: "⇄", group: "Live" },
+  { href: "/ops/insights", label: "Care insights", icon: "✦", group: "Live" },
   { href: "/ops/caregivers", label: "Caregivers", icon: "♥", group: "People" },
   { href: "/ops/people", label: "Families and seniors", icon: "⌂", group: "People" },
   { href: "/ops/community", label: "Community", icon: "☺", group: "People" },
@@ -30,7 +31,7 @@ export function ConsoleShell({ name, role, perms, children }: { name: string; ro
   const path = usePathname(); const [open, setOpen] = useState(false); const [badges, setBadges] = useState<Record<string, number>>({});
   const can = (p: string) => perms.includes(p);
   useEffect(() => { setOpen(false); }, [path]);
-  useEffect(() => { const l = () => api("/api/ops/dashboard").then((d) => setBadges({ "/ops/help": d.counts?.open_tickets ?? 0, "/ops/incidents": d.counts?.open_incidents ?? 0, "/ops": (d.alerts ?? []).filter((a: any) => a.status === "open").length })).catch(() => {}); l(); const t = setInterval(l, 30000); return () => clearInterval(t); }, []);
+  useEffect(() => { const l = () => api("/api/ops/dashboard").then((d) => setBadges({ "/ops/insights": d.counts?.open_insights ?? 0, "/ops/help": d.counts?.open_tickets ?? 0, "/ops/incidents": d.counts?.open_incidents ?? 0, "/ops": (d.alerts ?? []).filter((a: any) => a.status === "open").length })).catch(() => {}); l(); const t = setInterval(l, 30000); return () => clearInterval(t); }, []);
   const items = NAV.filter((n) => !n.perm || can(n.perm));
   const active = (h: string) => (h === "/ops" ? path === "/ops" : path.startsWith(h));
   return (

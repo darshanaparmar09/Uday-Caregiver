@@ -18,7 +18,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Uday checks that you have arrived at the booked home.",
         "NSPhotoLibraryUsageDescription": "Upload certificates for your Uday verification.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "Uday Caregiver records your voice only when you tap Speak the note, to turn it into text."
       },
       "buildNumber": "1",
       "privacyManifests": {
@@ -64,8 +65,7 @@
       },
       "versionCode": 1,
       "blockedPermissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.CAMERA"
       ]
     },
     "web": {
@@ -93,6 +93,12 @@
           "photosPermission": "Upload certificates for your Uday verification.",
           "cameraPermission": false,
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Uday Caregiver records your voice only when you tap Speak the note, to turn it into text."
         }
       ]
     ],

@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollView, TextInput, View } from "react-native";
 import { api } from "../shared/api";
 import { Button, Card, T } from "../shared/ui";
-import { tr } from "../shared/i18n";
+import { getLang, tr } from "../shared/i18n";
+import * as Speech from "expo-speech";
+import { MicButton } from "../shared/voice";
+
+const VOICE: Record<string, string> = { en: "en-IN", hi: "hi-IN", mr: "mr-IN" };
+/** Reads a reply aloud in the senior's language, using the voices installed on the phone. */
+function say(t: string) { Speech.stop(); Speech.speak(t, { language: VOICE[getLang()] ?? "en-IN", rate: 0.9 }); }
 import { C, F } from "../shared/theme";
 
 /**
@@ -13,15 +19,18 @@ import { C, F } from "../shared/theme";
 export function Companion({ onBack, onSos }: { onBack: () => void; onSos: () => void }) {
   const [msgs, setMsgs] = useState<{ id?: number; role: string; text: string; label?: string; reported?: boolean }[]>([]);
   const [about, setAbout] = useState<string[] | null>(null); const [consented, setConsented] = useState<boolean | null>(null); const [text, setText] = useState(""); const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<ScrollView>(null); const [aloud, setAloud] = useState(true);
+  useEffect(() => () => { Speech.stop(); }, []);
   useEffect(() => { api("/api/senior/companion").then((h: any) => { setConsented(h.consented); setAbout(h.about); setMsgs(h.messages.map((m: any) => ({ id: m.id, role: m.role, text: m.text ?? "", reported: m.reported }))); }).catch((e) => setErr(e.message)); }, []);
   async function flag(id?: number) { if (!id) return; try { await api("/api/senior/companion", { report: id }); setMsgs((m) => m.map((x) => x.id === id ? { ...x, reported: true } : x)); } catch (e: any) { setErr(e.message); } }
   useEffect(() => { setTimeout(() => ref.current?.scrollToEnd({ animated: true }), 50); }, [msgs]);
   async function send() {
     const t = text.trim(); if (!t || busy) return; setBusy(true); setErr(""); setMsgs((m) => [...m, { role: "user", text: t }]); setText("");
-    try { const r: any = await api("/api/senior/companion", { message: t }); setMsgs((m) => [...m, { id: r.id, role: "assistant", text: r.reply, label: r.label, crisis: r.crisis } as any]); }
+    try { const r: any = await api("/api/senior/companion", { message: t }); setMsgs((m) => [...m, { id: r.id, role: "assistant", text: r.reply, label: r.label, crisis: r.crisis } as any]); if (aloud) say(r.reply); }
     catch (e: any) { setErr(e.message); } finally { setBusy(false); }
   }
+  /** A spoken message: the server turns it into text, replies, and the reply is read aloud. */
+  function spoken(r: any) { setMsgs((m) => [...m, { role: "user", text: r.heard }, { id: r.id, role: "assistant", text: r.reply, label: r.label, crisis: r.crisis } as any]); if (aloud) say(r.reply); }
   const crisis = (msgs[msgs.length - 1] as any)?.crisis;
   if (consented === false) return (
     <ScrollView style={{ flex: 1, backgroundColor: C.peach }} contentContainerStyle={{ padding: 16, paddingTop: 48, gap: 14 }}>
@@ -53,6 +62,8 @@ export function Companion({ onBack, onSos }: { onBack: () => void; onSos: () => 
       <View style={{ padding: 16, gap: 10, backgroundColor: "#fff" }}>
         <TextInput value={text} onChangeText={setText} placeholder={tr("Write to Uday")} multiline maxLength={600} accessibilityLabel={tr("Write to Uday")}
           style={{ fontFamily: F.medium, fontSize: 24, minHeight: 64, borderWidth: 2, borderColor: C.inkSoft, borderRadius: 18, padding: 12, color: C.ink }} />
+        <MicButton purpose="companion" title={tr("Speak instead")} stopTitle={tr("Tap to send")} tone="teal" onResult={spoken} />
+        <Button title={aloud ? tr("Reading replies aloud: on") : tr("Reading replies aloud: off")} tone="outline" onPress={() => { if (aloud) Speech.stop(); setAloud(!aloud); }} />
         <View style={{ flexDirection: "row", gap: 10 }}>
           <View style={{ flex: 1 }}><Button title="Back" tone="outline" onPress={onBack} /></View>
           <View style={{ flex: 2 }}><Button title="Send" busy={busy} onPress={send} /></View>
